@@ -10,8 +10,22 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import Invoices from "./pages/finance/Invoices";
 import CreateInvoice from "./pages/finance/CreateInvoice";
-import FinancialReports from "./pages/finance/FinancialReports";
+import Proforma from "./pages/finance/Proforma";
+import ReceivedInvoices from "./pages/finance/ReceivedInvoices";
+import RecurringInvoices from "./pages/finance/RecurringInvoices";
+import PaymentOrders from "./pages/finance/PaymentOrders";
+import SupplierPayments from "./pages/finance/SupplierPayments";
+import BankStatements from "./pages/finance/BankStatements";
 import VatRecords from "./pages/finance/VatRecords";
+import PPPDV from "./pages/finance/PPPDV";
+import Taxes from "./pages/finance/Taxes";
+import Ledger from "./pages/finance/Ledger";
+import FinancialReports from "./pages/finance/FinancialReports";
+import Profitability from "./pages/finance/Profitability";
+import SalesReports from "./pages/finance/SalesReports";
+import ClientReports from "./pages/finance/ClientReports";
+import CashFlow from "./pages/finance/CashFlow";
+import Contracts from "./pages/finance/Contracts";
 import Clients from "./pages/clients/Clients";
 import Employees from "./pages/hr/Employees";
 import Articles from "./pages/sales/Articles";
@@ -40,23 +54,23 @@ const App = () => (
               {/* Finansije */}
               <Route path="/invoices" element={<Invoices />} />
               <Route path="/invoices/create" element={<CreateInvoice />} />
-              <Route path="/proforma" element={<ComingSoon />} />
-              <Route path="/received-invoices" element={<ComingSoon />} />
-              <Route path="/recurring-invoices" element={<ComingSoon />} />
-              <Route path="/payment-orders" element={<ComingSoon />} />
-              <Route path="/supplier-payments" element={<ComingSoon />} />
-              <Route path="/bank-statements" element={<ComingSoon />} />
+              <Route path="/proforma" element={<Proforma />} />
+              <Route path="/received-invoices" element={<ReceivedInvoices />} />
+              <Route path="/recurring-invoices" element={<RecurringInvoices />} />
+              <Route path="/payment-orders" element={<PaymentOrders />} />
+              <Route path="/supplier-payments" element={<SupplierPayments />} />
+              <Route path="/bank-statements" element={<BankStatements />} />
               <Route path="/vat" element={<VatRecords />} />
-              <Route path="/pppdv" element={<ComingSoon />} />
-              <Route path="/taxes" element={<ComingSoon />} />
-              <Route path="/incoming-ledger" element={<ComingSoon />} />
-              <Route path="/outgoing-ledger" element={<ComingSoon />} />
+              <Route path="/pppdv" element={<PPPDV />} />
+              <Route path="/taxes" element={<Taxes />} />
+              <Route path="/incoming-ledger" element={<Ledger />} />
+              <Route path="/outgoing-ledger" element={<Ledger />} />
               <Route path="/financial-reports" element={<FinancialReports />} />
-              <Route path="/profitability" element={<ComingSoon />} />
-              <Route path="/sales-reports" element={<ComingSoon />} />
-              <Route path="/client-reports" element={<ComingSoon />} />
-              <Route path="/cash-flow" element={<ComingSoon />} />
-              <Route path="/contracts" element={<ComingSoon />} />
+              <Route path="/profitability" element={<Profitability />} />
+              <Route path="/sales-reports" element={<SalesReports />} />
+              <Route path="/client-reports" element={<ClientReports />} />
+              <Route path="/cash-flow" element={<CashFlow />} />
+              <Route path="/contracts" element={<Contracts />} />
               
               {/* Klijenti */}
               <Route path="/clients" element={<Clients />} />
