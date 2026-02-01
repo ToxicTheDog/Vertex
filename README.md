@@ -1,73 +1,280 @@
-# Welcome to your Lovable project
+# 📊 Knjigovodstveni ERP Sistem
 
-## Project info
+Kompletan profesionalni program za knjigovodstvo sa svim modulima, Dashboard dizajnom i tamnom/svetlom temom.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🚀 Pokretanje projekta
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🔌 API Dokumentacija
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Ova demo verzija koristi **Local Storage** za čuvanje podataka. Ispod je specifikacija API endpointa za buduću integraciju sa backend-om.
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📋 Endpointi
 
-## What technologies are used for this project?
+### Klijenti (Clients)
 
-This project is built with:
+| Metoda | Endpoint | Opis | Request Body | Response |
+|--------|----------|------|--------------|----------|
+| GET | `/api/clients` | Lista svih klijenata | - | `Client[]` |
+| GET | `/api/clients/:id` | Pojedinačni klijent | - | `Client` |
+| POST | `/api/clients` | Kreiraj klijenta | `CreateClientDTO` | `Client` |
+| PUT | `/api/clients/:id` | Ažuriraj klijenta | `UpdateClientDTO` | `Client` |
+| DELETE | `/api/clients/:id` | Obriši klijenta | - | `{ success: boolean }` |
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+**Client Interface:**
+```typescript
+interface Client {
+  id: string;
+  name: string;
+  pib: string;
+  maticniBroj: string;
+  address: string;
+  city: string;
+  email: string;
+  phone: string;
+  contactPerson: string;
+  createdAt: string;
+}
+```
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### Fakture (Invoices)
 
-## Can I connect a custom domain to my Lovable project?
+| Metoda | Endpoint | Opis | Request Body | Response |
+|--------|----------|------|--------------|----------|
+| GET | `/api/invoices` | Lista svih faktura | - | `Invoice[]` |
+| GET | `/api/invoices/:id` | Pojedinačna faktura | - | `Invoice` |
+| POST | `/api/invoices` | Kreiraj fakturu | `CreateInvoiceDTO` | `Invoice` |
+| PUT | `/api/invoices/:id` | Ažuriraj fakturu | `UpdateInvoiceDTO` | `Invoice` |
+| DELETE | `/api/invoices/:id` | Obriši fakturu | - | `{ success: boolean }` |
+| POST | `/api/invoices/:id/send` | Pošalji fakturu | - | `{ success: boolean }` |
+| POST | `/api/invoices/:id/mark-paid` | Označi kao plaćeno | `{ paidDate: string }` | `Invoice` |
 
-Yes, you can!
+**Invoice Interface:**
+```typescript
+interface Invoice {
+  id: string;
+  number: string;
+  clientId: string;
+  clientName: string;
+  date: string;
+  dueDate: string;
+  items: InvoiceItem[];
+  subtotal: number;
+  vat: number;
+  total: number;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  type: 'invoice' | 'proforma' | 'credit';
+}
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+interface InvoiceItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  price: number;
+  vatRate: number;
+  total: number;
+}
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+
+### Nalozi za plaćanje (Payment Orders)
+
+| Metoda | Endpoint | Opis | Request Body | Response |
+|--------|----------|------|--------------|----------|
+| GET | `/api/payment-orders` | Lista naloga | - | `PaymentOrder[]` |
+| POST | `/api/payment-orders` | Kreiraj nalog | `CreatePaymentOrderDTO` | `PaymentOrder` |
+| PUT | `/api/payment-orders/:id/approve` | Odobri nalog | - | `PaymentOrder` |
+| PUT | `/api/payment-orders/:id/execute` | Izvrši nalog | - | `PaymentOrder` |
+| PUT | `/api/payment-orders/:id/reject` | Odbij nalog | `{ reason: string }` | `PaymentOrder` |
+
+**PaymentOrder Interface:**
+```typescript
+interface PaymentOrder {
+  id: string;
+  number: string;
+  date: string;
+  recipientName: string;
+  recipientAccount: string;
+  amount: number;
+  purpose: string;
+  status: 'pending' | 'approved' | 'executed' | 'rejected';
+  paymentCode: string;
+  referenceNumber: string;
+}
+```
+
+---
+
+### Zaposleni (Employees)
+
+| Metoda | Endpoint | Opis | Request Body | Response |
+|--------|----------|------|--------------|----------|
+| GET | `/api/employees` | Lista zaposlenih | - | `Employee[]` |
+| GET | `/api/employees/:id` | Pojedinačni zaposleni | - | `Employee` |
+| POST | `/api/employees` | Kreiraj zaposlenog | `CreateEmployeeDTO` | `Employee` |
+| PUT | `/api/employees/:id` | Ažuriraj zaposlenog | `UpdateEmployeeDTO` | `Employee` |
+| DELETE | `/api/employees/:id` | Obriši zaposlenog | - | `{ success: boolean }` |
+
+**Employee Interface:**
+```typescript
+interface Employee {
+  id: string;
+  firstName: string;
+  lastName: string;
+  jmbg: string;
+  position: string;
+  department: string;
+  email: string;
+  phone: string;
+  salary: number;
+  startDate: string;
+  status: 'active' | 'inactive' | 'on-leave';
+}
+```
+
+---
+
+### Artikli (Articles)
+
+| Metoda | Endpoint | Opis | Request Body | Response |
+|--------|----------|------|--------------|----------|
+| GET | `/api/articles` | Lista artikala | - | `Article[]` |
+| GET | `/api/articles/:id` | Pojedinačni artikal | - | `Article` |
+| POST | `/api/articles` | Kreiraj artikal | `CreateArticleDTO` | `Article` |
+| PUT | `/api/articles/:id` | Ažuriraj artikal | `UpdateArticleDTO` | `Article` |
+| DELETE | `/api/articles/:id` | Obriši artikal | - | `{ success: boolean }` |
+| PUT | `/api/articles/:id/stock` | Ažuriraj zalihe | `{ quantity: number, type: 'add' \| 'remove' }` | `Article` |
+
+**Article Interface:**
+```typescript
+interface Article {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  category: string;
+  unit: string;
+  price: number;
+  vatRate: number;
+  stock: number;
+  minStock: number;
+}
+```
+
+---
+
+### Ugovori (Contracts)
+
+| Metoda | Endpoint | Opis | Request Body | Response |
+|--------|----------|------|--------------|----------|
+| GET | `/api/contracts` | Lista ugovora | - | `Contract[]` |
+| POST | `/api/contracts` | Kreiraj ugovor | `CreateContractDTO` | `Contract` |
+| PUT | `/api/contracts/:id` | Ažuriraj ugovor | `UpdateContractDTO` | `Contract` |
+| PUT | `/api/contracts/:id/terminate` | Raskini ugovor | `{ reason: string }` | `Contract` |
+
+---
+
+### Porezi (Taxes)
+
+| Metoda | Endpoint | Opis | Request Body | Response |
+|--------|----------|------|--------------|----------|
+| GET | `/api/taxes` | Lista poreskih obaveza | - | `TaxRecord[]` |
+| POST | `/api/taxes/:id/pay` | Plati porez | `{ paidDate: string }` | `TaxRecord` |
+| GET | `/api/taxes/vat-report` | PDV izveštaj | `?period=2024-03` | `VatReport` |
+| POST | `/api/taxes/pppdv/generate` | Generiši PPPDV | `{ period: string }` | `PPPDVForm` |
+
+---
+
+### Izvodi banke (Bank Statements)
+
+| Metoda | Endpoint | Opis | Request Body | Response |
+|--------|----------|------|--------------|----------|
+| GET | `/api/bank-statements` | Lista izvoda | - | `BankStatement[]` |
+| POST | `/api/bank-statements/import` | Uvezi izvod | `FormData (file)` | `BankStatement` |
+| GET | `/api/bank-statements/:id/transactions` | Transakcije izvoda | - | `Transaction[]` |
+
+---
+
+## 🔐 Autentifikacija
+
+Svi API pozivi zahtevaju JWT token u header-u:
+
+```
+Authorization: Bearer <token>
+```
+
+### Autentifikacija Endpointi
+
+| Metoda | Endpoint | Opis | Request Body | Response |
+|--------|----------|------|--------------|----------|
+| POST | `/api/auth/login` | Prijava | `{ email, password }` | `{ token, user }` |
+| POST | `/api/auth/logout` | Odjava | - | `{ success: boolean }` |
+| GET | `/api/auth/me` | Trenutni korisnik | - | `User` |
+
+---
+
+## 📊 Izveštaji
+
+| Metoda | Endpoint | Opis | Query Params | Response |
+|--------|----------|------|--------------|----------|
+| GET | `/api/reports/financial` | Finansijski izveštaj | `?from=&to=` | `FinancialReport` |
+| GET | `/api/reports/sales` | Izveštaj prodaje | `?from=&to=&groupBy=` | `SalesReport` |
+| GET | `/api/reports/cash-flow` | Keš flow | `?from=&to=` | `CashFlowReport` |
+| GET | `/api/reports/profitability` | Profitabilnost | `?from=&to=` | `ProfitabilityReport` |
+
+---
+
+## 📦 Tehnologije
+
+- **Frontend:** React 18, TypeScript, Vite
+- **UI:** Tailwind CSS, shadcn/ui, Radix UI
+- **Grafici:** Recharts
+- **Routing:** React Router v6
+- **State:** React Query, Context API
+- **Storage:** Local Storage (demo), Supabase (produkcija)
+
+---
+
+## 📁 Struktura projekta
+
+```
+src/
+├── components/
+│   ├── layout/          # Layout komponente (Sidebar, Header)
+│   └── ui/              # shadcn/ui komponente
+├── contexts/            # React konteksti (Theme)
+├── data/                # Demo podaci
+├── hooks/               # Custom hooks
+├── pages/
+│   ├── finance/         # Finansije stranice
+│   ├── clients/         # Klijenti stranice
+│   ├── hr/              # HR stranice
+│   ├── sales/           # Prodaja stranice
+│   ├── inventory/       # Inventar stranice
+│   ├── projects/        # Projekti stranice
+│   ├── marketing/       # Marketing stranice
+│   └── automation/      # Automatizacija stranice
+└── lib/                 # Utility funkcije
+```
+
+---
+
+## 🔧 Konfiguracija
+
+Za produkcijsku verziju, podesite sledeće environment varijable:
+
+```env
+VITE_API_URL=https://api.example.com
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
