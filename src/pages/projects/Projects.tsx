@@ -1,14 +1,19 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Plus, FolderKanban, Calendar, Users, MoreHorizontal } from 'lucide-react';
+import { Plus, FolderKanban, Calendar, Users, MoreHorizontal, Eye, Edit, Trash2, Archive } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { ProjectDialog, ProjectFormData } from '@/components/dialogs/ProjectDialog';
+import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface Project {
   id: string;
@@ -20,7 +25,7 @@ interface Project {
   team: number;
 }
 
-const projects: Project[] = [
+const initialProjects: Project[] = [
   {
     id: '1',
     name: 'Implementacija ERP sistema',
@@ -72,6 +77,79 @@ const statusLabels = {
 };
 
 const Projects = () => {
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('create');
+  const [selectedProject, setSelectedProject] = useState<ProjectFormData | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleCreate = () => {
+    setSelectedProject(null);
+    setDialogMode('create');
+    setDialogOpen(true);
+  };
+
+  const handleView = (project: Project) => {
+    setSelectedProject(project);
+    setDialogMode('view');
+    setDialogOpen(true);
+  };
+
+  const handleEdit = (project: Project) => {
+    setSelectedProject(project);
+    setDialogMode('edit');
+    setDialogOpen(true);
+  };
+
+  const handleSave = (data: ProjectFormData) => {
+    if (dialogMode === 'create') {
+      const newProject: Project = {
+        ...data,
+        id: `proj-${Date.now()}`
+      };
+      setProjects([...projects, newProject]);
+      toast({
+        title: "Projekat kreiran",
+        description: `Projekat "${data.name}" je uspešno kreiran.`
+      });
+    } else if (data.id) {
+      setProjects(projects.map(p => p.id === data.id ? { ...p, ...data } : p));
+      toast({
+        title: "Projekat ažuriran",
+        description: `Projekat "${data.name}" je uspešno ažuriran.`
+      });
+    }
+  };
+
+  const handleArchive = (project: Project) => {
+    setProjects(projects.map(p => 
+      p.id === project.id ? { ...p, status: 'completed' as const, progress: 100 } : p
+    ));
+    toast({
+      title: "Projekat arhiviran",
+      description: `Projekat "${project.name}" je arhiviran.`
+    });
+  };
+
+  const handleDelete = (id: string) => {
+    setProjectToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (projectToDelete) {
+      const project = projects.find(p => p.id === projectToDelete);
+      setProjects(projects.filter(p => p.id !== projectToDelete));
+      toast({
+        title: "Projekat obrisan",
+        description: `Projekat "${project?.name}" je obrisan.`
+      });
+      setProjectToDelete(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -79,7 +157,7 @@ const Projects = () => {
           <h1 className="text-3xl font-bold tracking-tight">Projekti</h1>
           <p className="text-muted-foreground">Upravljanje projektima i kampanjama</p>
         </div>
-        <Button>
+        <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
           Novi projekat
         </Button>
@@ -108,9 +186,23 @@ const Projects = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Prikaži detalje</DropdownMenuItem>
-                    <DropdownMenuItem>Izmeni</DropdownMenuItem>
-                    <DropdownMenuItem>Arhiviraj</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleView(project)}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Prikaži detalje
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEdit(project)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Izmeni
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleArchive(project)}>
+                      <Archive className="mr-2 h-4 w-4" />
+                      Arhiviraj
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(project.id)}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Obriši
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -140,6 +232,24 @@ const Projects = () => {
           </Card>
         ))}
       </div>
+
+      <ProjectDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        project={selectedProject}
+        onSave={handleSave}
+        mode={dialogMode}
+      />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Obrisati projekat?"
+        description="Da li ste sigurni da želite da obrišete ovaj projekat? Svi podaci o projektu će biti izgubljeni."
+        confirmLabel="Obriši"
+        variant="destructive"
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 };

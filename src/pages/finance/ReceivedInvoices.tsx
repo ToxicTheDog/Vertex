@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileDown, Plus, Search, Filter, Eye, CheckCircle, XCircle, Upload } from 'lucide-react';
+import { FileDown, Search, Filter, Eye, CheckCircle, XCircle, Upload } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { demoReceivedInvoices } from '@/data/demoData';
+import { InvoiceViewDialog, InvoiceData } from '@/components/dialogs/InvoiceViewDialog';
+import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
+import { useToast } from '@/hooks/use-toast';
 
 const statusColors = {
   pending: 'bg-warning/20 text-warning',
@@ -37,8 +40,15 @@ const sefStatusLabels = {
 const ReceivedInvoices = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [invoices, setInvoices] = useState(demoReceivedInvoices);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [invoiceToAction, setInvoiceToAction] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const filteredInvoices = demoReceivedInvoices.filter(invoice => {
+  const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = invoice.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          invoice.number.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
@@ -49,8 +59,86 @@ const ReceivedInvoices = () => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
   };
 
-  const totalAmount = demoReceivedInvoices.reduce((sum, inv) => sum + inv.total, 0);
-  const pendingAmount = demoReceivedInvoices.filter(i => i.status === 'pending').reduce((sum, inv) => sum + inv.total, 0);
+  const handleView = (invoice: typeof invoices[0]) => {
+    setSelectedInvoice({
+      id: invoice.id,
+      number: invoice.number,
+      clientName: invoice.supplierName,
+      date: invoice.date,
+      dueDate: invoice.dueDate,
+      status: invoice.status === 'pending' ? 'draft' : invoice.status === 'approved' ? 'sent' : invoice.status === 'rejected' ? 'cancelled' : invoice.status,
+      total: invoice.total
+    });
+    setViewDialogOpen(true);
+  };
+
+  const handleApprove = (id: string) => {
+    setInvoiceToAction(id);
+    setApproveDialogOpen(true);
+  };
+
+  const confirmApprove = () => {
+    if (invoiceToAction) {
+      setInvoices(invoices.map(inv => 
+        inv.id === invoiceToAction ? { ...inv, status: 'approved' as const, sefStatus: 'accepted' as const } : inv
+      ));
+      toast({
+        title: "Faktura odobrena",
+        description: "Primljena faktura je odobrena za plaćanje."
+      });
+      setInvoiceToAction(null);
+    }
+  };
+
+  const handleReject = (id: string) => {
+    setInvoiceToAction(id);
+    setRejectDialogOpen(true);
+  };
+
+  const confirmReject = () => {
+    if (invoiceToAction) {
+      setInvoices(invoices.map(inv => 
+        inv.id === invoiceToAction ? { ...inv, status: 'rejected' as const, sefStatus: 'rejected' as const } : inv
+      ));
+      toast({
+        title: "Faktura odbijena",
+        description: "Primljena faktura je odbijena."
+      });
+      setInvoiceToAction(null);
+    }
+  };
+
+  const handleImport = () => {
+    toast({
+      title: "Uvoz iz SEF-a",
+      description: "Preuzimanje novih faktura iz Sistem Elektronskih Faktura..."
+    });
+    // Simulate import after a delay
+    setTimeout(() => {
+      const total = Math.floor(Math.random() * 500000) + 50000;
+      const newInvoice = {
+        id: `ri-${Date.now()}`,
+        number: `SEF-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
+        supplierId: 'supplier-new',
+        supplierName: 'Novi dobavljač d.o.o.',
+        date: new Date().toISOString().split('T')[0],
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        subtotal: Math.round(total / 1.2),
+        vat: Math.round(total - total / 1.2),
+        total: total,
+        status: 'pending' as const,
+        sefStatus: 'received' as const
+      };
+      setInvoices([newInvoice, ...invoices]);
+      toast({
+        title: "Nova faktura uvezena",
+        description: `Faktura ${newInvoice.number} od ${newInvoice.supplierName} je uvezena.`
+      });
+    }, 1500);
+  };
+
+  const totalAmount = invoices.reduce((sum, inv) => sum + inv.total, 0);
+  const pendingAmount = invoices.filter(i => i.status === 'pending').reduce((sum, inv) => sum + inv.total, 0);
 
   return (
     <div className="space-y-6">
@@ -59,7 +147,7 @@ const ReceivedInvoices = () => {
           <h1 className="text-3xl font-bold tracking-tight">Primljeni računi (SEF)</h1>
           <p className="text-muted-foreground">Pregled i upravljanje ulaznim fakturama iz SEF sistema</p>
         </div>
-        <Button>
+        <Button onClick={handleImport}>
           <Upload className="mr-2 h-4 w-4" />
           Uvezi iz SEF-a
         </Button>
@@ -72,7 +160,7 @@ const ReceivedInvoices = () => {
             <FileDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{demoReceivedInvoices.length}</div>
+            <div className="text-2xl font-bold">{invoices.length}</div>
             <p className="text-xs text-muted-foreground">{formatCurrency(totalAmount)}</p>
           </CardContent>
         </Card>
@@ -82,7 +170,7 @@ const ReceivedInvoices = () => {
             <FileDown className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{demoReceivedInvoices.filter(i => i.status === 'pending').length}</div>
+            <div className="text-2xl font-bold">{invoices.filter(i => i.status === 'pending').length}</div>
             <p className="text-xs text-muted-foreground">{formatCurrency(pendingAmount)}</p>
           </CardContent>
         </Card>
@@ -92,7 +180,7 @@ const ReceivedInvoices = () => {
             <CheckCircle className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{demoReceivedInvoices.filter(i => i.status === 'approved').length}</div>
+            <div className="text-2xl font-bold">{invoices.filter(i => i.status === 'approved').length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -101,7 +189,7 @@ const ReceivedInvoices = () => {
             <CheckCircle className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{demoReceivedInvoices.filter(i => i.status === 'paid').length}</div>
+            <div className="text-2xl font-bold">{invoices.filter(i => i.status === 'paid').length}</div>
           </CardContent>
         </Card>
       </div>
@@ -171,16 +259,20 @@ const ReceivedInvoices = () => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" title="Prikaži">
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" title="Prikaži" onClick={() => handleView(invoice)}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" title="Odobri">
-                        <CheckCircle className="h-4 w-4 text-success" />
-                      </Button>
-                      <Button variant="ghost" size="icon" title="Odbij">
-                        <XCircle className="h-4 w-4 text-destructive" />
-                      </Button>
+                      {invoice.status === 'pending' && (
+                        <>
+                          <Button variant="ghost" size="icon" title="Odobri" onClick={() => handleApprove(invoice.id)}>
+                            <CheckCircle className="h-4 w-4 text-success" />
+                          </Button>
+                          <Button variant="ghost" size="icon" title="Odbij" onClick={() => handleReject(invoice.id)}>
+                            <XCircle className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -189,6 +281,31 @@ const ReceivedInvoices = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <InvoiceViewDialog
+        open={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+        invoice={selectedInvoice}
+      />
+
+      <ConfirmDialog
+        open={approveDialogOpen}
+        onOpenChange={setApproveDialogOpen}
+        title="Odobriti fakturu?"
+        description="Da li ste sigurni da želite da odobrite ovu ulaznu fakturu za plaćanje?"
+        confirmLabel="Odobri"
+        onConfirm={confirmApprove}
+      />
+
+      <ConfirmDialog
+        open={rejectDialogOpen}
+        onOpenChange={setRejectDialogOpen}
+        title="Odbiti fakturu?"
+        description="Da li ste sigurni da želite da odbijete ovu ulaznu fakturu? Dobavljač će biti obavešten."
+        confirmLabel="Odbij"
+        variant="destructive"
+        onConfirm={confirmReject}
+      />
     </div>
   );
 };

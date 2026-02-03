@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
 import { demoRecurringInvoices } from '@/data/demoData';
+import { RecurringInvoiceDialog, RecurringInvoiceFormData } from '@/components/dialogs/RecurringInvoiceDialog';
+import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
+import { useToast } from '@/hooks/use-toast';
 
 const frequencyLabels = {
   weekly: 'Nedeljno',
@@ -18,6 +21,12 @@ const frequencyLabels = {
 const RecurringInvoices = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [invoices, setInvoices] = useState(demoRecurringInvoices);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+  const [selectedInvoice, setSelectedInvoice] = useState<RecurringInvoiceFormData | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const filteredInvoices = invoices.filter(invoice => {
     return invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -32,6 +41,69 @@ const RecurringInvoices = () => {
     setInvoices(invoices.map(inv => 
       inv.id === id ? { ...inv, isActive: !inv.isActive } : inv
     ));
+    const invoice = invoices.find(i => i.id === id);
+    toast({
+      title: invoice?.isActive ? "Faktura pauzirana" : "Faktura aktivirana",
+      description: `Automatska faktura za ${invoice?.clientName} je ${invoice?.isActive ? 'pauzirana' : 'aktivirana'}.`
+    });
+  };
+
+  const handleCreate = () => {
+    setSelectedInvoice(null);
+    setDialogMode('create');
+    setDialogOpen(true);
+  };
+
+  const handleEdit = (invoice: typeof invoices[0]) => {
+    setSelectedInvoice({
+      id: invoice.id,
+      clientId: invoice.clientId,
+      clientName: invoice.clientName,
+      articleDescription: invoice.articleDescription,
+      amount: invoice.amount,
+      frequency: invoice.frequency,
+      nextDate: invoice.nextDate,
+      isActive: invoice.isActive
+    });
+    setDialogMode('edit');
+    setDialogOpen(true);
+  };
+
+  const handleSave = (data: RecurringInvoiceFormData) => {
+    if (dialogMode === 'create') {
+      const newInvoice = {
+        ...data,
+        id: `ri-${Date.now()}`,
+        lastGenerated: null
+      };
+      setInvoices([newInvoice, ...invoices]);
+      toast({
+        title: "Automatska faktura kreirana",
+        description: `Faktura za ${data.clientName} će se generisati ${frequencyLabels[data.frequency].toLowerCase()}.`
+      });
+    } else if (data.id) {
+      setInvoices(invoices.map(i => i.id === data.id ? { ...i, ...data } : i));
+      toast({
+        title: "Automatska faktura ažurirana",
+        description: "Podešavanja su uspešno sačuvana."
+      });
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    setInvoiceToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (invoiceToDelete) {
+      setInvoices(invoices.filter(i => i.id !== invoiceToDelete));
+      toast({
+        title: "Automatska faktura obrisana",
+        description: "Faktura je uspešno obrisana."
+      });
+      setInvoiceToDelete(null);
+    }
   };
 
   const activeInvoices = invoices.filter(i => i.isActive);
@@ -47,7 +119,7 @@ const RecurringInvoices = () => {
           <h1 className="text-3xl font-bold tracking-tight">Automatske fakture</h1>
           <p className="text-muted-foreground">Podešavanje ponavljajućih faktura</p>
         </div>
-        <Button>
+        <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
           Nova automatska faktura
         </Button>
@@ -144,11 +216,11 @@ const RecurringInvoices = () => {
                     />
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" title="Izmeni">
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" title="Izmeni" onClick={() => handleEdit(invoice)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" title="Obriši">
+                      <Button variant="ghost" size="icon" title="Obriši" onClick={() => handleDelete(invoice.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -159,6 +231,24 @@ const RecurringInvoices = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <RecurringInvoiceDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        invoice={selectedInvoice}
+        onSave={handleSave}
+        mode={dialogMode}
+      />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Obrisati automatsku fakturu?"
+        description="Da li ste sigurni da želite da obrišete ovu automatsku fakturu? Neće se više generisati nove fakture."
+        confirmLabel="Obriši"
+        variant="destructive"
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 };
