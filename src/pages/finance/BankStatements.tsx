@@ -5,11 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { demoBankStatements } from '@/data/demoData';
+import { BankStatementDialog, BankStatementData } from '@/components/dialogs/BankStatementDialog';
+import { useToast } from '@/hooks/use-toast';
 
 const BankStatements = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [statements, setStatements] = useState(demoBankStatements);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedStatement, setSelectedStatement] = useState<BankStatementData | null>(null);
+  const { toast } = useToast();
 
-  const filteredStatements = demoBankStatements.filter(statement => {
+  const filteredStatements = statements.filter(statement => {
     return statement.bankName.toLowerCase().includes(searchTerm.toLowerCase()) ||
            statement.accountNumber.includes(searchTerm);
   });
@@ -18,9 +24,41 @@ const BankStatements = () => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
   };
 
-  const latestStatement = demoBankStatements[0];
-  const totalIncome = demoBankStatements.reduce((sum, s) => sum + s.totalIncome, 0);
-  const totalExpense = demoBankStatements.reduce((sum, s) => sum + s.totalExpense, 0);
+  const handleView = (statement: typeof statements[0]) => {
+    setSelectedStatement(statement);
+    setDialogOpen(true);
+  };
+
+  const handleDownload = (statement: BankStatementData) => {
+    toast({
+      title: "Preuzimanje izvoda",
+      description: `Izvod za ${new Date(statement.date).toLocaleDateString('sr-RS')} se preuzima...`
+    });
+  };
+
+  const handleImport = () => {
+    // Simulate import
+    const newStatement = {
+      id: `bs-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      bankName: 'Banka Intesa',
+      accountNumber: '160-1234567890123-45',
+      openingBalance: statements[0]?.closingBalance || 0,
+      closingBalance: (statements[0]?.closingBalance || 0) + 150000,
+      totalIncome: 250000,
+      totalExpense: 100000,
+      transactionsCount: 12
+    };
+    setStatements([newStatement, ...statements]);
+    toast({
+      title: "Izvod uvezen",
+      description: `Novi izvod banke za ${new Date().toLocaleDateString('sr-RS')} je uspešno uvezen.`
+    });
+  };
+
+  const latestStatement = statements[0];
+  const totalIncome = statements.reduce((sum, s) => sum + s.totalIncome, 0);
+  const totalExpense = statements.reduce((sum, s) => sum + s.totalExpense, 0);
 
   return (
     <div className="space-y-6">
@@ -29,7 +67,7 @@ const BankStatements = () => {
           <h1 className="text-3xl font-bold tracking-tight">Izvodi banke</h1>
           <p className="text-muted-foreground">Import i pregled bankovnih izvoda</p>
         </div>
-        <Button>
+        <Button onClick={handleImport}>
           <Upload className="mr-2 h-4 w-4" />
           Uvezi izvod
         </Button>
@@ -72,7 +110,7 @@ const BankStatements = () => {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{demoBankStatements.length}</div>
+            <div className="text-2xl font-bold">{statements.length}</div>
           </CardContent>
         </Card>
       </div>
@@ -121,11 +159,11 @@ const BankStatements = () => {
                   <TableCell className="text-right font-medium">{formatCurrency(statement.closingBalance)}</TableCell>
                   <TableCell>{statement.transactionsCount}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" title="Prikaži detalje">
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" title="Prikaži detalje" onClick={() => handleView(statement)}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" title="Preuzmi">
+                      <Button variant="ghost" size="icon" title="Preuzmi" onClick={() => handleDownload(statement)}>
                         <Download className="h-4 w-4" />
                       </Button>
                     </div>
@@ -136,6 +174,13 @@ const BankStatements = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <BankStatementDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        statement={selectedStatement}
+        onDownload={handleDownload}
+      />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Plus, Search, Filter, Eye, Send, FileCheck } from 'lucide-react';
+import { FileText, Plus, Search, Filter, Eye, FileCheck, Send } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { demoInvoices } from '@/data/demoData';
 import { Link } from 'react-router-dom';
+import { InvoiceViewDialog, InvoiceData } from '@/components/dialogs/InvoiceViewDialog';
+import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
+import { useToast } from '@/hooks/use-toast';
 
 const statusColors = {
   draft: 'bg-muted text-muted-foreground',
@@ -28,10 +31,14 @@ const statusLabels = {
 const Proforma = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [invoices, setInvoices] = useState(demoInvoices.filter(inv => inv.type === 'proforma'));
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [invoiceToConvert, setInvoiceToConvert] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const proformaInvoices = demoInvoices.filter(inv => inv.type === 'proforma');
-  
-  const filteredInvoices = proformaInvoices.filter(invoice => {
+  const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          invoice.number.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
@@ -40,6 +47,48 @@ const Proforma = () => {
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
+  };
+
+  const handleView = (invoice: typeof invoices[0]) => {
+    setSelectedInvoice({
+      id: invoice.id,
+      number: invoice.number,
+      clientName: invoice.clientName,
+      date: invoice.date,
+      dueDate: invoice.dueDate,
+      status: invoice.status,
+      total: invoice.total
+    });
+    setViewDialogOpen(true);
+  };
+
+  const handleConvert = (id: string) => {
+    setInvoiceToConvert(id);
+    setConvertDialogOpen(true);
+  };
+
+  const confirmConvert = () => {
+    if (invoiceToConvert) {
+      const proforma = invoices.find(i => i.id === invoiceToConvert);
+      setInvoices(invoices.map(inv => 
+        inv.id === invoiceToConvert ? { ...inv, status: 'paid' as const } : inv
+      ));
+      toast({
+        title: "Predračun konvertovan",
+        description: `Predračun ${proforma?.number} je konvertovan u fakturu.`
+      });
+      setInvoiceToConvert(null);
+    }
+  };
+
+  const handleSend = (invoice: typeof invoices[0]) => {
+    setInvoices(invoices.map(inv => 
+      inv.id === invoice.id ? { ...inv, status: 'sent' as const } : inv
+    ));
+    toast({
+      title: "Predračun poslat",
+      description: `Predračun ${invoice.number} je poslat klijentu ${invoice.clientName}.`
+    });
   };
 
   return (
@@ -64,7 +113,7 @@ const Proforma = () => {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{proformaInvoices.length}</div>
+            <div className="text-2xl font-bold">{invoices.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -73,7 +122,7 @@ const Proforma = () => {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{proformaInvoices.filter(i => i.status === 'draft').length}</div>
+            <div className="text-2xl font-bold">{invoices.filter(i => i.status === 'draft').length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -82,7 +131,7 @@ const Proforma = () => {
             <Send className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{proformaInvoices.filter(i => i.status === 'sent').length}</div>
+            <div className="text-2xl font-bold">{invoices.filter(i => i.status === 'sent').length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -91,7 +140,7 @@ const Proforma = () => {
             <FileCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{proformaInvoices.filter(i => i.status === 'paid').length}</div>
+            <div className="text-2xl font-bold">{invoices.filter(i => i.status === 'paid').length}</div>
           </CardContent>
         </Card>
       </div>
@@ -159,13 +208,20 @@ const Proforma = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" title="Prikaži">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" title="Prikaži" onClick={() => handleView(invoice)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" title="Konvertuj u fakturu">
-                          <FileCheck className="h-4 w-4" />
-                        </Button>
+                        {invoice.status === 'draft' && (
+                          <Button variant="ghost" size="icon" title="Pošalji" onClick={() => handleSend(invoice)}>
+                            <Send className="h-4 w-4 text-primary" />
+                          </Button>
+                        )}
+                        {invoice.status !== 'paid' && (
+                          <Button variant="ghost" size="icon" title="Konvertuj u fakturu" onClick={() => handleConvert(invoice.id)}>
+                            <FileCheck className="h-4 w-4 text-success" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -175,6 +231,21 @@ const Proforma = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <InvoiceViewDialog
+        open={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+        invoice={selectedInvoice}
+      />
+
+      <ConfirmDialog
+        open={convertDialogOpen}
+        onOpenChange={setConvertDialogOpen}
+        title="Konvertovati u fakturu?"
+        description="Da li ste sigurni da želite da konvertujete ovaj predračun u fakturu? Biće kreirana nova faktura sa istim podacima."
+        confirmLabel="Konvertuj"
+        onConfirm={confirmConvert}
+      />
     </div>
   );
 };

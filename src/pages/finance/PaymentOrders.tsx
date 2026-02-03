@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { demoPaymentOrders } from '@/data/demoData';
+import { PaymentOrderDialog, PaymentOrderFormData } from '@/components/dialogs/PaymentOrderDialog';
+import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
+import { useToast } from '@/hooks/use-toast';
 
 const statusColors = {
   pending: 'bg-warning/20 text-warning',
@@ -25,8 +28,16 @@ const statusLabels = {
 const PaymentOrders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [orders, setOrders] = useState(demoPaymentOrders);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'view'>('create');
+  const [selectedOrder, setSelectedOrder] = useState<PaymentOrderFormData | null>(null);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [executeDialogOpen, setExecuteDialogOpen] = useState(false);
+  const [orderToAction, setOrderToAction] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const filteredOrders = demoPaymentOrders.filter(order => {
+  const filteredOrders = orders.filter(order => {
     const matchesSearch = order.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.number.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
@@ -37,8 +48,79 @@ const PaymentOrders = () => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
   };
 
-  const totalPending = demoPaymentOrders.filter(o => o.status === 'pending').reduce((sum, o) => sum + o.amount, 0);
-  const totalApproved = demoPaymentOrders.filter(o => o.status === 'approved').reduce((sum, o) => sum + o.amount, 0);
+  const handleCreate = () => {
+    setSelectedOrder(null);
+    setDialogMode('create');
+    setDialogOpen(true);
+  };
+
+  const handleView = (order: typeof orders[0]) => {
+    setSelectedOrder({
+      id: order.id,
+      number: order.number,
+      date: order.date,
+      recipientName: order.recipientName,
+      recipientAccount: order.recipientAccount,
+      amount: order.amount,
+      purpose: order.purpose,
+      status: order.status
+    });
+    setDialogMode('view');
+    setDialogOpen(true);
+  };
+
+  const handleSave = (data: PaymentOrderFormData) => {
+    const newOrder = {
+      ...data,
+      id: `po-${Date.now()}`,
+      paymentCode: '289',
+      referenceNumber: data.referenceNumber || ''
+    };
+    setOrders([newOrder, ...orders]);
+    toast({
+      title: "Nalog kreiran",
+      description: `Nalog ${data.number} je uspešno kreiran.`
+    });
+  };
+
+  const handleApprove = (id: string) => {
+    setOrderToAction(id);
+    setApproveDialogOpen(true);
+  };
+
+  const confirmApprove = () => {
+    if (orderToAction) {
+      setOrders(orders.map(o => 
+        o.id === orderToAction ? { ...o, status: 'approved' as const } : o
+      ));
+      toast({
+        title: "Nalog odobren",
+        description: "Nalog za plaćanje je odobren."
+      });
+      setOrderToAction(null);
+    }
+  };
+
+  const handleExecute = (id: string) => {
+    setOrderToAction(id);
+    setExecuteDialogOpen(true);
+  };
+
+  const confirmExecute = () => {
+    if (orderToAction) {
+      setOrders(orders.map(o => 
+        o.id === orderToAction ? { ...o, status: 'executed' as const } : o
+      ));
+      toast({
+        title: "Nalog izvršen",
+        description: "Nalog za plaćanje je uspešno izvršen."
+      });
+      setOrderToAction(null);
+    }
+  };
+
+  const totalPending = orders.filter(o => o.status === 'pending').reduce((sum, o) => sum + o.amount, 0);
+  const totalApproved = orders.filter(o => o.status === 'approved').reduce((sum, o) => sum + o.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -47,7 +129,7 @@ const PaymentOrders = () => {
           <h1 className="text-3xl font-bold tracking-tight">Nalozi za plaćanje</h1>
           <p className="text-muted-foreground">Kreiranje i pregled naloga za plaćanje</p>
         </div>
-        <Button>
+        <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
           Novi nalog
         </Button>
@@ -60,7 +142,7 @@ const PaymentOrders = () => {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{demoPaymentOrders.length}</div>
+            <div className="text-2xl font-bold">{orders.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -70,7 +152,7 @@ const PaymentOrders = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalPending)}</div>
-            <p className="text-xs text-muted-foreground">{demoPaymentOrders.filter(o => o.status === 'pending').length} naloga</p>
+            <p className="text-xs text-muted-foreground">{orders.filter(o => o.status === 'pending').length} naloga</p>
           </CardContent>
         </Card>
         <Card>
@@ -80,7 +162,7 @@ const PaymentOrders = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalApproved)}</div>
-            <p className="text-xs text-muted-foreground">{demoPaymentOrders.filter(o => o.status === 'approved').length} naloga</p>
+            <p className="text-xs text-muted-foreground">{orders.filter(o => o.status === 'approved').length} naloga</p>
           </CardContent>
         </Card>
         <Card>
@@ -89,7 +171,7 @@ const PaymentOrders = () => {
             <Send className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{demoPaymentOrders.filter(o => o.status === 'executed').length}</div>
+            <div className="text-2xl font-bold">{orders.filter(o => o.status === 'executed').length}</div>
           </CardContent>
         </Card>
       </div>
@@ -153,17 +235,17 @@ const PaymentOrders = () => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" title="Prikaži">
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" title="Prikaži" onClick={() => handleView(order)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                       {order.status === 'pending' && (
-                        <Button variant="ghost" size="icon" title="Odobri">
+                        <Button variant="ghost" size="icon" title="Odobri" onClick={() => handleApprove(order.id)}>
                           <CheckCircle className="h-4 w-4 text-success" />
                         </Button>
                       )}
                       {order.status === 'approved' && (
-                        <Button variant="ghost" size="icon" title="Izvrši">
+                        <Button variant="ghost" size="icon" title="Izvrši" onClick={() => handleExecute(order.id)}>
                           <Send className="h-4 w-4 text-primary" />
                         </Button>
                       )}
@@ -175,6 +257,32 @@ const PaymentOrders = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <PaymentOrderDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        paymentOrder={selectedOrder}
+        onSave={handleSave}
+        mode={dialogMode}
+      />
+
+      <ConfirmDialog
+        open={approveDialogOpen}
+        onOpenChange={setApproveDialogOpen}
+        title="Odobriti nalog?"
+        description="Da li ste sigurni da želite da odobrite ovaj nalog za plaćanje?"
+        confirmLabel="Odobri"
+        onConfirm={confirmApprove}
+      />
+
+      <ConfirmDialog
+        open={executeDialogOpen}
+        onOpenChange={setExecuteDialogOpen}
+        title="Izvršiti nalog?"
+        description="Da li ste sigurni da želite da izvršite ovaj nalog za plaćanje? Sredstva će biti preneta na račun primaoca."
+        confirmLabel="Izvrši"
+        onConfirm={confirmExecute}
+      />
     </div>
   );
 };

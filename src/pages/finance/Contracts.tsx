@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Plus, Search, Filter, Eye, Edit, Calendar, DollarSign } from 'lucide-react';
+import { FileText, Plus, Search, Filter, Eye, Edit, Calendar, DollarSign, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { demoContracts } from '@/data/demoData';
+import { ContractDialog, ContractFormData } from '@/components/dialogs/ContractDialog';
+import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
+import { useToast } from '@/hooks/use-toast';
 
 const statusColors = {
   draft: 'bg-muted text-muted-foreground',
@@ -33,8 +36,15 @@ const Contracts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [contracts, setContracts] = useState(demoContracts);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('create');
+  const [selectedContract, setSelectedContract] = useState<ContractFormData | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [contractToDelete, setContractToDelete] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const filteredContracts = demoContracts.filter(contract => {
+  const filteredContracts = contracts.filter(contract => {
     const matchesSearch = contract.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          contract.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          contract.number.toLowerCase().includes(searchTerm.toLowerCase());
@@ -47,7 +57,85 @@ const Contracts = () => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
   };
 
-  const activeContracts = demoContracts.filter(c => c.status === 'active');
+  const handleCreate = () => {
+    setSelectedContract(null);
+    setDialogMode('create');
+    setDialogOpen(true);
+  };
+
+  const handleView = (contract: typeof demoContracts[0]) => {
+    setSelectedContract({
+      id: contract.id,
+      number: contract.number,
+      title: contract.title,
+      clientName: contract.clientName,
+      type: contract.type,
+      status: contract.status,
+      startDate: contract.startDate,
+      endDate: contract.endDate,
+      value: contract.value,
+      description: ''
+    });
+    setDialogMode('view');
+    setDialogOpen(true);
+  };
+
+  const handleEdit = (contract: typeof demoContracts[0]) => {
+    setSelectedContract({
+      id: contract.id,
+      number: contract.number,
+      title: contract.title,
+      clientName: contract.clientName,
+      type: contract.type,
+      status: contract.status,
+      startDate: contract.startDate,
+      endDate: contract.endDate,
+      value: contract.value,
+      description: ''
+    });
+    setDialogMode('edit');
+    setDialogOpen(true);
+  };
+
+  const handleSave = (data: ContractFormData) => {
+    if (dialogMode === 'create') {
+      const newContract = {
+        ...data,
+        id: `contract-${Date.now()}`,
+        clientId: `client-${Date.now()}`
+      };
+      setContracts([newContract, ...contracts]);
+      toast({
+        title: "Ugovor kreiran",
+        description: `Ugovor ${data.number} je uspešno kreiran.`
+      });
+    } else if (dialogMode === 'edit' && data.id) {
+      const existingContract = contracts.find(c => c.id === data.id);
+      setContracts(contracts.map(c => c.id === data.id ? { ...c, ...data, clientId: existingContract?.clientId || c.clientId } : c));
+      toast({
+        title: "Ugovor ažuriran",
+        description: `Ugovor ${data.number} je uspešno ažuriran.`
+      });
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    setContractToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (contractToDelete) {
+      setContracts(contracts.filter(c => c.id !== contractToDelete));
+      toast({
+        title: "Ugovor obrisan",
+        description: "Ugovor je uspešno obrisan."
+      });
+      setContractToDelete(null);
+    }
+  };
+
+  const activeContracts = contracts.filter(c => c.status === 'active');
   const totalValue = activeContracts.reduce((sum, c) => sum + c.value, 0);
 
   return (
@@ -57,7 +145,7 @@ const Contracts = () => {
           <h1 className="text-3xl font-bold tracking-tight">Evidencija ugovora</h1>
           <p className="text-muted-foreground">Upravljanje ugovorima sa klijentima i dobavljačima</p>
         </div>
-        <Button>
+        <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
           Novi ugovor
         </Button>
@@ -70,7 +158,7 @@ const Contracts = () => {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{demoContracts.length}</div>
+            <div className="text-2xl font-bold">{contracts.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -178,12 +266,15 @@ const Contracts = () => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" title="Prikaži">
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" title="Prikaži" onClick={() => handleView(contract)}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" title="Izmeni">
+                      <Button variant="ghost" size="icon" title="Izmeni" onClick={() => handleEdit(contract)}>
                         <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" title="Obriši" onClick={() => handleDelete(contract.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
                   </TableCell>
@@ -193,6 +284,24 @@ const Contracts = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <ContractDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        contract={selectedContract}
+        onSave={handleSave}
+        mode={dialogMode}
+      />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Obrisati ugovor?"
+        description="Da li ste sigurni da želite da obrišete ovaj ugovor? Ova akcija se ne može poništiti."
+        confirmLabel="Obriši"
+        variant="destructive"
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 };
