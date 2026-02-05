@@ -1,4 +1,5 @@
-import { Bell, Search, Moon, Sun, User, Menu } from 'lucide-react';
+ import { Bell, Search, Moon, Sun, User, Menu, LayoutGrid } from 'lucide-react';
+ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -13,15 +14,25 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Badge } from '@/components/ui/badge';
 
-export function Header() {
+ interface HeaderProps {
+   showSidebarTrigger?: boolean;
+ }
+ 
+ export function Header({ showSidebarTrigger = true }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center gap-4 px-4">
-        <SidebarTrigger className="-ml-1">
-          <Menu className="h-5 w-5" />
-        </SidebarTrigger>
+         {showSidebarTrigger ? (
+           <SidebarTrigger className="-ml-1">
+             <Menu className="h-5 w-5" />
+           </SidebarTrigger>
+         ) : (
+           <Link to="/" className="p-2 hover:bg-accent rounded-md">
+             <Menu className="h-5 w-5" />
+           </Link>
+         )}
         
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
@@ -99,6 +110,13 @@ export function Header() {
               <DropdownMenuItem>Profil</DropdownMenuItem>
               <DropdownMenuItem>Podešavanja</DropdownMenuItem>
               <DropdownMenuSeparator />
+             <DropdownMenuItem asChild>
+               <Link to="/menu" className="flex items-center gap-2">
+                 <LayoutGrid className="h-4 w-4" />
+                 Meni navigacija
+               </Link>
+             </DropdownMenuItem>
+             <DropdownMenuSeparator />
               <DropdownMenuItem>Odjavi se</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
