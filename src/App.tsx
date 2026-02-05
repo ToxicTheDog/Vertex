@@ -51,6 +51,19 @@ import Campaigns from "./pages/marketing/Campaigns";
 import AutomationSettings from "./pages/automation/AutomationSettings";
 import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
+ import Menu from "./pages/Menu";
+ import BusinessTrips from "./pages/hr/BusinessTrips";
+ import TravelOrders from "./pages/hr/TravelOrders";
+ import FixedAssets from "./pages/hr/FixedAssets";
+ import Depreciation from "./pages/hr/Depreciation";
+ import YearlyProcessing from "./pages/hr/YearlyProcessing";
+ import Promotions from "./pages/marketing/Promotions";
+ import Feedback from "./pages/marketing/Feedback";
+ import Reminders from "./pages/projects/Reminders";
+ import InventoryTracking from "./pages/inventory/InventoryTracking";
+ import StockMovements from "./pages/inventory/StockMovements";
+ import InventoryLists from "./pages/inventory/InventoryLists";
+ import { MenuLayout } from "./components/layout/MenuLayout";
 
 const queryClient = new QueryClient();
 
@@ -110,27 +123,27 @@ const App = () => (
               <Route path="/time-tracking" element={<TimeTracking />} />
               <Route path="/payroll" element={<Payroll />} />
               <Route path="/absences" element={<Absences />} />
-              <Route path="/business-trips" element={<ComingSoon />} />
-              <Route path="/travel-orders" element={<ComingSoon />} />
-              <Route path="/fixed-assets" element={<ComingSoon />} />
-              <Route path="/depreciation" element={<ComingSoon />} />
-              <Route path="/yearly-processing" element={<ComingSoon />} />
+               <Route path="/business-trips" element={<BusinessTrips />} />
+               <Route path="/travel-orders" element={<TravelOrders />} />
+               <Route path="/fixed-assets" element={<FixedAssets />} />
+               <Route path="/depreciation" element={<Depreciation />} />
+               <Route path="/yearly-processing" element={<YearlyProcessing />} />
               
               {/* Marketing */}
               <Route path="/campaigns" element={<Campaigns />} />
-              <Route path="/promotions" element={<ComingSoon />} />
-              <Route path="/feedback" element={<ComingSoon />} />
+               <Route path="/promotions" element={<Promotions />} />
+               <Route path="/feedback" element={<Feedback />} />
               
               {/* Projekti */}
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/projects" element={<Projects />} />
-              <Route path="/reminders" element={<ComingSoon />} />
+               <Route path="/reminders" element={<Reminders />} />
               
               {/* Inventar */}
               <Route path="/warehouses" element={<Warehouses />} />
-              <Route path="/inventory-tracking" element={<ComingSoon />} />
-              <Route path="/stock-movements" element={<ComingSoon />} />
-              <Route path="/inventory-lists" element={<ComingSoon />} />
+               <Route path="/inventory-tracking" element={<InventoryTracking />} />
+               <Route path="/stock-movements" element={<StockMovements />} />
+               <Route path="/inventory-lists" element={<InventoryLists />} />
               
               {/* Automatizacija */}
               <Route path="/auto-invoices" element={<AutomationSettings />} />
@@ -141,6 +154,11 @@ const App = () => (
               <Route path="/auto-quotes" element={<AutomationSettings />} />
             </Route>
             
+             {/* Menu - bez sidebar-a */}
+             <Route element={<MenuLayout />}>
+               <Route path="/menu" element={<Menu />} />
+             </Route>
+             
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
