@@ -133,6 +133,7 @@ const menuStructure: MenuCategory[] = [
         icon: Calculator,
         items: [
           { title: 'PDV evidencija', url: '/vat', icon: Calculator },
+          { title: 'Smanjenje PDV-a', url: '/vat-reduction', icon: TrendingDown },
           { title: 'PPPDV obrasci', url: '/pppdv', icon: FileSpreadsheet },
           { title: 'Porezi i doprinosi', url: '/taxes', icon: Scale },
           { title: 'Knjiga ulaznih faktura', url: '/incoming-ledger', icon: BookOpen },

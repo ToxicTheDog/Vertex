@@ -29,6 +29,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { demoInvoices } from '@/data/demoData';
+import { InvoiceViewDialog, InvoiceData } from '@/components/dialogs/InvoiceViewDialog';
+import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
+import { useToast } from '@/hooks/use-toast';
 
 const statusColors: Record<string, string> = {
   paid: 'bg-success text-success-foreground',
@@ -57,14 +60,67 @@ const formatCurrency = (value: number) => {
 const Invoices = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [invoices, setInvoices] = useState(demoInvoices.filter(inv => inv.type === 'invoice'));
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const filteredInvoices = demoInvoices.filter(invoice => {
+  const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = 
       invoice.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
-    return matchesSearch && matchesStatus && invoice.type === 'invoice';
+    return matchesSearch && matchesStatus;
   });
+
+  const handleView = (invoice: typeof invoices[0]) => {
+    setSelectedInvoice({
+      id: invoice.id,
+      number: invoice.number,
+      clientName: invoice.clientName,
+      date: invoice.date,
+      dueDate: invoice.dueDate,
+      status: invoice.status,
+      total: invoice.total
+    });
+    setViewDialogOpen(true);
+  };
+
+  const handleSend = (invoice: InvoiceData) => {
+    setInvoices(invoices.map(inv => 
+      inv.id === invoice.id ? { ...inv, status: 'sent' as const } : inv
+    ));
+    setViewDialogOpen(false);
+    toast({
+      title: "Faktura poslata",
+      description: `Faktura ${invoice.number} je uspešno poslata klijentu.`
+    });
+  };
+
+  const handleDownload = (invoice: InvoiceData) => {
+    toast({
+      title: "Preuzimanje PDF-a",
+      description: `Faktura ${invoice.number} se preuzima...`
+    });
+  };
+
+  const handleDelete = (id: string) => {
+    setInvoiceToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (invoiceToDelete) {
+      setInvoices(invoices.filter(inv => inv.id !== invoiceToDelete));
+      toast({
+        title: "Faktura obrisana",
+        description: "Faktura je uspešno obrisana."
+      });
+      setInvoiceToDelete(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -150,24 +206,42 @@ const Invoices = () => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Akcije</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleView(invoice)}>
                           <Eye className="mr-2 h-4 w-4" />
                           Prikaži
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Izmeni
+                        <DropdownMenuItem asChild>
+                          <Link to="/invoices/create">
+                            <Edit className="mr-2 h-4 w-4" />
+                            Izmeni
+                          </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          setInvoices(invoices.map(inv => 
+                            inv.id === invoice.id ? { ...inv, status: 'sent' as const } : inv
+                          ));
+                          toast({
+                            title: "Faktura poslata",
+                            description: `Faktura ${invoice.number} je poslata klijentu.`
+                          });
+                        }}>
                           <Send className="mr-2 h-4 w-4" />
                           Pošalji
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDownload({ 
+                          id: invoice.id, 
+                          number: invoice.number, 
+                          clientName: invoice.clientName,
+                          date: invoice.date,
+                          dueDate: invoice.dueDate,
+                          status: invoice.status,
+                          total: invoice.total
+                        })}>
                           <Download className="mr-2 h-4 w-4" />
                           Preuzmi PDF
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(invoice.id)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Obriši
                         </DropdownMenuItem>
@@ -180,6 +254,24 @@ const Invoices = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <InvoiceViewDialog
+        open={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+        invoice={selectedInvoice}
+        onSend={handleSend}
+        onDownload={handleDownload}
+      />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Obrisati fakturu?"
+        description="Da li ste sigurni da želite da obrišete ovu fakturu? Ova akcija se ne može poništiti."
+        confirmLabel="Obriši"
+        variant="destructive"
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 };

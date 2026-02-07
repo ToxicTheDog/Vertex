@@ -10,11 +10,40 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import Invoices from "./pages/finance/Invoices";
 import CreateInvoice from "./pages/finance/CreateInvoice";
-import FinancialReports from "./pages/finance/FinancialReports";
+import Proforma from "./pages/finance/Proforma";
+import ReceivedInvoices from "./pages/finance/ReceivedInvoices";
+import RecurringInvoices from "./pages/finance/RecurringInvoices";
+import PaymentOrders from "./pages/finance/PaymentOrders";
+import SupplierPayments from "./pages/finance/SupplierPayments";
+import BankStatements from "./pages/finance/BankStatements";
 import VatRecords from "./pages/finance/VatRecords";
+import VatReduction from "./pages/finance/VatReduction";
+import PPPDV from "./pages/finance/PPPDV";
+import Taxes from "./pages/finance/Taxes";
+import Ledger from "./pages/finance/Ledger";
+import FinancialReports from "./pages/finance/FinancialReports";
+import Profitability from "./pages/finance/Profitability";
+import SalesReports from "./pages/finance/SalesReports";
+import ClientReports from "./pages/finance/ClientReports";
+import CashFlow from "./pages/finance/CashFlow";
+import Contracts from "./pages/finance/Contracts";
 import Clients from "./pages/clients/Clients";
-import Employees from "./pages/hr/Employees";
+import CrmNotes from "./pages/clients/CrmNotes";
+import Branches from "./pages/clients/Branches";
+import FiscalRegisters from "./pages/clients/FiscalRegisters";
+import PosTerminals from "./pages/clients/PosTerminals";
+import ReceivedOrders from "./pages/sales/ReceivedOrders";
+import IssuedOrders from "./pages/sales/IssuedOrders";
+import Suppliers from "./pages/sales/Suppliers";
 import Articles from "./pages/sales/Articles";
+import PriceLists from "./pages/sales/PriceLists";
+import Stock from "./pages/sales/Stock";
+import Categories from "./pages/sales/Categories";
+import SerialNumbers from "./pages/sales/SerialNumbers";
+import Employees from "./pages/hr/Employees";
+import TimeTracking from "./pages/hr/TimeTracking";
+import Payroll from "./pages/hr/Payroll";
+import Absences from "./pages/hr/Absences";
 import Warehouses from "./pages/inventory/Warehouses";
 import Tasks from "./pages/projects/Tasks";
 import Projects from "./pages/projects/Projects";
@@ -22,6 +51,19 @@ import Campaigns from "./pages/marketing/Campaigns";
 import AutomationSettings from "./pages/automation/AutomationSettings";
 import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
+ import Menu from "./pages/Menu";
+ import BusinessTrips from "./pages/hr/BusinessTrips";
+ import TravelOrders from "./pages/hr/TravelOrders";
+ import FixedAssets from "./pages/hr/FixedAssets";
+ import Depreciation from "./pages/hr/Depreciation";
+ import YearlyProcessing from "./pages/hr/YearlyProcessing";
+ import Promotions from "./pages/marketing/Promotions";
+ import Feedback from "./pages/marketing/Feedback";
+ import Reminders from "./pages/projects/Reminders";
+ import InventoryTracking from "./pages/inventory/InventoryTracking";
+ import StockMovements from "./pages/inventory/StockMovements";
+ import InventoryLists from "./pages/inventory/InventoryLists";
+ import { MenuLayout } from "./components/layout/MenuLayout";
 
 const queryClient = new QueryClient();
 
@@ -40,67 +82,68 @@ const App = () => (
               {/* Finansije */}
               <Route path="/invoices" element={<Invoices />} />
               <Route path="/invoices/create" element={<CreateInvoice />} />
-              <Route path="/proforma" element={<ComingSoon />} />
-              <Route path="/received-invoices" element={<ComingSoon />} />
-              <Route path="/recurring-invoices" element={<ComingSoon />} />
-              <Route path="/payment-orders" element={<ComingSoon />} />
-              <Route path="/supplier-payments" element={<ComingSoon />} />
-              <Route path="/bank-statements" element={<ComingSoon />} />
+              <Route path="/proforma" element={<Proforma />} />
+              <Route path="/received-invoices" element={<ReceivedInvoices />} />
+              <Route path="/recurring-invoices" element={<RecurringInvoices />} />
+              <Route path="/payment-orders" element={<PaymentOrders />} />
+              <Route path="/supplier-payments" element={<SupplierPayments />} />
+              <Route path="/bank-statements" element={<BankStatements />} />
               <Route path="/vat" element={<VatRecords />} />
-              <Route path="/pppdv" element={<ComingSoon />} />
-              <Route path="/taxes" element={<ComingSoon />} />
-              <Route path="/incoming-ledger" element={<ComingSoon />} />
-              <Route path="/outgoing-ledger" element={<ComingSoon />} />
+              <Route path="/vat-reduction" element={<VatReduction />} />
+              <Route path="/pppdv" element={<PPPDV />} />
+              <Route path="/taxes" element={<Taxes />} />
+              <Route path="/incoming-ledger" element={<Ledger />} />
+              <Route path="/outgoing-ledger" element={<Ledger />} />
               <Route path="/financial-reports" element={<FinancialReports />} />
-              <Route path="/profitability" element={<ComingSoon />} />
-              <Route path="/sales-reports" element={<ComingSoon />} />
-              <Route path="/client-reports" element={<ComingSoon />} />
-              <Route path="/cash-flow" element={<ComingSoon />} />
-              <Route path="/contracts" element={<ComingSoon />} />
+              <Route path="/profitability" element={<Profitability />} />
+              <Route path="/sales-reports" element={<SalesReports />} />
+              <Route path="/client-reports" element={<ClientReports />} />
+              <Route path="/cash-flow" element={<CashFlow />} />
+              <Route path="/contracts" element={<Contracts />} />
               
               {/* Klijenti */}
               <Route path="/clients" element={<Clients />} />
-              <Route path="/crm-notes" element={<ComingSoon />} />
-              <Route path="/branches" element={<ComingSoon />} />
-              <Route path="/fiscal-registers" element={<ComingSoon />} />
-              <Route path="/pos-terminals" element={<ComingSoon />} />
+              <Route path="/crm-notes" element={<CrmNotes />} />
+              <Route path="/branches" element={<Branches />} />
+              <Route path="/fiscal-registers" element={<FiscalRegisters />} />
+              <Route path="/pos-terminals" element={<PosTerminals />} />
               
               {/* Prodaja */}
-              <Route path="/received-orders" element={<ComingSoon />} />
-              <Route path="/issued-orders" element={<ComingSoon />} />
-              <Route path="/suppliers" element={<ComingSoon />} />
+              <Route path="/received-orders" element={<ReceivedOrders />} />
+              <Route path="/issued-orders" element={<IssuedOrders />} />
+              <Route path="/suppliers" element={<Suppliers />} />
               <Route path="/articles" element={<Articles />} />
-              <Route path="/price-lists" element={<ComingSoon />} />
-              <Route path="/stock" element={<ComingSoon />} />
-              <Route path="/categories" element={<ComingSoon />} />
-              <Route path="/serial-numbers" element={<ComingSoon />} />
+              <Route path="/price-lists" element={<PriceLists />} />
+              <Route path="/stock" element={<Stock />} />
+              <Route path="/categories" element={<Categories />} />
+              <Route path="/serial-numbers" element={<SerialNumbers />} />
               
               {/* Ljudski resursi */}
               <Route path="/employees" element={<Employees />} />
-              <Route path="/time-tracking" element={<ComingSoon />} />
-              <Route path="/payroll" element={<ComingSoon />} />
-              <Route path="/absences" element={<ComingSoon />} />
-              <Route path="/business-trips" element={<ComingSoon />} />
-              <Route path="/travel-orders" element={<ComingSoon />} />
-              <Route path="/fixed-assets" element={<ComingSoon />} />
-              <Route path="/depreciation" element={<ComingSoon />} />
-              <Route path="/yearly-processing" element={<ComingSoon />} />
+              <Route path="/time-tracking" element={<TimeTracking />} />
+              <Route path="/payroll" element={<Payroll />} />
+              <Route path="/absences" element={<Absences />} />
+               <Route path="/business-trips" element={<BusinessTrips />} />
+               <Route path="/travel-orders" element={<TravelOrders />} />
+               <Route path="/fixed-assets" element={<FixedAssets />} />
+               <Route path="/depreciation" element={<Depreciation />} />
+               <Route path="/yearly-processing" element={<YearlyProcessing />} />
               
               {/* Marketing */}
               <Route path="/campaigns" element={<Campaigns />} />
-              <Route path="/promotions" element={<ComingSoon />} />
-              <Route path="/feedback" element={<ComingSoon />} />
+               <Route path="/promotions" element={<Promotions />} />
+               <Route path="/feedback" element={<Feedback />} />
               
               {/* Projekti */}
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/projects" element={<Projects />} />
-              <Route path="/reminders" element={<ComingSoon />} />
+               <Route path="/reminders" element={<Reminders />} />
               
               {/* Inventar */}
               <Route path="/warehouses" element={<Warehouses />} />
-              <Route path="/inventory-tracking" element={<ComingSoon />} />
-              <Route path="/stock-movements" element={<ComingSoon />} />
-              <Route path="/inventory-lists" element={<ComingSoon />} />
+               <Route path="/inventory-tracking" element={<InventoryTracking />} />
+               <Route path="/stock-movements" element={<StockMovements />} />
+               <Route path="/inventory-lists" element={<InventoryLists />} />
               
               {/* Automatizacija */}
               <Route path="/auto-invoices" element={<AutomationSettings />} />
@@ -111,6 +154,11 @@ const App = () => (
               <Route path="/auto-quotes" element={<AutomationSettings />} />
             </Route>
             
+             {/* Menu - bez sidebar-a */}
+             <Route element={<MenuLayout />}>
+               <Route path="/menu" element={<Menu />} />
+             </Route>
+             
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
