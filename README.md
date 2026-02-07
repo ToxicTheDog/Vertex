@@ -9,37 +9,171 @@ npm install
 npm run dev
 ```
 
-## 🔌 API Dokumentacija
+## 🔧 Konfiguracija
 
-Ova demo verzija koristi **Local Storage** za čuvanje podataka. Ispod je specifikacija API endpointa za buduću integraciju sa backend-om.
+### Demo Mode
+
+U fajlu `src/config/api.ts` možete kontrolisati da li aplikacija koristi demo podatke ili pravi API:
+
+```typescript
+// Postavite na false kada je backend spreman
+export const DEMO_MODE = true;
+
+// Base URL za API
+export const API_BASE_URL = 'https://api.vertex.com/';
+```
+
+### Environment varijable (produkcija)
+
+```env
+VITE_API_URL=https://api.vertex.com
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
 
 ---
 
-## 📋 Endpointi
+## 🔌 API Dokumentacija
+
+### Base URL
+```
+https://api.vertex.com/
+```
+
+### Autentifikacija
+Svi API pozivi zahtevaju JWT token u header-u:
+```
+Authorization: Bearer <token>
+```
+
+---
+
+## 📋 Endpointi sa primerima
+
+### Autentifikacija
+
+#### POST `/auth/login`
+Prijava korisnika
+
+**Request:**
+```json
+{
+  "email": "admin@vertex.com",
+  "password": "secure_password"
+}
+```
+
+**Response (Success):**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": "user-123",
+      "email": "admin@vertex.com",
+      "name": "Admin Korisnik",
+      "role": "admin",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00Z"
+    }
+  }
+}
+```
+
+**Response (Error):**
+```json
+{
+  "success": false,
+  "msg": "Pogrešan email ili lozinka"
+}
+```
+
+#### GET `/auth/me`
+Trenutni korisnik
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user-123",
+      "email": "admin@vertex.com",
+      "name": "Admin Korisnik",
+      "role": "admin"
+    }
+  }
+}
+```
+
+---
 
 ### Klijenti (Clients)
 
-| Metoda | Endpoint | Opis | Request Body | Response |
-|--------|----------|------|--------------|----------|
-| GET | `/api/clients` | Lista svih klijenata | - | `Client[]` |
-| GET | `/api/clients/:id` | Pojedinačni klijent | - | `Client` |
-| POST | `/api/clients` | Kreiraj klijenta | `CreateClientDTO` | `Client` |
-| PUT | `/api/clients/:id` | Ažuriraj klijenta | `UpdateClientDTO` | `Client` |
-| DELETE | `/api/clients/:id` | Obriši klijenta | - | `{ success: boolean }` |
+#### GET `/clients`
+Lista svih klijenata
 
-**Client Interface:**
-```typescript
-interface Client {
-  id: string;
-  name: string;
-  pib: string;
-  maticniBroj: string;
-  address: string;
-  city: string;
-  email: string;
-  phone: string;
-  contactPerson: string;
-  createdAt: string;
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "1",
+      "name": "Tech Solutions d.o.o.",
+      "pib": "123456789",
+      "maticniBroj": "12345678",
+      "address": "Bulevar Kralja Aleksandra 73",
+      "city": "Beograd",
+      "email": "info@techsolutions.rs",
+      "phone": "+381 11 123 4567",
+      "contactPerson": "Marko Marković",
+      "createdAt": "2024-01-15"
+    }
+  ]
+}
+```
+
+#### POST `/clients`
+Kreiranje klijenta
+
+**Request:**
+```json
+{
+  "name": "Nova Firma d.o.o.",
+  "pib": "111222333",
+  "maticniBroj": "11122233",
+  "address": "Ulica 123",
+  "city": "Beograd",
+  "email": "info@novafirma.rs",
+  "phone": "+381 11 000 0000",
+  "contactPerson": "Ime Prezime"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "new-id-123",
+    "name": "Nova Firma d.o.o.",
+    "...": "ostali podaci"
+  }
+}
+```
+
+#### PUT `/clients/:id`
+Ažuriranje klijenta
+
+#### DELETE `/clients/:id`
+Brisanje klijenta
+
+**Response:**
+```json
+{
+  "success": true
 }
 ```
 
@@ -47,41 +181,82 @@ interface Client {
 
 ### Fakture (Invoices)
 
-| Metoda | Endpoint | Opis | Request Body | Response |
-|--------|----------|------|--------------|----------|
-| GET | `/api/invoices` | Lista svih faktura | - | `Invoice[]` |
-| GET | `/api/invoices/:id` | Pojedinačna faktura | - | `Invoice` |
-| POST | `/api/invoices` | Kreiraj fakturu | `CreateInvoiceDTO` | `Invoice` |
-| PUT | `/api/invoices/:id` | Ažuriraj fakturu | `UpdateInvoiceDTO` | `Invoice` |
-| DELETE | `/api/invoices/:id` | Obriši fakturu | - | `{ success: boolean }` |
-| POST | `/api/invoices/:id/send` | Pošalji fakturu | - | `{ success: boolean }` |
-| POST | `/api/invoices/:id/mark-paid` | Označi kao plaćeno | `{ paidDate: string }` | `Invoice` |
+#### GET `/invoices`
+Lista svih faktura
 
-**Invoice Interface:**
-```typescript
-interface Invoice {
-  id: string;
-  number: string;
-  clientId: string;
-  clientName: string;
-  date: string;
-  dueDate: string;
-  items: InvoiceItem[];
-  subtotal: number;
-  vat: number;
-  total: number;
-  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
-  type: 'invoice' | 'proforma' | 'credit';
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "1",
+      "number": "FAK-2024-001",
+      "clientId": "1",
+      "clientName": "Tech Solutions d.o.o.",
+      "date": "2024-01-20",
+      "dueDate": "2024-02-20",
+      "items": [
+        {
+          "id": "item-1",
+          "name": "Konsultantske usluge",
+          "quantity": 10,
+          "unit": "sat",
+          "price": 5000,
+          "vatRate": 20,
+          "total": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "vat": 10000,
+      "total": 60000,
+      "status": "sent",
+      "type": "invoice"
+    }
+  ]
 }
+```
 
-interface InvoiceItem {
-  id: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  price: number;
-  vatRate: number;
-  total: number;
+#### POST `/invoices`
+Kreiranje fakture
+
+**Request:**
+```json
+{
+  "clientId": "1",
+  "date": "2024-03-15",
+  "dueDate": "2024-04-15",
+  "items": [
+    {
+      "name": "Usluga programiranja",
+      "quantity": 20,
+      "unit": "sat",
+      "price": 6000,
+      "vatRate": 20
+    }
+  ],
+  "type": "invoice"
+}
+```
+
+#### POST `/invoices/:id/send`
+Slanje fakture klijentu
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Faktura uspešno poslata"
+}
+```
+
+#### POST `/invoices/:id/mark-paid`
+Označavanje fakture kao plaćene
+
+**Request:**
+```json
+{
+  "paidDate": "2024-03-20"
 }
 ```
 
@@ -89,27 +264,57 @@ interface InvoiceItem {
 
 ### Nalozi za plaćanje (Payment Orders)
 
-| Metoda | Endpoint | Opis | Request Body | Response |
-|--------|----------|------|--------------|----------|
-| GET | `/api/payment-orders` | Lista naloga | - | `PaymentOrder[]` |
-| POST | `/api/payment-orders` | Kreiraj nalog | `CreatePaymentOrderDTO` | `PaymentOrder` |
-| PUT | `/api/payment-orders/:id/approve` | Odobri nalog | - | `PaymentOrder` |
-| PUT | `/api/payment-orders/:id/execute` | Izvrši nalog | - | `PaymentOrder` |
-| PUT | `/api/payment-orders/:id/reject` | Odbij nalog | `{ reason: string }` | `PaymentOrder` |
+#### GET `/payment-orders`
+Lista naloga
 
-**PaymentOrder Interface:**
-```typescript
-interface PaymentOrder {
-  id: string;
-  number: string;
-  date: string;
-  recipientName: string;
-  recipientAccount: string;
-  amount: number;
-  purpose: string;
-  status: 'pending' | 'approved' | 'executed' | 'rejected';
-  paymentCode: string;
-  referenceNumber: string;
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "1",
+      "number": "NP-2024-001",
+      "date": "2024-03-01",
+      "recipientName": "Dobavljač d.o.o.",
+      "recipientAccount": "265-1234567890-12",
+      "amount": 150000,
+      "purpose": "Plaćanje fakture FAK-123",
+      "status": "pending",
+      "paymentCode": "221",
+      "referenceNumber": "97-12345678"
+    }
+  ]
+}
+```
+
+#### POST `/payment-orders`
+Kreiranje naloga
+
+#### PUT `/payment-orders/:id/approve`
+Odobrenje naloga
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "1",
+    "status": "approved"
+  }
+}
+```
+
+#### PUT `/payment-orders/:id/execute`
+Izvršenje naloga
+
+#### PUT `/payment-orders/:id/reject`
+Odbijanje naloga
+
+**Request:**
+```json
+{
+  "reason": "Nedovoljno sredstava"
 }
 ```
 
@@ -117,28 +322,28 @@ interface PaymentOrder {
 
 ### Zaposleni (Employees)
 
-| Metoda | Endpoint | Opis | Request Body | Response |
-|--------|----------|------|--------------|----------|
-| GET | `/api/employees` | Lista zaposlenih | - | `Employee[]` |
-| GET | `/api/employees/:id` | Pojedinačni zaposleni | - | `Employee` |
-| POST | `/api/employees` | Kreiraj zaposlenog | `CreateEmployeeDTO` | `Employee` |
-| PUT | `/api/employees/:id` | Ažuriraj zaposlenog | `UpdateEmployeeDTO` | `Employee` |
-| DELETE | `/api/employees/:id` | Obriši zaposlenog | - | `{ success: boolean }` |
+#### GET `/employees`
+Lista zaposlenih
 
-**Employee Interface:**
-```typescript
-interface Employee {
-  id: string;
-  firstName: string;
-  lastName: string;
-  jmbg: string;
-  position: string;
-  department: string;
-  email: string;
-  phone: string;
-  salary: number;
-  startDate: string;
-  status: 'active' | 'inactive' | 'on-leave';
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "1",
+      "firstName": "Marko",
+      "lastName": "Marković",
+      "jmbg": "0101990710001",
+      "position": "Senior Developer",
+      "department": "IT",
+      "email": "marko@firma.rs",
+      "phone": "+381 64 123 4567",
+      "salary": 180000,
+      "startDate": "2023-01-15",
+      "status": "active"
+    }
+  ]
 }
 ```
 
@@ -146,28 +351,38 @@ interface Employee {
 
 ### Artikli (Articles)
 
-| Metoda | Endpoint | Opis | Request Body | Response |
-|--------|----------|------|--------------|----------|
-| GET | `/api/articles` | Lista artikala | - | `Article[]` |
-| GET | `/api/articles/:id` | Pojedinačni artikal | - | `Article` |
-| POST | `/api/articles` | Kreiraj artikal | `CreateArticleDTO` | `Article` |
-| PUT | `/api/articles/:id` | Ažuriraj artikal | `UpdateArticleDTO` | `Article` |
-| DELETE | `/api/articles/:id` | Obriši artikal | - | `{ success: boolean }` |
-| PUT | `/api/articles/:id/stock` | Ažuriraj zalihe | `{ quantity: number, type: 'add' \| 'remove' }` | `Article` |
+#### GET `/articles`
+Lista artikala
 
-**Article Interface:**
-```typescript
-interface Article {
-  id: string;
-  code: string;
-  name: string;
-  description: string;
-  category: string;
-  unit: string;
-  price: number;
-  vatRate: number;
-  stock: number;
-  minStock: number;
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "1",
+      "code": "ART001",
+      "name": "Laptop Dell XPS 15",
+      "description": "Profesionalni laptop",
+      "category": "Računari",
+      "unit": "kom",
+      "price": 180000,
+      "vatRate": 20,
+      "stock": 15,
+      "minStock": 5
+    }
+  ]
+}
+```
+
+#### PUT `/articles/:id/stock`
+Ažuriranje zaliha
+
+**Request:**
+```json
+{
+  "quantity": 10,
+  "type": "add"
 }
 ```
 
@@ -175,62 +390,270 @@ interface Article {
 
 ### Ugovori (Contracts)
 
-| Metoda | Endpoint | Opis | Request Body | Response |
-|--------|----------|------|--------------|----------|
-| GET | `/api/contracts` | Lista ugovora | - | `Contract[]` |
-| POST | `/api/contracts` | Kreiraj ugovor | `CreateContractDTO` | `Contract` |
-| PUT | `/api/contracts/:id` | Ažuriraj ugovor | `UpdateContractDTO` | `Contract` |
-| PUT | `/api/contracts/:id/terminate` | Raskini ugovor | `{ reason: string }` | `Contract` |
+#### GET `/contracts`
+Lista ugovora
+
+#### PUT `/contracts/:id/terminate`
+Raskid ugovora
+
+**Request:**
+```json
+{
+  "reason": "Istekao ugovorni period"
+}
+```
 
 ---
 
 ### Porezi (Taxes)
 
-| Metoda | Endpoint | Opis | Request Body | Response |
-|--------|----------|------|--------------|----------|
-| GET | `/api/taxes` | Lista poreskih obaveza | - | `TaxRecord[]` |
-| POST | `/api/taxes/:id/pay` | Plati porez | `{ paidDate: string }` | `TaxRecord` |
-| GET | `/api/taxes/vat-report` | PDV izveštaj | `?period=2024-03` | `VatReport` |
-| POST | `/api/taxes/pppdv/generate` | Generiši PPPDV | `{ period: string }` | `PPPDVForm` |
+#### GET `/taxes`
+Lista poreskih obaveza
+
+#### POST `/taxes/:id/pay`
+Plaćanje poreza
+
+**Request:**
+```json
+{
+  "paidDate": "2024-03-15"
+}
+```
+
+#### GET `/taxes/vat-report?period=2024-03`
+PDV izveštaj za period
+
+#### POST `/taxes/pppdv/generate`
+Generisanje PPPDV obrasca
+
+**Request:**
+```json
+{
+  "period": "2024-03"
+}
+```
 
 ---
 
 ### Izvodi banke (Bank Statements)
 
-| Metoda | Endpoint | Opis | Request Body | Response |
-|--------|----------|------|--------------|----------|
-| GET | `/api/bank-statements` | Lista izvoda | - | `BankStatement[]` |
-| POST | `/api/bank-statements/import` | Uvezi izvod | `FormData (file)` | `BankStatement` |
-| GET | `/api/bank-statements/:id/transactions` | Transakcije izvoda | - | `Transaction[]` |
+#### GET `/bank-statements`
+Lista izvoda
+
+#### POST `/bank-statements/import`
+Uvoz izvoda (multipart/form-data)
+
+**Request:**
+```
+Content-Type: multipart/form-data
+file: [XML/CSV fajl izvoda]
+```
+
+#### GET `/bank-statements/:id/transactions`
+Transakcije izvoda
 
 ---
 
-## 🔐 Autentifikacija
+### Izveštaji (Reports)
 
-Svi API pozivi zahtevaju JWT token u header-u:
+#### GET `/reports/financial?from=2024-01-01&to=2024-03-31`
+Finansijski izveštaj
 
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "totalIncome": 5000000,
+    "totalExpense": 3500000,
+    "profit": 1500000,
+    "vatCollected": 1000000,
+    "vatPaid": 700000,
+    "netVat": 300000
+  }
+}
 ```
-Authorization: Bearer <token>
-```
 
-### Autentifikacija Endpointi
+#### GET `/reports/sales?from=2024-01-01&to=2024-03-31&groupBy=month`
+Izveštaj prodaje
 
-| Metoda | Endpoint | Opis | Request Body | Response |
-|--------|----------|------|--------------|----------|
-| POST | `/api/auth/login` | Prijava | `{ email, password }` | `{ token, user }` |
-| POST | `/api/auth/logout` | Odjava | - | `{ success: boolean }` |
-| GET | `/api/auth/me` | Trenutni korisnik | - | `User` |
+#### GET `/reports/cash-flow?from=2024-01-01&to=2024-03-31`
+Keš flow izveštaj
+
+#### GET `/reports/profitability?from=2024-01-01&to=2024-03-31`
+Izveštaj profitabilnosti
 
 ---
 
-## 📊 Izveštaji
+### Dashboard
 
-| Metoda | Endpoint | Opis | Query Params | Response |
-|--------|----------|------|--------------|----------|
-| GET | `/api/reports/financial` | Finansijski izveštaj | `?from=&to=` | `FinancialReport` |
-| GET | `/api/reports/sales` | Izveštaj prodaje | `?from=&to=&groupBy=` | `SalesReport` |
-| GET | `/api/reports/cash-flow` | Keš flow | `?from=&to=` | `CashFlowReport` |
-| GET | `/api/reports/profitability` | Profitabilnost | `?from=&to=` | `ProfitabilityReport` |
+#### GET `/dashboard/stats`
+Statistike za dashboard
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "totalRevenue": 12500000,
+    "pendingInvoices": 8,
+    "activeClients": 45,
+    "monthlyGrowth": 12.5,
+    "recentTransactions": [...]
+  }
+}
+```
+
+#### GET `/dashboard/realtime`
+Real-time ažuriranja (polling)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "newInvoices": 2,
+    "newPayments": 45000,
+    "alerts": [
+      {
+        "type": "warning",
+        "message": "Faktura FAK-2024-015 dospeva sutra"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### PDV Smanjenje (VAT Reduction)
+
+#### GET `/vat-reduction/purchases`
+Lista kupovina na račun firme
+
+#### POST `/vat-reduction/purchases`
+Dodavanje nove kupovine
+
+**Request:**
+```json
+{
+  "date": "2024-03-15",
+  "supplierName": "Maxi",
+  "category": "kancelarijski_materijal",
+  "description": "Toneri za štampač",
+  "amount": 15000,
+  "vatAmount": 3000,
+  "invoiceNumber": "12345"
+}
+```
+
+#### GET `/vat-reduction/summary`
+Sumarni pregled PDV smanjenja
+
+---
+
+### Admin - Korisnici
+
+#### GET `/auth/me/users`
+Lista svih korisnika (samo admin)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "user-1",
+      "email": "admin@vertex.com",
+      "name": "Admin",
+      "role": "admin",
+      "isActive": true,
+      "lastLogin": "2024-03-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+#### POST `/auth/login/register`
+Kreiranje novog korisnika
+
+**Request:**
+```json
+{
+  "email": "novi@vertex.com",
+  "name": "Novi Korisnik",
+  "password": "secure_password",
+  "role": "accountant"
+}
+```
+
+#### PUT `/auth/me/users/:id/permissions`
+Ažuriranje dozvola korisnika
+
+**Request:**
+```json
+{
+  "categories": {
+    "finansije": true,
+    "klijenti": true,
+    "prodaja": false,
+    "hr": false,
+    "marketing": false,
+    "projekti": true,
+    "inventar": false,
+    "automatizacija": false,
+    "admin": false
+  }
+}
+```
+
+---
+
+### Admin - Logovi
+
+#### GET `/auth/me/logs?from=2024-03-01&to=2024-03-31&action=create&userId=user-1`
+Sistemski logovi
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "log-1",
+      "timestamp": "2024-03-15T10:30:00Z",
+      "action": "create",
+      "resource": "invoices",
+      "details": "POST /invoices",
+      "userId": "user-1",
+      "userName": "Admin"
+    }
+  ]
+}
+```
+
+---
+
+## 📦 Struktura Error Response-a
+
+Svi error response-i imaju sledeći format:
+
+```json
+{
+  "success": false,
+  "msg": "Opis greške za korisnika",
+  "error": "Tehnički detalji greške (opciono)"
+}
+```
+
+### HTTP Status kodovi:
+- `200` - Uspešan zahtev
+- `201` - Uspešno kreiran resurs
+- `400` - Loš zahtev (validacija)
+- `401` - Neautorizovan pristup
+- `403` - Zabranjen pristup
+- `404` - Resurs nije pronađen
+- `500` - Serverska greška
 
 ---
 
@@ -241,7 +664,7 @@ Authorization: Bearer <token>
 - **Grafici:** Recharts
 - **Routing:** React Router v6
 - **State:** React Query, Context API
-- **Storage:** Local Storage (demo), Supabase (produkcija)
+- **Storage:** Local Storage (demo), API (produkcija)
 
 ---
 
@@ -251,11 +674,19 @@ Authorization: Bearer <token>
 src/
 ├── components/
 │   ├── layout/          # Layout komponente (Sidebar, Header)
+│   ├── dialogs/         # Modal dijalozi za CRUD
 │   └── ui/              # shadcn/ui komponente
+├── config/
+│   └── api.ts           # API konfiguracija i endpoints
 ├── contexts/            # React konteksti (Theme)
 ├── data/                # Demo podaci
 ├── hooks/               # Custom hooks
+├── services/
+│   ├── apiService.ts    # Centralizovani API pozivi
+│   ├── authService.ts   # Autentifikacija
+│   └── logService.ts    # Sistemski logovi
 ├── pages/
+│   ├── admin/           # Admin stranice (Settings)
 │   ├── finance/         # Finansije stranice
 │   ├── clients/         # Klijenti stranice
 │   ├── hr/              # HR stranice
@@ -269,12 +700,22 @@ src/
 
 ---
 
-## 🔧 Konfiguracija
+## 🔐 Korisničke uloge
 
-Za produkcijsku verziju, podesite sledeće environment varijable:
+| Uloga | Opis | Pristup |
+|-------|------|---------|
+| `admin` | Administrator | Sve stranice + podešavanja |
+| `accountant` | Knjigovođa | Finansije, klijenti, prodaja |
+| `viewer` | Pregled | Samo čitanje podataka |
 
-```env
-VITE_API_URL=https://api.example.com
-VITE_SUPABASE_URL=your-supabase-url
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
+---
+
+## 📝 Logovanje akcija
+
+Sistem automatski loguje sve korisničke akcije:
+- Pregled resursa
+- Kreiranje/izmena/brisanje
+- Prijave/odjave
+- Odobrenja/odbijanja
+
+Logovi su dostupni u Admin > Podešavanja > Logovi (samo za admin korisnike).
