@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronRight,
   LayoutDashboard,
+  LayoutGrid,
   FileText,
   FilePlus,
   FileCheck,
@@ -59,8 +60,10 @@ import {
   FileBarChart,
   Percent,
   AlertTriangle,
-  Zap
+  Zap,
+  ShieldCheck
 } from 'lucide-react';
+import { authService } from '@/services/authService';
 import { cn } from '@/lib/utils';
 import {
   Sidebar,
@@ -95,6 +98,20 @@ interface MenuCategory {
   icon: React.ComponentType<{ className?: string }>;
   groups: MenuGroup[];
 }
+
+// Link za Meni iznad kategorija
+const menuLink = {
+  title: 'Meni',
+  url: '/menu',
+  icon: LayoutGrid
+};
+
+// Admin podešavanja (samo za admine)
+const adminLink = {
+  title: 'Podešavanja',
+  url: '/settings',
+  icon: ShieldCheck
+};
 
 const menuStructure: MenuCategory[] = [
   {
@@ -314,6 +331,8 @@ export function AppSidebar() {
   const collapsed = state === 'collapsed';
   const [openCategories, setOpenCategories] = useState<string[]>(['Finansije']);
   const [openGroups, setOpenGroups] = useState<string[]>(['Početna']);
+  
+  const isAdmin = authService.isAdmin();
 
   const toggleCategory = (category: string) => {
     setOpenCategories(prev => 
@@ -339,6 +358,42 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r border-sidebar-border">
       <SidebarContent className="py-2">
+        {/* MENI LINK - iznad svih kategorija */}
+        <SidebarGroup>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink
+                  to={menuLink.url}
+                  className={cn(
+                    "flex items-center gap-2 w-full font-medium",
+                    isActiveRoute(menuLink.url) && "bg-sidebar-accent text-sidebar-accent-foreground"
+                  )}
+                >
+                  <menuLink.icon className="h-4 w-4" />
+                  {!collapsed && <span>{menuLink.title}</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            {isAdmin && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to={adminLink.url}
+                    className={cn(
+                      "flex items-center gap-2 w-full font-medium text-primary",
+                      isActiveRoute(adminLink.url) && "bg-sidebar-accent text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <adminLink.icon className="h-4 w-4" />
+                    {!collapsed && <span>{adminLink.title}</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
+          </SidebarMenu>
+        </SidebarGroup>
+
         {menuStructure.map((category) => (
           <SidebarGroup key={category.category}>
             <Collapsible

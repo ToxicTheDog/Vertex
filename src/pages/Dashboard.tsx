@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -6,7 +7,10 @@ import {
   FileText, 
   AlertTriangle,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  RefreshCw,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +31,8 @@ import {
 } from 'recharts';
 import { dashboardStats, demoInvoices, demoTransactions, demoArticles } from '@/data/demoData';
 import { Link } from 'react-router-dom';
+import { startRealtimeUpdates } from '@/services/apiService';
+import { DEMO_MODE, REALTIME_UPDATE_INTERVAL } from '@/config/api';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('sr-RS', {
@@ -61,6 +67,26 @@ const pieData = [
 
 const Dashboard = () => {
   const lowStockItems = demoArticles.filter(a => a.stock <= a.minStock);
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [realtimeData, setRealtimeData] = useState<any>(null);
+
+  // Real-time ažuriranja
+  useEffect(() => {
+    const stopUpdates = startRealtimeUpdates((data) => {
+      setRealtimeData(data);
+      setLastUpdate(new Date());
+      setIsRealtimeConnected(true);
+    }, REALTIME_UPDATE_INTERVAL);
+
+    // Postavi initial connected status
+    setIsRealtimeConnected(true);
+
+    return () => {
+      stopUpdates();
+      setIsRealtimeConnected(false);
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -69,16 +95,35 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">Pregled poslovanja - Januar 2024</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" asChild>
-            <Link to="/financial-reports">Izveštaji</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/invoices/create">
-              <FileText className="mr-2 h-4 w-4" />
-              Nova faktura
-            </Link>
-          </Button>
+        <div className="flex items-center gap-4">
+          {/* Real-time status indikator */}
+          <div className="flex items-center gap-2 text-sm">
+            {isRealtimeConnected ? (
+              <>
+                <Wifi className="h-4 w-4 text-success animate-pulse" />
+                <span className="text-muted-foreground">
+                  {DEMO_MODE ? 'Demo' : 'Live'} 
+                  {lastUpdate && ` • ${lastUpdate.toLocaleTimeString('sr-RS')}`}
+                </span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Offline</span>
+              </>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/financial-reports">Izveštaji</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/invoices/create">
+                <FileText className="mr-2 h-4 w-4" />
+                Nova faktura
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 

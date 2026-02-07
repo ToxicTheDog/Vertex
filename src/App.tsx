@@ -51,19 +51,20 @@ import Campaigns from "./pages/marketing/Campaigns";
 import AutomationSettings from "./pages/automation/AutomationSettings";
 import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
- import Menu from "./pages/Menu";
- import BusinessTrips from "./pages/hr/BusinessTrips";
- import TravelOrders from "./pages/hr/TravelOrders";
- import FixedAssets from "./pages/hr/FixedAssets";
- import Depreciation from "./pages/hr/Depreciation";
- import YearlyProcessing from "./pages/hr/YearlyProcessing";
- import Promotions from "./pages/marketing/Promotions";
- import Feedback from "./pages/marketing/Feedback";
- import Reminders from "./pages/projects/Reminders";
- import InventoryTracking from "./pages/inventory/InventoryTracking";
- import StockMovements from "./pages/inventory/StockMovements";
- import InventoryLists from "./pages/inventory/InventoryLists";
- import { MenuLayout } from "./components/layout/MenuLayout";
+import Menu from "./pages/Menu";
+import BusinessTrips from "./pages/hr/BusinessTrips";
+import TravelOrders from "./pages/hr/TravelOrders";
+import FixedAssets from "./pages/hr/FixedAssets";
+import Depreciation from "./pages/hr/Depreciation";
+import YearlyProcessing from "./pages/hr/YearlyProcessing";
+import Promotions from "./pages/marketing/Promotions";
+import Feedback from "./pages/marketing/Feedback";
+import Reminders from "./pages/projects/Reminders";
+import InventoryTracking from "./pages/inventory/InventoryTracking";
+import StockMovements from "./pages/inventory/StockMovements";
+import InventoryLists from "./pages/inventory/InventoryLists";
+import Settings from "./pages/admin/Settings";
+import { MenuLayout } from "./components/layout/MenuLayout";
 
 const queryClient = new QueryClient();
 
@@ -152,12 +153,15 @@ const App = () => (
               <Route path="/auto-vat" element={<AutomationSettings />} />
               <Route path="/stock-alerts" element={<AutomationSettings />} />
               <Route path="/auto-quotes" element={<AutomationSettings />} />
+              
+              {/* Admin */}
+              <Route path="/settings" element={<Settings />} />
             </Route>
             
-             {/* Menu - bez sidebar-a */}
-             <Route element={<MenuLayout />}>
-               <Route path="/menu" element={<Menu />} />
-             </Route>
+            {/* Menu - bez sidebar-a */}
+            <Route element={<MenuLayout />}>
+              <Route path="/menu" element={<Menu />} />
+            </Route>
              
             {/* 404 */}
             <Route path="*" element={<NotFound />} />

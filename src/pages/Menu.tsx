@@ -1,14 +1,16 @@
- import { Link } from 'react-router-dom';
- import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
- import { 
-   DollarSign, Users, ShoppingCart, Users2, Megaphone, FolderKanban, Warehouse, Settings,
-   LayoutDashboard, FileText, FilePlus, FileCheck, Receipt, RefreshCw, CreditCard, Building2,
-   Landmark, Calculator, FileSpreadsheet, Scale, BookOpen, BarChart3, TrendingUp, PieChart,
-   FileSignature, UserCircle, MessageSquare, Store, Monitor, ClipboardList, Package, Truck,
-   Tag, Layers, Hash, Clock, Wallet, Calendar, Plane, Building, TrendingDown, RotateCcw,
-   Mail, MessageCircle, CheckSquare, Bell, PackageSearch, ArrowUpDown, ClipboardCheck,
-   Send, MessageSquareMore, FileBarChart, Percent, AlertTriangle, Zap
- } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { 
+  DollarSign, Users, ShoppingCart, Users2, Megaphone, FolderKanban, Warehouse, Settings,
+  LayoutDashboard, FileText, FilePlus, FileCheck, Receipt, RefreshCw, CreditCard, Building2,
+  Landmark, Calculator, FileSpreadsheet, Scale, BookOpen, BarChart3, TrendingUp, PieChart,
+  FileSignature, UserCircle, MessageSquare, Store, Monitor, ClipboardList, Package, Truck,
+  Tag, Layers, Hash, Clock, Wallet, Calendar, Plane, Building, TrendingDown, RotateCcw,
+  Mail, MessageCircle, CheckSquare, Bell, PackageSearch, ArrowUpDown, ClipboardCheck,
+  Send, MessageSquareMore, FileBarChart, Percent, AlertTriangle, Zap, ShieldCheck
+} from 'lucide-react';
+import { authService } from '@/services/authService';
  
  interface MenuItem {
    title: string;
@@ -250,14 +252,37 @@
    }
  ];
  
- const Menu = () => {
-   return (
-     <div className="min-h-screen bg-background">
-       <div className="container mx-auto py-8 px-4">
-         <div className="text-center mb-12">
-           <h1 className="text-4xl font-bold mb-4">Navigacija</h1>
-           <p className="text-xl text-muted-foreground">Izaberite modul za brz pristup svim funkcionalnostima</p>
-         </div>
+const Menu = () => {
+  const isAdmin = authService.isAdmin();
+  
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4">Navigacija</h1>
+          <p className="text-xl text-muted-foreground">Izaberite modul za brz pristup svim funkcionalnostima</p>
+        </div>
+
+        {/* Admin sekcija - samo za admine */}
+        {isAdmin && (
+          <div className="mb-8">
+            <Link
+              to="/settings"
+              className="flex items-center gap-4 p-6 rounded-xl border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors"
+            >
+              <div className="p-3 rounded-full bg-primary/20">
+                <ShieldCheck className="h-8 w-8 text-primary" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-bold">Admin podešavanja</h2>
+                  <Badge variant="default">Admin</Badge>
+                </div>
+                <p className="text-muted-foreground">Upravljanje korisnicima, dozvolama i sistemskim logovima</p>
+              </div>
+            </Link>
+          </div>
+        )}
  
          <div className="grid gap-8">
            {menuStructure.map((category) => (
