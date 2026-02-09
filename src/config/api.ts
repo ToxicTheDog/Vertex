@@ -13,6 +13,11 @@
 //   - Validaciju podataka
 //   - Upite na bazu
 //
+// TOKEN STRATEGIJA:
+//   - Access token: traje 30 minuta
+//   - Refresh token: traje 7 dana
+//   - Automatski refresh pre isteka access tokena
+//
 // ============================================================
 
 // Promenite na false kada je backend API spreman
@@ -21,6 +26,16 @@ export const DEMO_MODE = true;
 // Jedina tačka komunikacije sa serverom
 // Frontend NIKADA ne komunicira direktno sa bazom podataka
 export const API_BASE_URL = 'https://api.vertex.com/';
+
+// Token konfiguracija
+export const TOKEN_CONFIG = {
+  // Access token traje 30 minuta
+  accessTokenExpiryMinutes: 30,
+  // Refresh token 5 minuta pre isteka access tokena
+  refreshBeforeExpiryMinutes: 5,
+  // Refresh token traje 7 dana
+  refreshTokenExpiryDays: 7,
+};
 
 // Interval za real-time ažuriranje (u milisekundama)
 export const REALTIME_UPDATE_INTERVAL = 30000; // 30 sekundi
@@ -32,6 +47,7 @@ export const API_ENDPOINTS = {
     login: `${API_BASE_URL}auth/login`,
     logout: `${API_BASE_URL}auth/logout`,
     me: `${API_BASE_URL}auth/me`,
+    refresh: `${API_BASE_URL}auth/refresh`, // Refresh token endpoint
   },
   
   // Klijenti
