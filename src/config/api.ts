@@ -1,8 +1,25 @@
-// API konfiguracija
-// Promenite DEMO_MODE na false kada je backend spreman
+// ============================================================
+// API Konfiguracija
+// ============================================================
+// 
+// ARHITEKTURA:
+// Frontend -> Backend API -> Baza podataka
+// 
+// Frontend NIKADA nema direktan pristup bazi podataka.
+// Sva komunikacija ide isključivo preko REST API-ja.
+// Backend je odgovoran za:
+//   - Autentifikaciju (JWT)
+//   - Autorizaciju (provera dozvola)
+//   - Validaciju podataka
+//   - Upite na bazu
+//
+// ============================================================
 
+// Promenite na false kada je backend API spreman
 export const DEMO_MODE = true;
 
+// Jedina tačka komunikacije sa serverom
+// Frontend NIKADA ne komunicira direktno sa bazom podataka
 export const API_BASE_URL = 'https://api.vertex.com/';
 
 // Interval za real-time ažuriranje (u milisekundama)

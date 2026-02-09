@@ -2,6 +2,52 @@
 
 Kompletan profesionalni program za knjigovodstvo sa svim modulima, Dashboard dizajnom i tamnom/svetlom temom.
 
+---
+
+## 🏗️ Arhitektura Sistema
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        FRONTEND (React)                         │
+│  • UI komponente, forme, tabele                                 │
+│  • LocalStorage za demo podatke                                 │
+│  • NEMA direktnog pristupa bazi podataka                        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ HTTPS (REST API)
+                              │ JWT Autentifikacija
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    BACKEND API SERVER                           │
+│                  https://api.vertex.com/                        │
+│  • Autentifikacija i autorizacija                               │
+│  • Validacija podataka                                          │
+│  • Poslovna logika                                              │
+│  • Rukovanje greškama                                           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ Privatna mreža
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      BAZA PODATAKA                              │
+│  • PostgreSQL / MySQL                                           │
+│  • Pristup ISKLJUČIVO preko backend-a                           │
+│  • Frontend NIKADA nema direktan pristup                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### ⚠️ VAŽNO: Bezbednosna Arhitektura
+
+**Frontend aplikacija NIKADA nema direktan pristup bazi podataka.**
+
+Sva komunikacija sa bazom ide isključivo preko backend API servera:
+- Frontend šalje HTTP zahteve na `https://api.vertex.com/`
+- Backend validira JWT token i korisničke dozvole
+- Backend izvršava upite na bazi i vraća rezultate
+- Osetljivi podaci (connection strings, kredencijali) nikada ne izlaze iz backend-a
+
+---
+
 ## 🚀 Pokretanje projekta
 
 ```bash
@@ -19,7 +65,7 @@ U fajlu `src/config/api.ts` možete kontrolisati da li aplikacija koristi demo p
 // Postavite na false kada je backend spreman
 export const DEMO_MODE = true;
 
-// Base URL za API
+// Base URL za API - JEDINA tačka komunikacije sa serverom
 export const API_BASE_URL = 'https://api.vertex.com/';
 ```
 
@@ -27,9 +73,9 @@ export const API_BASE_URL = 'https://api.vertex.com/';
 
 ```env
 VITE_API_URL=https://api.vertex.com
-VITE_SUPABASE_URL=your-supabase-url
-VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
+
+> **Napomena:** Ne postoje environment varijable za direktan pristup bazi podataka jer frontend nikada ne komunicira direktno sa bazom.
 
 ---
 
