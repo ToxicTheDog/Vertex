@@ -634,14 +634,718 @@ Sistemski logovi
 
 ---
 
-## 📦 Struktura Error Response-a
+### CRM - Beleške
 
-Svi error response-i imaju sledeći format:
+#### GET `/crm/notes`
+Lista CRM beleški za klijente
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "note-1",
+      "clientId": "1",
+      "clientName": "Tech Solutions d.o.o.",
+      "title": "Važna napomena",
+      "content": "Klijent je želeo da produži ugovor",
+      "date": "2024-03-15T10:30:00Z",
+      "author": "Admin"
+    }
+  ]
+}
+```
+
+#### POST `/crm/notes`
+Dodavanje nove CRM beleške
+
+**Request:**
+```json
+{
+  "clientId": "1",
+  "title": "Pregovor o uslugama",
+  "content": "Potrebno diskutovati o novim uslugama"
+}
+```
+
+---
+
+### Poslovnice (Branches)
+
+#### GET `/branches`
+Lista poslovnica
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "branch-1",
+      "name": "Centralna poslovnica",
+      "address": "Bulevar Kralja Aleksandra 73",
+      "city": "Beograd",
+      "phone": "+381 11 123 4567",
+      "manager": "Marko Marković"
+    }
+  ]
+}
+```
+
+#### POST `/branches`
+Kreiranje nove poslovnice
+
+---
+
+### Fiskalne blagajne (Fiscal Registers)
+
+#### GET `/fiscal-registers`
+Lista fiskalnih blagajni
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "register-1",
+      "name": "Blagajna 1",
+      "serialNumber": "FIS123456",
+      "branchId": "branch-1",
+      "status": "active"
+    }
+  ]
+}
+```
+
+---
+
+### POS terminali (POS Terminals)
+
+#### GET `/pos-terminals`
+Lista POS terminala
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "pos-1",
+      "name": "POS Terminal 1",
+      "serialNumber": "POS123456",
+      "branchId": "branch-1",
+      "status": "online"
+    }
+  ]
+}
+```
+
+---
+
+### Narudžbe (Orders)
+
+#### GET `/orders/received`
+Primljene narudžbe
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "order-1",
+      "number": "NAR-2024-001",
+      "supplierId": "supplier-1",
+      "supplierName": "Dobavljač d.o.o.",
+      "date": "2024-03-15",
+      "items": [
+        {
+          "articleId": "art-1",
+          "quantity": 10,
+          "price": 5000
+        }
+      ],
+      "total": 50000,
+      "status": "pending"
+    }
+  ]
+}
+```
+
+#### GET `/orders/issued`
+Izdate narudžbe
+
+#### POST `/orders`
+Kreiranje narudžbe
+
+#### PUT `/orders/:id/status`
+Ažuriranje statusa narudžbe
+
+**Request:**
+```json
+{
+  "status": "confirmed"
+}
+```
+
+---
+
+### Dobavljači (Suppliers)
+
+#### GET `/suppliers`
+Lista dobavljača
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "supplier-1",
+      "name": "Dobavljač d.o.o.",
+      "pib": "123456789",
+      "address": "Dobavljačeva ulica 10",
+      "city": "Beograd",
+      "contactPerson": "Pera Perić",
+      "email": "info@dobavljac.rs",
+      "phone": "+381 11 999 9999"
+    }
+  ]
+}
+```
+
+---
+
+### Cenovnici (Price Lists)
+
+#### GET `/price-lists`
+Lista cenovnika
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "pricelist-1",
+      "name": "Cenovnik 2024",
+      "validFrom": "2024-01-01",
+      "validTo": "2024-12-31",
+      "items": [
+        {
+          "articleId": "art-1",
+          "price": 5000
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### Kategorije (Categories)
+
+#### GET `/categories`
+Lista kategorija artikala
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "cat-1",
+      "name": "Računari",
+      "description": "Računari i oprema"
+    }
+  ]
+}
+```
+
+---
+
+### Serijski brojevi (Serial Numbers)
+
+#### GET `/serial-numbers`
+Lista serijskih brojeva
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "serial-1",
+      "articleId": "art-1",
+      "serialNumber": "SN123456",
+      "status": "active"
+    }
+  ]
+}
+```
+
+---
+
+### HR - Evidencija radnog vremena (Time Tracking)
+
+#### GET `/time-tracking`
+Lista evidencije radnog vremena
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "tt-1",
+      "employeeId": "emp-1",
+      "date": "2024-03-15",
+      "startTime": "08:00",
+      "endTime": "16:30",
+      "hours": 8.5
+    }
+  ]
+}
+```
+
+#### POST `/time-tracking`
+Dodavanje evidencije radnog vremena
+
+---
+
+### HR - Obračun zarada (Payroll)
+
+#### GET `/payroll`
+Lista obračuna zarada
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "payroll-1",
+      "employeeId": "emp-1",
+      "period": "2024-03",
+      "baseSalary": 180000,
+      "allowances": 20000,
+      "deductions": 15000,
+      "netSalary": 185000,
+      "status": "pending"
+    }
+  ]
+}
+```
+
+#### POST `/payroll/calculate`
+Obračun zarada
+
+#### PUT `/payroll/:id/approve`
+Odobrenje obračuna
+
+---
+
+### HR - Odsustva (Absences)
+
+#### GET `/absences`
+Lista odsustva
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "absence-1",
+      "employeeId": "emp-1",
+      "type": "vacation",
+      "startDate": "2024-03-20",
+      "endDate": "2024-03-27",
+      "days": 8,
+      "status": "pending"
+    }
+  ]
+}
+```
+
+#### POST `/absences`
+Zahtev za odsustvo
+
+#### PUT `/absences/:id/approve`
+Odobrenje odsustva
+
+---
+
+### HR - Službena putovanja (Business Trips)
+
+#### GET `/business-trips`
+Lista službenih putovanja
+
+#### POST `/business-trips`
+Kreiranje službenog putovanja
+
+---
+
+### HR - Putni nalozi (Travel Orders)
+
+#### GET `/travel-orders`
+Lista putnih naloga
+
+#### POST `/travel-orders`
+Kreiranje putnog naloga
+
+---
+
+### Osnovna sredstva (Fixed Assets)
+
+#### GET `/fixed-assets`
+Lista osnovnih sredstava
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "asset-1",
+      "name": "Laptop Dell XPS",
+      "category": "Računari",
+      "purchaseDate": "2023-01-15",
+      "originalValue": 180000,
+      "currentValue": 150000,
+      "depreciationRate": 15
+    }
+  ]
+}
+```
+
+---
+
+### Amortizacija (Depreciation)
+
+#### GET `/depreciation`
+Lista amortizacije
+
+#### POST `/depreciation/calculate`
+Obračun amortizacije
+
+---
+
+### Promocije (Promotions)
+
+#### GET `/promotions`
+Lista promocija
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "promo-1",
+      "name": "Jesenji popust",
+      "description": "Popust od 10%",
+      "discountPercent": 10,
+      "startDate": "2024-09-01",
+      "endDate": "2024-09-30",
+      "status": "active"
+    }
+  ]
+}
+```
+
+#### POST `/promotions`
+Kreiranje promocije
+
+---
+
+### Povratne informacije (Feedback)
+
+#### GET `/feedback`
+Lista povratnih informacija
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "feedback-1",
+      "clientId": "client-1",
+      "rating": 5,
+      "comment": "Odličan servis",
+      "date": "2024-03-15T10:30:00Z",
+      "status": "received"
+    }
+  ]
+}
+```
+
+#### PUT `/feedback/:id/status`
+Ažuriranje statusa povratne informacije
+
+---
+
+### Podsetnici (Reminders)
+
+#### GET `/reminders`
+Lista podsetnika
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "reminder-1",
+      "title": "Rok za plaćanje fakture",
+      "dueDate": "2024-03-20",
+      "priority": "high",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+#### POST `/reminders`
+Kreiranje podsetnika
+
+#### PUT `/reminders/:id/complete`
+Označavanje podsetnika kao završenog
+
+---
+
+### Inventar (Inventory)
+
+#### GET `/inventory/movements`
+Lista kretanja inventara
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "mov-1",
+      "articleId": "art-1",
+      "type": "inbound",
+      "quantity": 50,
+      "date": "2024-03-15",
+      "reference": "NAR-2024-001"
+    }
+  ]
+}
+```
+
+#### GET `/inventory/lists`
+Lista inventurnih listi
+
+#### POST `/inventory/lists`
+Kreiranje inventurne liste
+
+---
+
+## 👨‍💼 Admin API Endpointi
+
+### Upravljanje korisnicima (Users)
+
+#### POST `/auth/login/register`
+Kreiranje novog korisnika (samo admin)
+
+**Request:**
+```json
+{
+  "email": "knjigzovoda@vertex.com",
+  "name": "Petar Petrović",
+  "password": "secure_password_123",
+  "role": "accountant"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "user-new-1",
+    "email": "knjigzovoda@vertex.com",
+    "name": "Petar Petrović",
+    "role": "accountant",
+    "createdAt": "2024-03-15T10:30:00Z"
+  }
+}
+```
+
+#### GET `/auth/me/users`
+Lista svih korisnika (samo admin)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "user-1",
+      "email": "admin@vertex.com",
+      "name": "Admin Korisnik",
+      "role": "admin",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "lastLogin": "2024-03-15T10:30:00Z"
+    },
+    {
+      "id": "user-2",
+      "email": "knjigzovoda@vertex.com",
+      "name": "Petar Petrović",
+      "role": "accountant",
+      "isActive": true,
+      "createdAt": "2024-02-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+#### PUT `/auth/me/users/:id/permissions`
+Ažuriranje dozvola korisnika (samo admin)
+
+**Request:**
+```json
+{
+  "categories": {
+    "finansije": true,
+    "klijenti": true,
+    "prodaja": true,
+    "hr": false,
+    "marketing": false,
+    "projekti": true,
+    "inventar": true,
+    "automatizacija": false,
+    "admin": false
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "user-2",
+    "permissions": {
+      "finansije": true,
+      "klijenti": true,
+      "prodaja": true,
+      "hr": false,
+      "marketing": false,
+      "projekti": true,
+      "inventar": true,
+      "automatizacija": false,
+      "admin": false
+    }
+  }
+}
+```
+
+#### DELETE `/auth/me/users/:id`
+Brisanje korisnika (samo admin)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Korisnik je obrisan"
+}
+```
+
+---
+
+### Sistemski logovi (Activity Logs)
+
+#### GET `/auth/me/logs`
+Lista sistemskih logova (samo admin)
+
+**Query parametri:**
+- `from` - od datuma (YYYY-MM-DD)
+- `to` - do datuma (YYYY-MM-DD)
+- `action` - tip akcije (create, update, delete, view, login, logout)
+- `userId` - ID korisnika
+- `resource` - tip resursa (invoices, clients, employees, itd.)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "log-1",
+      "timestamp": "2024-03-15T10:30:00Z",
+      "action": "create",
+      "resource": "invoices",
+      "details": "POST /invoices",
+      "userId": "user-2",
+      "userName": "Petar Petrović",
+      "status": "success"
+    },
+    {
+      "id": "log-2",
+      "timestamp": "2024-03-15T09:15:00Z",
+      "action": "view",
+      "resource": "clients",
+      "details": "GET /clients",
+      "userId": "user-2",
+      "userName": "Petar Petrović",
+      "status": "success"
+    },
+    {
+      "id": "log-3",
+      "timestamp": "2024-03-14T17:45:00Z",
+      "action": "update",
+      "resource": "invoices",
+      "details": "PUT /invoices/1",
+      "userId": "user-1",
+      "userName": "Admin Korisnik",
+      "status": "success"
+    }
+  ]
+}
+```
+
+#### GET `/auth/me/logs/export`
+Izvoz logova kao CSV
+
+**Query parametri:**
+- `from` - od datuma
+- `to` - do datuma
+
+**Response:** CSV fajl sa svim logovima
+
+---
+
+## 📦 API Response Format
+
+### Standardni odgovor za uspešan zahtev
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "resource-id",
+    "name": "Resource name",
+    "...": "ostali podaci"
+  },
+  "message": "Operacija je uspešno izvršena"
+}
+```
+
+### Standardni odgovor za neuspešan zahtev
 
 ```json
 {
   "success": false,
-  "msg": "Opis greške za korisnika",
+  "message": "Opis greške za korisnika",
   "error": "Tehnički detalji greške (opciono)"
 }
 ```
@@ -650,10 +1354,33 @@ Svi error response-i imaju sledeći format:
 - `200` - Uspešan zahtev
 - `201` - Uspešno kreiran resurs
 - `400` - Loš zahtev (validacija)
-- `401` - Neautorizovan pristup
-- `403` - Zabranjen pristup
-- `404` - Resurs nije pronađen
+- `401` - Neautorizovan pristup (nema JWT tokena)
+- `403` - Zabranjen pristup (nema dozvole za resurs)
+- `404` - Resurs nije pronađen (vraća prazne podatke)
 - `500` - Serverska greška
+
+---
+
+## 🔐 Zaštita i Greške
+
+### Rukovanje greškama na frontend-u
+
+Sistem automatski prikazuje "trenutno nema podataka" kada:
+- API vrati `404` status (resurs nije pronađen)
+- API vrati praznu listu podataka
+- API vrati error sa statusom `500` ili drugom greškom
+
+### Demo Mode
+
+Dok je `DEMO_MODE = true` u `src/config/api.ts`:
+- Svi API pozivi vraćaju demo podatke iz LocalStorage
+- Nema stvarnih zahteva na backend
+- Akcije se loguju lokalno
+
+Kada se postavi `DEMO_MODE = false`:
+- Svi pozivi idu na `https://api.vertex.com/`
+- Potreban je validan JWT token
+- Greške se loguju na serveru
 
 ---
 
