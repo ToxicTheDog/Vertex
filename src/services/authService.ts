@@ -1,5 +1,5 @@
-// Auth Service - autentifikacija i autorizacija
-import { DEMO_MODE, API_ENDPOINTS } from '@/config/api';
+// Auth Service - autentifikacija i autorizacija sa refresh token podrškom
+import { DEMO_MODE, API_ENDPOINTS, TOKEN_CONFIG } from '@/config/api';
 import { logService } from './logService';
 
 export interface User {
@@ -26,9 +26,15 @@ export interface UserPermissions {
   };
 }
 
+export interface TokenData {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number; // Unix timestamp u milisekundama
+}
+
 const USERS_STORAGE_KEY = 'erp_users';
 const CURRENT_USER_KEY = 'current_user';
-const AUTH_TOKEN_KEY = 'auth_token';
+const TOKEN_DATA_KEY = 'erp_token_data';
 
 // Demo korisnici
 const defaultUsers: User[] = [
@@ -80,8 +86,13 @@ const adminPermissions: UserPermissions = {
 };
 
 class AuthService {
+  private refreshTimer: ReturnType<typeof setTimeout> | null = null;
+  private isRefreshing = false;
+  private refreshPromise: Promise<boolean> | null = null;
+
   constructor() {
     this.initializeDefaultUsers();
+    this.setupAutoRefresh();
   }
 
   private initializeDefaultUsers(): void {
@@ -97,6 +108,160 @@ class AuthService {
     if (DEMO_MODE && !this.getCurrentUser()) {
       this.setCurrentUser(defaultUsers[0]);
     }
+  }
+
+  // ==================== TOKEN MANAGEMENT ====================
+
+  private getTokenData(): TokenData | null {
+    try {
+      const stored = localStorage.getItem(TOKEN_DATA_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private setTokenData(tokenData: TokenData): void {
+    localStorage.setItem(TOKEN_DATA_KEY, JSON.stringify(tokenData));
+    this.scheduleTokenRefresh(tokenData.expiresAt);
+  }
+
+  private clearTokenData(): void {
+    localStorage.removeItem(TOKEN_DATA_KEY);
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+  }
+
+  getToken(): string {
+    if (DEMO_MODE) return 'demo-token';
+    const tokenData = this.getTokenData();
+    return tokenData?.accessToken || '';
+  }
+
+  getRefreshToken(): string {
+    const tokenData = this.getTokenData();
+    return tokenData?.refreshToken || '';
+  }
+
+  isTokenExpired(): boolean {
+    const tokenData = this.getTokenData();
+    if (!tokenData) return true;
+    // Token je istekao ako je trenutno vreme veće od expiresAt
+    return Date.now() >= tokenData.expiresAt;
+  }
+
+  shouldRefreshToken(): boolean {
+    const tokenData = this.getTokenData();
+    if (!tokenData) return false;
+    // Refresh ako je ostalo manje od 5 minuta do isteka
+    const refreshThreshold = TOKEN_CONFIG.refreshBeforeExpiryMinutes * 60 * 1000;
+    return Date.now() >= (tokenData.expiresAt - refreshThreshold);
+  }
+
+  private scheduleTokenRefresh(expiresAt: number): void {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+    }
+
+    // Zakaži refresh 5 minuta pre isteka
+    const refreshThreshold = TOKEN_CONFIG.refreshBeforeExpiryMinutes * 60 * 1000;
+    const refreshTime = expiresAt - refreshThreshold - Date.now();
+
+    if (refreshTime > 0) {
+      console.log(`[Auth] Token refresh zakazan za ${Math.round(refreshTime / 1000 / 60)} minuta`);
+      this.refreshTimer = setTimeout(() => {
+        this.refreshAccessToken();
+      }, refreshTime);
+    }
+  }
+
+  private setupAutoRefresh(): void {
+    if (DEMO_MODE) return;
+    
+    const tokenData = this.getTokenData();
+    if (tokenData && !this.isTokenExpired()) {
+      this.scheduleTokenRefresh(tokenData.expiresAt);
+    }
+  }
+
+  async refreshAccessToken(): Promise<boolean> {
+    if (DEMO_MODE) return true;
+
+    // Sprečava višestruke istovremene refresh pozive
+    if (this.isRefreshing && this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.isRefreshing = true;
+    this.refreshPromise = this.performTokenRefresh();
+
+    try {
+      return await this.refreshPromise;
+    } finally {
+      this.isRefreshing = false;
+      this.refreshPromise = null;
+    }
+  }
+
+  private async performTokenRefresh(): Promise<boolean> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      console.warn('[Auth] Nema refresh tokena za osvežavanje');
+      return false;
+    }
+
+    try {
+      console.log('[Auth] Osvežavanje access tokena...');
+      
+      const response = await fetch(API_ENDPOINTS.auth.refresh, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+      });
+
+      if (!response.ok) {
+        console.error('[Auth] Refresh token istekao ili nevažeći');
+        this.logout();
+        return false;
+      }
+
+      const data = await response.json();
+      
+      // Izračunaj vreme isteka (30 minuta od sada)
+      const expiresAt = Date.now() + (TOKEN_CONFIG.accessTokenExpiryMinutes * 60 * 1000);
+      
+      this.setTokenData({
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken || refreshToken, // Koristi novi ako je vraćen
+        expiresAt
+      });
+
+      console.log('[Auth] Access token uspešno osvežen');
+      return true;
+    } catch (error) {
+      console.error('[Auth] Greška pri osvežavanju tokena:', error);
+      return false;
+    }
+  }
+
+  // Wrapper za API pozive sa automatskim refresh-om
+  async ensureValidToken(): Promise<string> {
+    if (DEMO_MODE) return 'demo-token';
+
+    if (this.isTokenExpired()) {
+      console.warn('[Auth] Token istekao, pokušaj refresh...');
+      const refreshed = await this.refreshAccessToken();
+      if (!refreshed) {
+        throw new Error('Sesija je istekla. Molimo prijavite se ponovo.');
+      }
+    } else if (this.shouldRefreshToken()) {
+      // Proaktivno osveži token ako je blizu isteka
+      this.refreshAccessToken().catch(console.error);
+    }
+
+    return this.getToken();
   }
 
   async login(email: string, password: string): Promise<{ success: boolean; user?: User; error?: string }> {
@@ -148,7 +313,15 @@ class AuthService {
       }
 
       const data = await response.json();
-      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      
+      // Sačuvaj token podatke sa vremenom isteka
+      const expiresAt = Date.now() + (TOKEN_CONFIG.accessTokenExpiryMinutes * 60 * 1000);
+      this.setTokenData({
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        expiresAt
+      });
+      
       this.setCurrentUser(data.user);
       return { success: true, user: data.user };
     } catch (error) {
@@ -169,7 +342,7 @@ class AuthService {
     }
 
     localStorage.removeItem(CURRENT_USER_KEY);
-    localStorage.removeItem(AUTH_TOKEN_KEY);
+    this.clearTokenData();
 
     if (!DEMO_MODE) {
       fetch(API_ENDPOINTS.auth.logout, {
@@ -192,12 +365,9 @@ class AuthService {
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
   }
 
-  getToken(): string {
-    return localStorage.getItem(AUTH_TOKEN_KEY) || '';
-  }
-
   isAuthenticated(): boolean {
-    return !!this.getCurrentUser();
+    if (DEMO_MODE) return !!this.getCurrentUser();
+    return !!this.getCurrentUser() && !this.isTokenExpired();
   }
 
   isAdmin(): boolean {

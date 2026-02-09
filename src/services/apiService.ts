@@ -1,6 +1,8 @@
 // API Service - centralizovani servis za sve API pozive
+// Svi zahtevi idu preko backend API-ja - NIKADA direktno na bazu
 import { DEMO_MODE, API_ENDPOINTS, REALTIME_UPDATE_INTERVAL } from '@/config/api';
 import { logService, LogAction } from './logService';
+import { authService } from './authService';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -20,7 +22,7 @@ export interface PaginatedResponse<T> {
 // Helper za demo delay simulaciju
 const simulateDelay = (ms: number = 300) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Centralni API request handler
+// Centralni API request handler sa automatskim token refresh-om
 async function makeRequest<T>(
   endpoint: string,
   options: RequestInit = {},
@@ -45,14 +47,59 @@ async function makeRequest<T>(
   }
 
   try {
+    // Osiguraj validan token pre svakog zahteva
+    const token = await authService.ensureValidToken();
+
     const response = await fetch(endpoint, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getAuthToken()}`,
+        'Authorization': `Bearer ${token}`,
         ...options.headers,
       },
     });
+
+    // Ako je 401, pokušaj refresh i ponovi zahtev
+    if (response.status === 401) {
+      console.warn('[API] 401 Unauthorized - pokušaj refresh tokena');
+      const refreshed = await authService.refreshAccessToken();
+      
+      if (refreshed) {
+        // Ponovi originalni zahtev sa novim tokenom
+        const newToken = authService.getToken();
+        const retryResponse = await fetch(endpoint, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${newToken}`,
+            ...options.headers,
+          },
+        });
+
+        if (!retryResponse.ok) {
+          const errorData = await retryResponse.json().catch(() => ({}));
+          return {
+            success: false,
+            error: errorData.message || `Greška: ${retryResponse.status}`,
+            message: errorData.msg || 'Došlo je do greške prilikom obrade zahteva'
+          };
+        }
+
+        const data = await retryResponse.json();
+        return {
+          success: true,
+          data: data.data || data,
+          message: data.message
+        };
+      } else {
+        // Refresh nije uspeo - korisnik mora ponovo da se prijavi
+        return {
+          success: false,
+          error: 'Sesija je istekla',
+          message: 'Vaša sesija je istekla. Molimo prijavite se ponovo.'
+        };
+      }
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -80,35 +127,16 @@ async function makeRequest<T>(
 }
 
 // Helper funkcije za auth
-function getAuthToken(): string {
-  if (DEMO_MODE) return 'demo-token';
-  return localStorage.getItem('auth_token') || '';
-}
-
 function getCurrentUserId(): string {
   if (DEMO_MODE) return 'demo-user';
-  const user = localStorage.getItem('current_user');
-  if (user) {
-    try {
-      return JSON.parse(user).id || 'unknown';
-    } catch {
-      return 'unknown';
-    }
-  }
-  return 'unknown';
+  const user = authService.getCurrentUser();
+  return user?.id || 'unknown';
 }
 
 function getCurrentUserName(): string {
   if (DEMO_MODE) return 'Demo Korisnik';
-  const user = localStorage.getItem('current_user');
-  if (user) {
-    try {
-      return JSON.parse(user).name || 'Nepoznat';
-    } catch {
-      return 'Nepoznat';
-    }
-  }
-  return 'Nepoznat';
+  const user = authService.getCurrentUser();
+  return user?.name || 'Nepoznat';
 }
 
 // ==================== KLIJENTI ====================

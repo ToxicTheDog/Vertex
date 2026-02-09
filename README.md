@@ -89,8 +89,23 @@ https://api.vertex.com/
 ### Autentifikacija
 Svi API pozivi zahtevaju JWT token u header-u:
 ```
-Authorization: Bearer <token>
+Authorization: Bearer <access_token>
 ```
+
+### Token Strategija
+
+Sistem koristi **Access Token + Refresh Token** model:
+
+| Token | Trajanje | Svrha |
+|-------|----------|-------|
+| Access Token | 30 minuta | Autorizacija API poziva |
+| Refresh Token | 7 dana | Dobijanje novog access tokena |
+
+**Automatski refresh:**
+- Frontend automatski osvežava access token 5 minuta pre isteka
+- Ako access token istekne, API vraća `401 Unauthorized`
+- Frontend automatski pokušava refresh i ponavlja originalni zahtev
+- Ako refresh token istekne, korisnik mora ponovo da se prijavi
 
 ---
 
@@ -114,7 +129,9 @@ Prijava korisnika
 {
   "success": true,
   "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expiresIn": 1800,
     "user": {
       "id": "user-123",
       "email": "admin@vertex.com",
@@ -132,6 +149,52 @@ Prijava korisnika
 {
   "success": false,
   "msg": "Pogrešan email ili lozinka"
+}
+```
+
+#### POST `/auth/refresh`
+Osvežavanje access tokena
+
+**Request:**
+```json
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Response (Success):**
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expiresIn": 1800
+  }
+}
+```
+
+**Response (Error - Refresh Token Expired):**
+```json
+{
+  "success": false,
+  "msg": "Refresh token je istekao. Molimo prijavite se ponovo."
+}
+```
+
+#### POST `/auth/logout`
+Odjava korisnika (invalidira refresh token)
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Uspešno ste se odjavili"
 }
 ```
 
