@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Shield, Eye, EyeOff, Save, History, Download } from 'lucide-react';
+import { Plus, Pencil, Trash2, Shield, Eye, EyeOff, Save, History, Download, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -284,58 +284,105 @@ export default function Settings() {
         <TabsContent value="logs" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Sistemski logovi</h2>
-            <Button variant="outline" onClick={handleExportLogs} className="gap-2">
-              <Download className="h-4 w-4" />
-              Izvoz logova
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (confirm('Da li ste sigurni da želite da obrišete sve logove?')) {
+                    logService.clearLogs();
+                    loadLogs();
+                    toast({ title: 'Logovi obrisani', description: 'Svi sistemski logovi su obrisani.' });
+                  }
+                }}
+                className="gap-2 text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+                Obriši sve
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleExportLogs} className="gap-2">
+                <Download className="h-4 w-4" />
+                Izvoz logova
+              </Button>
+            </div>
           </div>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-base">Filteri</CardTitle>
             </CardHeader>
-            <CardContent className="flex gap-4">
+            <CardContent className="flex flex-wrap gap-4">
               <div className="w-48">
-                <Label>Akcija</Label>
+                <Label className="text-xs text-muted-foreground">Akcija</Label>
                 <Select
-                  value={logFilters.action}
-                  onValueChange={(value) => setLogFilters({ ...logFilters, action: value as LogAction })}
+                  value={logFilters.action || 'all'}
+                  onValueChange={(value) => setLogFilters({ ...logFilters, action: value === 'all' ? '' : value as LogAction })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Sve akcije" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sve akcije</SelectItem>
+                    <SelectItem value="all">Sve akcije</SelectItem>
                     <SelectItem value="view">Pregled</SelectItem>
                     <SelectItem value="create">Kreiranje</SelectItem>
                     <SelectItem value="update">Izmena</SelectItem>
                     <SelectItem value="delete">Brisanje</SelectItem>
                     <SelectItem value="login">Prijava</SelectItem>
                     <SelectItem value="logout">Odjava</SelectItem>
+                    <SelectItem value="approve">Odobrenje</SelectItem>
+                    <SelectItem value="reject">Odbijanje</SelectItem>
+                    <SelectItem value="export">Izvoz</SelectItem>
+                    <SelectItem value="import">Uvoz</SelectItem>
+                    <SelectItem value="send">Slanje</SelectItem>
+                    <SelectItem value="pay">Plaćanje</SelectItem>
+                    <SelectItem value="generate">Generisanje</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="w-48">
-                <Label>Korisnik</Label>
+                <Label className="text-xs text-muted-foreground">Korisnik</Label>
                 <Select
-                  value={logFilters.userId}
-                  onValueChange={(value) => setLogFilters({ ...logFilters, userId: value })}
+                  value={logFilters.userId || 'all'}
+                  onValueChange={(value) => setLogFilters({ ...logFilters, userId: value === 'all' ? '' : value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Svi korisnici" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Svi korisnici</SelectItem>
+                    <SelectItem value="all">Svi korisnici</SelectItem>
                     {users.map(user => (
                       <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+              {(logFilters.action || logFilters.userId) && (
+                <div className="flex items-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLogFilters({ action: '', userId: '' })}
+                    className="text-muted-foreground"
+                  >
+                    Resetuj filtere
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardDescription>
+                  {filteredLogs.length} {filteredLogs.length === 1 ? 'zapis' : 'zapisa'} ukupno
+                </CardDescription>
+                <Button variant="ghost" size="sm" onClick={loadLogs} className="gap-1 h-7 text-xs">
+                  <RefreshCw className="h-3 w-3" />
+                  Osveži
+                </Button>
+              </div>
+            </CardHeader>
             <CardContent className="p-0">
               {filteredLogs.length === 0 ? (
                 <div className="p-6">
@@ -346,43 +393,56 @@ export default function Settings() {
                   />
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Vreme</TableHead>
-                      <TableHead>Korisnik</TableHead>
-                      <TableHead>Akcija</TableHead>
-                      <TableHead>Resurs</TableHead>
-                      <TableHead>Detalji</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredLogs.map((log) => (
-                      <TableRow key={log.id}>
-                        <TableCell className="whitespace-nowrap">
-                          {new Date(log.timestamp).toLocaleDateString('sr-RS', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit'
-                          })}
-                        </TableCell>
-                        <TableCell>{log.userName}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {logService.getActionLabel(log.action)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{logService.getResourceLabel(log.resource)}</TableCell>
-                        <TableCell className="max-w-xs truncate" title={log.details}>
-                          {log.details}
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[180px]">Vreme</TableHead>
+                        <TableHead className="w-[150px]">Korisnik</TableHead>
+                        <TableHead className="w-[120px]">Akcija</TableHead>
+                        <TableHead className="w-[150px]">Resurs</TableHead>
+                        <TableHead>Detalji</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredLogs.map((log) => {
+                        const actionVariant = (() => {
+                          switch (log.action) {
+                            case 'create': return 'default';
+                            case 'delete': return 'destructive';
+                            case 'login':
+                            case 'logout': return 'secondary';
+                            default: return 'outline';
+                          }
+                        })();
+                        return (
+                          <TableRow key={log.id}>
+                            <TableCell className="whitespace-nowrap text-xs font-mono text-muted-foreground">
+                              {new Date(log.timestamp).toLocaleDateString('sr-RS', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                              })}
+                            </TableCell>
+                            <TableCell className="font-medium text-sm">{log.userName}</TableCell>
+                            <TableCell>
+                              <Badge variant={actionVariant as any}>
+                                {logService.getActionLabel(log.action)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm">{logService.getResourceLabel(log.resource)}</TableCell>
+                            <TableCell className="max-w-xs truncate text-sm text-muted-foreground" title={log.details}>
+                              {log.details}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>
