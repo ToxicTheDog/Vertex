@@ -66,6 +66,7 @@ import InventoryTracking from "./pages/inventory/InventoryTracking";
 import StockMovements from "./pages/inventory/StockMovements";
 import InventoryLists from "./pages/inventory/InventoryLists";
 import Settings from "./pages/admin/Settings";
+import Profile from "./pages/Profile";
 import { MenuLayout } from "./components/layout/MenuLayout";
 
 const queryClient = new QueryClient();
@@ -158,6 +159,7 @@ const App = () => (
               
               {/* Admin */}
               <Route path="/settings" element={<Settings />} />
+              <Route path="/profile" element={<Profile />} />
             </Route>
             
             {/* Menu - bez sidebar-a */}

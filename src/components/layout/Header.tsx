@@ -107,8 +107,12 @@ import { Badge } from '@/components/ui/badge';
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Moj nalog</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profil</DropdownMenuItem>
-              <DropdownMenuItem>Podešavanja</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/profile">Profil</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/settings">Podešavanja</Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
              <DropdownMenuItem asChild>
                <Link to="/menu" className="flex items-center gap-2">
@@ -117,7 +121,11 @@ import { Badge } from '@/components/ui/badge';
                </Link>
              </DropdownMenuItem>
              <DropdownMenuSeparator />
-              <DropdownMenuItem>Odjavi se</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/login" onClick={() => { import('@/services/authService').then(m => m.authService.logout()); }}>
+                  Odjavi se
+                </Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
