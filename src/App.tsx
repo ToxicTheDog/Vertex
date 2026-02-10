@@ -8,6 +8,8 @@ import { MainLayout } from "@/components/layout/MainLayout";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
 import Invoices from "./pages/finance/Invoices";
 import CreateInvoice from "./pages/finance/CreateInvoice";
 import Proforma from "./pages/finance/Proforma";
@@ -162,6 +164,10 @@ const App = () => (
             <Route element={<MenuLayout />}>
               <Route path="/menu" element={<Menu />} />
             </Route>
+
+            {/* Auth stranice - bez sidebar-a */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
              
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
