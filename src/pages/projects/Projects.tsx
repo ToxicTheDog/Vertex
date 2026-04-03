@@ -16,6 +16,7 @@ import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { clientsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 interface Project {
   id: string;
@@ -79,7 +80,7 @@ const statusLabels = {
 };
 
 const Projects = () => {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const { data: projects, setData: setProjects } = useFetchData(() => clientsApi.getAll(), initialProjects);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('create');
   const [selectedProject, setSelectedProject] = useState<ProjectFormData | null>(null);

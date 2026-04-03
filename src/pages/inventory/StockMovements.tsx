@@ -11,6 +11,7 @@
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { articlesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
  
  interface StockMovement {
    id: string;
@@ -35,7 +36,7 @@ import { articlesApi } from '@/services/apiService';
  ];
  
  const StockMovements = () => {
-   const [movements, setMovements] = useState<StockMovement[]>(initialMovements);
+   const { data: movements, setData: setMovements } = useFetchData(() => articlesApi.getAll(), initialMovements);
    const [searchTerm, setSearchTerm] = useState('');
    const [typeFilter, setTypeFilter] = useState('all');
    const [dialogOpen, setDialogOpen] = useState(false);

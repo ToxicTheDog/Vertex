@@ -11,6 +11,7 @@
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { articlesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
  
  interface InventoryList {
    id: string;
@@ -32,7 +33,7 @@ import { articlesApi } from '@/services/apiService';
  ];
  
  const InventoryLists = () => {
-   const [lists, setLists] = useState<InventoryList[]>(initialLists);
+   const { data: lists, setData: setLists } = useFetchData(() => articlesApi.getAll(), initialLists);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const { toast } = useToast();

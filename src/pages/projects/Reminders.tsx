@@ -12,6 +12,7 @@
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { clientsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
  
  interface Reminder {
    id: string;
@@ -33,7 +34,7 @@ import { clientsApi } from '@/services/apiService';
  ];
  
  const Reminders = () => {
-   const [reminders, setReminders] = useState<Reminder[]>(initialReminders);
+   const { data: reminders, setData: setReminders } = useFetchData(() => clientsApi.getAll(), initialReminders);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);

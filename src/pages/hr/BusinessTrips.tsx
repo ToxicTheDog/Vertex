@@ -11,6 +11,7 @@
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { employeesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
  
  interface BusinessTrip {
    id: string;
@@ -31,7 +32,7 @@ import { employeesApi } from '@/services/apiService';
  ];
  
  const BusinessTrips = () => {
-   const [trips, setTrips] = useState<BusinessTrip[]>(initialTrips);
+   const { data: trips, setData: setTrips } = useFetchData(() => employeesApi.getAll(), initialTrips);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const [editingTrip, setEditingTrip] = useState<BusinessTrip | null>(null);

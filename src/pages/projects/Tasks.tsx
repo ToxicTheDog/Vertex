@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { API_ENDPOINTS } from '@/config/api';
 import { clientsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 interface Task {
   id: string;
@@ -45,7 +46,7 @@ const priorityLabels = {
 };
 
 const Tasks = () => {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const { data: tasks, setData: setTasks } = useFetchData(() => clientsApi.getAll(), initialTasks);
   const [newTask, setNewTask] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 

@@ -11,6 +11,7 @@
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { clientsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
  
  interface Promotion {
    id: string;
@@ -33,7 +34,7 @@ import { clientsApi } from '@/services/apiService';
  ];
  
  const Promotions = () => {
-   const [promotions, setPromotions] = useState<Promotion[]>(initialPromotions);
+   const { data: promotions, setData: setPromotions } = useFetchData(() => clientsApi.getAll(), initialPromotions);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const [editingPromo, setEditingPromo] = useState<Promotion | null>(null);

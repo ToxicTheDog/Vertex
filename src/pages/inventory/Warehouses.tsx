@@ -4,9 +4,13 @@ import { Progress } from '@/components/ui/progress';
 import { demoWarehouses, demoArticles } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
 import { articlesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const Warehouses = () => {
-  const lowStockItems = demoArticles.filter(a => a.stock <= a.minStock);
+  const { data: warehouses } = useFetchData(() => articlesApi.getAll(), demoWarehouses);
+  const { data: allArticles } = useFetchData(() => articlesApi.getAll(), demoArticles);
+  const lowStockArticles = allArticles.filter(a => a.stock <= a.minStock);
+  const lowStockItems = lowStockArticles.filter(a => a.stock <= a.minStock);
 
   return (
     <div className="space-y-6">
@@ -18,7 +22,7 @@ const Warehouses = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        {demoWarehouses.map((warehouse) => {
+        {warehouses.map((warehouse) => {
           const usagePercent = (warehouse.usedCapacity / warehouse.capacity) * 100;
           return (
             <Card key={warehouse.id} className="card-hover">

@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { API_ENDPOINTS } from '@/config/api';
 import { vatReductionApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 interface VatPurchase {
   id: string;
@@ -65,7 +66,7 @@ const formatCurrency = (value: number) => {
 };
 
 const VatReduction = () => {
-  const [purchases, setPurchases] = useState<VatPurchase[]>(initialPurchases);
+  const { data: purchases, setData: setPurchases } = useFetchData(() => vatReductionApi.getAll(), initialPurchases);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState<VatPurchase | null>(null);
