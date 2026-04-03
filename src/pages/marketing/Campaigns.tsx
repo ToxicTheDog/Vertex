@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { API_ENDPOINTS } from '@/config/api';
 import { clientsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 interface Campaign {
   id: string;

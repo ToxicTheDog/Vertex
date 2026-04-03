@@ -12,6 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { API_ENDPOINTS } from '@/config/api';
 import { taxesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 interface VatRecord {
   id: string;
@@ -23,7 +24,7 @@ interface VatRecord {
   dueDate: string;
 }
 
-const vatRecords: VatRecord[] = [
+const demoVatRecords: VatRecord[] = [
   { id: '1', period: 'Januar 2024', inputVat: 85000, outputVat: 125000, difference: 40000, status: 'paid', dueDate: '2024-02-15' },
   { id: '2', period: 'Februar 2024', inputVat: 72000, outputVat: 118000, difference: 46000, status: 'paid', dueDate: '2024-03-15' },
   { id: '3', period: 'Mart 2024', inputVat: 68000, outputVat: 135000, difference: 67000, status: 'due', dueDate: '2024-04-15' },
@@ -51,6 +52,7 @@ const statusLabels: Record<string, string> = {
 };
 
 const VatRecords = () => {
+  const { data: vatRecords } = useFetchData(() => taxesApi.getAll(), demoVatRecords);
   const totalInputVat = vatRecords.reduce((sum, r) => sum + r.inputVat, 0);
   const totalOutputVat = vatRecords.reduce((sum, r) => sum + r.outputVat, 0);
   const totalDifference = totalOutputVat - totalInputVat;

@@ -9,6 +9,7 @@
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { employeesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
  
  interface ProcessingTask {
    id: string;
@@ -19,6 +20,7 @@ import { employeesApi } from '@/services/apiService';
  }
  
  const YearlyProcessing = () => {
+  // API integracija: podaci se učitavaju sa servera kada DEMO_MODE === false
    const [year, setYear] = useState('2024');
    const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
    const [isRunning, setIsRunning] = useState(false);

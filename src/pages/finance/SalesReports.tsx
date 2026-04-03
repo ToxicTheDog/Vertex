@@ -6,6 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { demoInvoices, demoArticles, demoClients } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
 import { reportsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const monthlySales = [
   { month: 'Jan', sales: 385000 },
@@ -32,13 +33,16 @@ const salesByCategory = [
 ];
 
 const SalesReports = () => {
+  const { data: invoices } = useFetchData(() => reportsApi.getSales('', ''), demoInvoices);
+  const { data: articles } = useFetchData(() => reportsApi.getSales('', ''), demoArticles);
+  const { data: clients } = useFetchData(() => reportsApi.getSales('', ''), demoClients);
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
   };
 
   const totalSales = monthlySales.reduce((sum, m) => sum + m.sales, 0);
   const averageSale = totalSales / monthlySales.length;
-  const invoiceCount = demoInvoices.filter(i => i.type === 'invoice').length;
+  const invoiceCount = invoices.filter(i => i.type === 'invoice').length;
 
   return (
     <div className="space-y-6">
@@ -92,7 +96,7 @@ const SalesReports = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{demoClients.length}</div>
+            <div className="text-2xl font-bold">{clients.length}</div>
             <p className="text-xs text-muted-foreground">ovog meseca</p>
           </CardContent>
         </Card>

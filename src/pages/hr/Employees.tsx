@@ -41,6 +41,7 @@ import { demoEmployees } from '@/data/demoData';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { employeesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const statusColors: Record<string, string> = {
   active: 'bg-success text-success-foreground',
@@ -63,11 +64,12 @@ const formatCurrency = (value: number) => {
 };
 
 const Employees = () => {
+  const { data: employees } = useFetchData(() => employeesApi.getAll(), demoEmployees);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const filteredEmployees = demoEmployees.filter(emp =>
+  const filteredEmployees = employees.filter(emp =>
     `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
     emp.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
     emp.department.toLowerCase().includes(searchTerm.toLowerCase())
@@ -81,7 +83,7 @@ const Employees = () => {
     setIsDialogOpen(false);
   };
 
-  const totalSalaries = demoEmployees.filter(e => e.status === 'active').reduce((sum, e) => sum + e.salary, 0);
+  const totalSalaries = employees.filter(e => e.status === 'active').reduce((sum, e) => sum + e.salary, 0);
 
   return (
     <div className="space-y-6">
@@ -180,7 +182,7 @@ const Employees = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Ukupno radnika</p>
-                <p className="text-2xl font-bold">{demoEmployees.length}</p>
+                <p className="text-2xl font-bold">{employees.length}</p>
               </div>
             </div>
           </CardContent>
@@ -193,7 +195,7 @@ const Employees = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Aktivni</p>
-                <p className="text-2xl font-bold">{demoEmployees.filter(e => e.status === 'active').length}</p>
+                <p className="text-2xl font-bold">{employees.filter(e => e.status === 'active').length}</p>
               </div>
             </div>
           </CardContent>

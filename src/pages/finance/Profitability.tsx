@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { dashboardStats } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
 import { reportsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const categoryData = [
   { name: 'Konsultacije', revenue: 850000, cost: 320000, profit: 530000 },
@@ -22,6 +23,7 @@ const costBreakdown = [
 ];
 
 const Profitability = () => {
+  const { data: stats } = useFetchData(() => reportsApi.getProfitability('', ''), dashboardStats);
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
   };
