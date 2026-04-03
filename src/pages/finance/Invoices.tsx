@@ -34,6 +34,7 @@ import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { invoicesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const statusColors: Record<string, string> = {
   paid: 'bg-success text-success-foreground',
@@ -62,7 +63,7 @@ const formatCurrency = (value: number) => {
 const Invoices = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [invoices, setInvoices] = useState(demoInvoices.filter(inv => inv.type === 'invoice'));
+  const { data: invoices, setData: setInvoices, isLoading: _isLoading, refetch } = useFetchData(() => invoicesApi.getAll(), demoInvoices.filter(inv => inv.type === 'invoice'));
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

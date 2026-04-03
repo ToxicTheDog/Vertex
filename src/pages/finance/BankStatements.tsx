@@ -9,10 +9,11 @@ import { BankStatementDialog, BankStatementData } from '@/components/dialogs/Ban
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { bankStatementsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const BankStatements = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statements, setStatements] = useState(demoBankStatements);
+  const { data: statements, setData: setStatements, isLoading: _isLoading, refetch } = useFetchData(() => bankStatementsApi.getAll(), demoBankStatements);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedStatement, setSelectedStatement] = useState<BankStatementData | null>(null);
   const { toast } = useToast();

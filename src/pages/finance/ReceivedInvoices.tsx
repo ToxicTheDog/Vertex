@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { invoicesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const statusColors = {
   pending: 'bg-warning/20 text-warning',
@@ -42,7 +43,7 @@ const sefStatusLabels = {
 const ReceivedInvoices = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [invoices, setInvoices] = useState(demoReceivedInvoices);
+  const { data: invoices, setData: setInvoices, isLoading: _isLoading, refetch } = useFetchData(() => invoicesApi.getAll(), demoReceivedInvoices);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);

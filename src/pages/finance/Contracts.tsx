@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { contractsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const statusColors = {
   draft: 'bg-muted text-muted-foreground',
@@ -38,7 +39,7 @@ const Contracts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [contracts, setContracts] = useState(demoContracts);
+  const { data: contracts, setData: setContracts, isLoading: _isLoading, refetch } = useFetchData(() => contractsApi.getAll(), demoContracts);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('create');
   const [selectedContract, setSelectedContract] = useState<ContractFormData | null>(null);

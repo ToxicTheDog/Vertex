@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { demoPriceLists, PriceList } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
 import { articlesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('sr-RS', {
@@ -22,7 +23,7 @@ const formatCurrency = (value: number) => {
 };
 
 const PriceLists = () => {
-  const [priceLists, setPriceLists] = useState<PriceList[]>(demoPriceLists);
+  const { data: priceLists, setData: setPriceLists, isLoading: _isLoading, refetch } = useFetchData(() => articlesApi.getAll(), demoPriceLists);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedPriceList, setSelectedPriceList] = useState<PriceList | null>(null);

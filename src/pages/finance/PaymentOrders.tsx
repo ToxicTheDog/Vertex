@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { paymentOrdersApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const statusColors = {
   pending: 'bg-warning/20 text-warning',
@@ -30,7 +31,7 @@ const statusLabels = {
 const PaymentOrders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [orders, setOrders] = useState(demoPaymentOrders);
+  const { data: orders, setData: setOrders, isLoading: _isLoading, refetch } = useFetchData(() => paymentOrdersApi.getAll(), demoPaymentOrders);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'view'>('create');
   const [selectedOrder, setSelectedOrder] = useState<PaymentOrderFormData | null>(null);
