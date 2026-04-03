@@ -155,7 +155,7 @@ export const API_ENDPOINTS = {
   branches: {
     list: `${API_BASE_URL}branches`,
     get: (id: string) => `${API_BASE_URL}branches/${id}`,
-    create: `{API_BASE_URL}branches`,
+    create: `${API_BASE_URL}branches`,
     update: (id: string) => `${API_BASE_URL}branches/${id}`,
     delete: (id: string) => `${API_BASE_URL}branches/${id}`,
     toggleActive: (id: string) => `${API_BASE_URL}branches/${id}/toggle`,
