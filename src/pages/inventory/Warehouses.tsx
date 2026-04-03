@@ -2,6 +2,8 @@ import { Warehouse as WarehouseIcon, Package, ArrowUpDown, AlertTriangle } from 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { demoWarehouses, demoArticles } from '@/data/demoData';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 const Warehouses = () => {
   const lowStockItems = demoArticles.filter(a => a.stock <= a.minStock);

@@ -9,6 +9,8 @@
  import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
  import { Plus, Search, Eye, Edit, Trash2, Plane, Calendar, MapPin, DollarSign } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
  
  interface BusinessTrip {
    id: string;

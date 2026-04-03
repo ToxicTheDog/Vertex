@@ -45,6 +45,7 @@ import { DEMO_MODE } from '@/config/api';
 
 // Import demo podataka za DEMO_MODE
 import { demoClients } from '@/data/demoData';
+import { API_ENDPOINTS } from '@/config/api';
 
 const Clients = () => {
   const [clients, setClients] = useState<Client[]>([]);

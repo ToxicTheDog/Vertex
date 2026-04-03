@@ -9,6 +9,8 @@
  import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
  import { Plus, Search, Megaphone, Edit, Trash2, Percent, Calendar, Tag } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
  
  interface Promotion {
    id: string;

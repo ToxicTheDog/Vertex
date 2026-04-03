@@ -39,6 +39,8 @@ import {
 } from '@/components/ui/select';
 import { demoEmployees } from '@/data/demoData';
 import { useToast } from '@/hooks/use-toast';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 const statusColors: Record<string, string> = {
   active: 'bg-success text-success-foreground',

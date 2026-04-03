@@ -10,6 +10,8 @@ import {
   TableFooter,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 interface VatRecord {
   id: string;

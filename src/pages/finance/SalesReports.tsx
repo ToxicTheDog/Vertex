@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { demoInvoices, demoArticles, demoClients } from '@/data/demoData';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 const monthlySales = [
   { month: 'Jan', sales: 385000 },

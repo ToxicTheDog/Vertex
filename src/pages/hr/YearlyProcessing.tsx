@@ -7,6 +7,8 @@
  import { Progress } from '@/components/ui/progress';
  import { RotateCcw, Play, CheckCircle, Clock, AlertTriangle, FileText } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
  
  interface ProcessingTask {
    id: string;

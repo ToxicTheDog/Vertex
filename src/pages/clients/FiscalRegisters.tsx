@@ -23,6 +23,7 @@ import { FiscalRegister } from '@/data/demoData';
 import { fiscalRegistersApi, branchesApi } from '@/services/apiService'; // ← dodajemo oba
 import { DEMO_MODE } from '@/config/api';
 import { demoFiscalRegisters, demoBranches } from '@/data/demoData';
+import { API_ENDPOINTS } from '@/config/api';
 
 const statusLabels: Record<string, string> = {
   active: 'Aktivna',

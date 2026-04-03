@@ -7,6 +7,8 @@ import { Progress } from '@/components/ui/progress';
 import { Package, AlertTriangle, TrendingUp, TrendingDown, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { demoArticles, demoWarehouses } from '@/data/demoData';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('sr-RS', {

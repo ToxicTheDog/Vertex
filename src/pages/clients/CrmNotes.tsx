@@ -24,6 +24,7 @@ import { CrmNote } from '@/data/demoData';
 import { crmNotesApi, clientsApi } from '@/services/apiService';
 import { DEMO_MODE } from '@/config/api';
 import { demoCrmNotes, demoClients } from '@/data/demoData';
+import { API_ENDPOINTS } from '@/config/api';
 
 const typeIcons: Record<string, React.ReactNode> = {
   call: <Phone className="h-4 w-4" />,

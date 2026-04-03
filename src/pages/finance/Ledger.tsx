@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { demoLedgerEntries } from '@/data/demoData';
 import { useLocation } from 'react-router-dom';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 const documentTypeLabels = {
   invoice: 'Faktura',

@@ -2,6 +2,8 @@ import { TrendingUp, TrendingDown, DollarSign, Percent, BarChart3 } from 'lucide
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { dashboardStats } from '@/data/demoData';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 const categoryData = [
   { name: 'Konsultacije', revenue: 850000, cost: 320000, profit: 530000 },

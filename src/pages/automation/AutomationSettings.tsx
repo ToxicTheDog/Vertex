@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Save, Mail, MessageSquare, FileText, Bell, Percent, Zap } from 'lucide-react';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 const AutomationSettings = () => {
   return (

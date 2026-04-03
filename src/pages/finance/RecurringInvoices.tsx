@@ -10,6 +10,8 @@ import { demoRecurringInvoices } from '@/data/demoData';
 import { RecurringInvoiceDialog, RecurringInvoiceFormData } from '@/components/dialogs/RecurringInvoiceDialog';
 import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 const frequencyLabels = {
   weekly: 'Nedeljno',

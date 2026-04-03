@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, ShoppingCart, Package, Truck, CheckCircle, Eye, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { demoReceivedOrders, demoClients, demoArticles, Order } from '@/data/demoData';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 const statusLabels: Record<string, string> = {
   pending: 'Na čekanju',
