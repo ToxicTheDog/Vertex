@@ -6,10 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { demoLedgerEntries } from '@/data/demoData';
+import { allLedgerEntries } from '@/data/demoData';
 import { useLocation } from 'react-router-dom';
 import { API_ENDPOINTS } from '@/config/api';
 import { invoicesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const documentTypeLabels = {
   invoice: 'Faktura',
@@ -18,6 +19,7 @@ const documentTypeLabels = {
 };
 
 const Ledger = () => {
+    const { data: allLedgerEntries } = useFetchData(() => invoicesApi.getAll(), allLedgerEntries);
   const location = useLocation();
   const isIncoming = location.pathname.includes('incoming');
   
@@ -25,7 +27,7 @@ const Ledger = () => {
   const [typeFilter, setTypeFilter] = useState('all');
 
   // Filter based on incoming/outgoing
-  const ledgerEntries = demoLedgerEntries.filter(entry => {
+  const ledgerEntries = allLedgerEntries.filter(entry => {
     if (isIncoming) {
       return entry.credit > 0; // Ulazne - primljene fakture
     }

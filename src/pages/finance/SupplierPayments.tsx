@@ -9,12 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { demoReceivedInvoices, demoSuppliers } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
 import { invoicesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const SupplierPayments = () => {
+    const { data: receivedInvoices } = useFetchData(() => invoicesApi.getAll(), demoReceivedInvoices);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const payments = demoReceivedInvoices.map(inv => ({
+  const payments = receivedInvoices.map(inv => ({
     ...inv,
     daysUntilDue: Math.ceil((new Date(inv.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
   }));

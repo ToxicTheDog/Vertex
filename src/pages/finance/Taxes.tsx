@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { demoTaxRecords } from '@/data/demoData';
+import { taxRecords } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
 import { taxesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const typeLabels = {
   vat: 'PDV',
@@ -30,11 +31,12 @@ const statusLabels = {
 };
 
 const Taxes = () => {
+    const { data: taxRecords } = useFetchData(() => taxesApi.getAll(), taxRecords);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
 
-  const filteredRecords = demoTaxRecords.filter(record => {
+  const filteredRecords = taxRecords.filter(record => {
     const matchesSearch = record.period.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || record.status === statusFilter;
     const matchesType = typeFilter === 'all' || record.type === typeFilter;
@@ -45,9 +47,9 @@ const Taxes = () => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
   };
 
-  const totalPending = demoTaxRecords.filter(r => r.status === 'pending').reduce((sum, r) => sum + r.amount, 0);
-  const totalOverdue = demoTaxRecords.filter(r => r.status === 'overdue').reduce((sum, r) => sum + r.amount, 0);
-  const totalPaid = demoTaxRecords.filter(r => r.status === 'paid').reduce((sum, r) => sum + r.amount, 0);
+  const totalPending = taxRecords.filter(r => r.status === 'pending').reduce((sum, r) => sum + r.amount, 0);
+  const totalOverdue = taxRecords.filter(r => r.status === 'overdue').reduce((sum, r) => sum + r.amount, 0);
+  const totalPaid = taxRecords.filter(r => r.status === 'paid').reduce((sum, r) => sum + r.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -66,7 +68,7 @@ const Taxes = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalPending)}</div>
-            <p className="text-xs text-muted-foreground">{demoTaxRecords.filter(r => r.status === 'pending').length} obaveza</p>
+            <p className="text-xs text-muted-foreground">{taxRecords.filter(r => r.status === 'pending').length} obaveza</p>
           </CardContent>
         </Card>
         <Card>
@@ -94,7 +96,7 @@ const Taxes = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Date(demoTaxRecords.filter(r => r.status === 'pending')[0]?.dueDate || '').toLocaleDateString('sr-RS')}
+              {new Date(taxRecords.filter(r => r.status === 'pending')[0]?.dueDate || '').toLocaleDateString('sr-RS')}
             </div>
             <p className="text-xs text-muted-foreground">PDV</p>
           </CardContent>
