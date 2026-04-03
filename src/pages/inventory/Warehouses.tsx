@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { demoWarehouses, demoArticles } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { articlesApi } from '@/services/apiService';
 
 const Warehouses = () => {
   const lowStockItems = demoArticles.filter(a => a.stock <= a.minStock);

@@ -11,7 +11,7 @@ import { Plus, List, Calendar, CheckCircle, XCircle, Eye, Edit, Trash2 } from 'l
 import { toast } from 'sonner';
 import { demoPriceLists, PriceList } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { articlesApi } from '@/services/apiService';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('sr-RS', {

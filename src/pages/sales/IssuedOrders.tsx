@@ -11,7 +11,7 @@ import { Plus, Send, Package, Truck, CheckCircle, Eye, Trash2 } from 'lucide-rea
 import { toast } from 'sonner';
 import { demoIssuedOrders, demoSuppliers, demoArticles, Order } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { invoicesApi } from '@/services/apiService';
 
 const statusLabels: Record<string, string> = {
   pending: 'Na čekanju',

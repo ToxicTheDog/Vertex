@@ -11,7 +11,7 @@ import { PaymentOrderDialog, PaymentOrderFormData } from '@/components/dialogs/P
 import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { paymentOrdersApi } from '@/services/apiService';
 
 const statusColors = {
   pending: 'bg-warning/20 text-warning',

@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { demoClients, demoInvoices, demoSuppliers } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { reportsApi } from '@/services/apiService';
 
 const clientStats = demoClients.map(client => {
   const invoices = demoInvoices.filter(i => i.clientId === client.id);

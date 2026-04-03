@@ -11,7 +11,7 @@ import { Plus, Hash, Package, CheckCircle, Clock, Search, Eye, Edit, Trash2 } fr
 import { toast } from 'sonner';
 import { demoSerialNumbers, demoArticles, demoWarehouses, SerialNumber } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { articlesApi } from '@/services/apiService';
 
 const statusLabels: Record<string, string> = {
   'in-stock': 'Na zalihama',

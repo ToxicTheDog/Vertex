@@ -11,7 +11,7 @@
  import { Plus, Search, Bell, Clock, Calendar, Edit, Trash2, CheckCircle } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { clientsApi } from '@/services/apiService';
  
  interface Reminder {
    id: string;

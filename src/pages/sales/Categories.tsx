@@ -10,7 +10,7 @@ import { Plus, Folder, ChevronRight, Eye, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { demoCategories, Category } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { articlesApi } from '@/services/apiService';
 
 const Categories = () => {
   const [categories, setCategories] = useState<Category[]>(demoCategories);

@@ -11,7 +11,7 @@ import { Plus, ShoppingCart, Package, Truck, CheckCircle, Eye, Edit, Trash2 } fr
 import { toast } from 'sonner';
 import { demoReceivedOrders, demoClients, demoArticles, Order } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { invoicesApi } from '@/services/apiService';
 
 const statusLabels: Record<string, string> = {
   pending: 'Na čekanju',

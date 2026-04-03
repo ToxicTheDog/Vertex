@@ -10,7 +10,7 @@
  import { Plus, Search, ClipboardCheck, Eye, Edit, Trash2, Play, CheckCircle } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { articlesApi } from '@/services/apiService';
  
  interface InventoryList {
    id: string;

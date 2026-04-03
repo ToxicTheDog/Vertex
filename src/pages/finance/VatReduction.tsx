@@ -11,7 +11,7 @@ import { Plus, TrendingDown, Receipt, Calculator, Trash2, Eye, Edit, FileText } 
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { vatReductionApi } from '@/services/apiService';
 
 interface VatPurchase {
   id: string;

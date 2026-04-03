@@ -10,7 +10,7 @@
  import { MessageCircle, Star, ThumbsUp, ThumbsDown, Search, Eye, Reply, Trash2 } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { clientsApi } from '@/services/apiService';
  
  interface FeedbackItem {
    id: string;

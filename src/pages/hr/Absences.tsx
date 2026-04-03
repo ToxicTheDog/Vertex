@@ -12,7 +12,7 @@ import { Plus, CalendarDays, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, Che
 import { toast } from 'sonner';
 import { demoAbsences, demoEmployees, Absence } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { employeesApi } from '@/services/apiService';
 
 const typeLabels: Record<string, string> = {
   vacation: 'Godišnji odmor',

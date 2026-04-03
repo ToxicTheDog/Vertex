@@ -11,7 +11,7 @@ import { Plus, Clock, Calendar, User, Search, Eye, Edit, Trash2, Play, Pause } f
 import { toast } from 'sonner';
 import { demoTimeEntries, demoEmployees, TimeEntry } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { employeesApi } from '@/services/apiService';
 
 const TimeTracking = () => {
   const [entries, setEntries] = useState<TimeEntry[]>(demoTimeEntries);

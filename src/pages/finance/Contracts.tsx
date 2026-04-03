@@ -11,7 +11,7 @@ import { ContractDialog, ContractFormData } from '@/components/dialogs/ContractD
 import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { contractsApi } from '@/services/apiService';
 
 const statusColors = {
   draft: 'bg-muted text-muted-foreground',

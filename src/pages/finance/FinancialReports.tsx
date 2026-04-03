@@ -16,7 +16,7 @@ import {
 import { dashboardStats } from '@/data/demoData';
 import { TrendingUp, TrendingDown, DollarSign, Wallet } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { reportsApi } from '@/services/apiService';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('sr-RS', {

@@ -10,7 +10,7 @@
  import { Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Package } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { articlesApi } from '@/services/apiService';
  
  interface StockMovement {
    id: string;

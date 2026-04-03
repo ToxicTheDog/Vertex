@@ -8,7 +8,7 @@
  import { PackageSearch, AlertTriangle, TrendingUp, TrendingDown, Search, BarChart3 } from 'lucide-react';
  import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { articlesApi } from '@/services/apiService';
  
  interface InventoryItem {
    id: string;

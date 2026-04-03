@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { demoReceivedInvoices, demoSuppliers } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { invoicesApi } from '@/services/apiService';
 
 const SupplierPayments = () => {
   const [searchTerm, setSearchTerm] = useState('');

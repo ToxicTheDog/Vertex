@@ -7,7 +7,7 @@
  import { useToast } from '@/hooks/use-toast';
  import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { articlesApi } from '@/services/apiService';
  
  interface DepreciationRecord {
    id: string;

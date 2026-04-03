@@ -12,7 +12,7 @@ import { InvoiceViewDialog, InvoiceData } from '@/components/dialogs/InvoiceView
 import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { invoicesApi } from '@/services/apiService';
 
 const statusColors = {
   draft: 'bg-muted text-muted-foreground',

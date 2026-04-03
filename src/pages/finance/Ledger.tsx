@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { demoLedgerEntries } from '@/data/demoData';
 import { useLocation } from 'react-router-dom';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { invoicesApi } from '@/services/apiService';
 
 const documentTypeLabels = {
   invoice: 'Faktura',

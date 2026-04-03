@@ -10,7 +10,7 @@
  import { Plus, Search, Megaphone, Edit, Trash2, Percent, Calendar, Tag } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { clientsApi } from '@/services/apiService';
  
  interface Promotion {
    id: string;
