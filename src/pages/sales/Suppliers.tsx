@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Plus, Building, Star, Search, Eye, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { demoSuppliers, Supplier } from '@/data/demoData';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 const Suppliers = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>(demoSuppliers);

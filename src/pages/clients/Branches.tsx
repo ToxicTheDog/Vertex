@@ -23,6 +23,7 @@ import { Branch } from '@/data/demoData';
 import { branchesApi } from '@/services/apiService';
 import { DEMO_MODE } from '@/config/api';
 import { demoBranches } from '@/data/demoData';
+import { API_ENDPOINTS } from '@/config/api';
 
 const Branches = () => {
   const [branches, setBranches] = useState<Branch[]>([]);

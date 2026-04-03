@@ -6,6 +6,8 @@
  import { TrendingDown, Calculator, DollarSign, Calendar, Play } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
  import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
  
  interface DepreciationRecord {
    id: string;

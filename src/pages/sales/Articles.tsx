@@ -39,6 +39,8 @@ import {
 } from '@/components/ui/select';
 import { demoArticles } from '@/data/demoData';
 import { useToast } from '@/hooks/use-toast';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('sr-RS', {

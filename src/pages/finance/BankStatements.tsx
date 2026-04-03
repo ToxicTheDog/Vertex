@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { demoBankStatements } from '@/data/demoData';
 import { BankStatementDialog, BankStatementData } from '@/components/dialogs/BankStatementDialog';
 import { useToast } from '@/hooks/use-toast';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 const BankStatements = () => {
   const [searchTerm, setSearchTerm] = useState('');

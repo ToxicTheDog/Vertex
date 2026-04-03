@@ -24,6 +24,7 @@ import { Link } from 'react-router-dom';
 import { startRealtimeUpdates } from '@/services/apiService';
 import { dashboardApi } from '@/services/apiService';
 import { DEMO_MODE, REALTIME_UPDATE_INTERVAL } from '@/config/api';
+import { API_ENDPOINTS } from '@/config/api';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('sr-RS', {

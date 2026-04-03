@@ -32,6 +32,8 @@ import { demoInvoices } from '@/data/demoData';
 import { InvoiceViewDialog, InvoiceData } from '@/components/dialogs/InvoiceViewDialog';
 import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
+import { API_ENDPOINTS } from '@/config/api';
+import { apiService } from '@/services/apiService';
 
 const statusColors: Record<string, string> = {
   paid: 'bg-success text-success-foreground',
