@@ -7,7 +7,8 @@
  import { useToast } from '@/hooks/use-toast';
  import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { articlesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
  
  interface DepreciationRecord {
    id: string;
@@ -45,7 +46,7 @@ import { apiService } from '@/services/apiService';
  
  const Depreciation = () => {
    const [year, setYear] = useState('2024');
-   const [records] = useState<DepreciationRecord[]>(depreciationData);
+   const { data: records } = useFetchData(() => articlesApi.getAll(), depreciationData);
    const { toast } = useToast();
  
    const totalPurchaseValue = records.reduce((sum, r) => sum + r.purchaseValue, 0);

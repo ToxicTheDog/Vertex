@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { demoTransactions, demoBankStatements } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { reportsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const cashFlowData = [
   { month: 'Jan', inflow: 380000, outflow: 290000, balance: 90000 },
@@ -37,11 +38,12 @@ const upcomingOutflows = [
 ];
 
 const CashFlow = () => {
+  const { data: bankStatements } = useFetchData(() => reportsApi.getCashFlow("", ""), demoBankStatements);
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
   };
 
-  const currentBalance = demoBankStatements[0]?.closingBalance || 0;
+  const currentBalance = bankStatements[0]?.closingBalance || 0;
   const totalInflow = cashFlowData.reduce((sum, m) => sum + m.inflow, 0);
   const totalOutflow = cashFlowData.reduce((sum, m) => sum + m.outflow, 0);
   const netCashFlow = totalInflow - totalOutflow;

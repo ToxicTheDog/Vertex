@@ -10,7 +10,8 @@
  import { Plus, Search, Building, Edit, Trash2, DollarSign, TrendingDown } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { articlesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
  
  interface FixedAsset {
    id: string;
@@ -32,7 +33,7 @@ import { apiService } from '@/services/apiService';
  ];
  
  const FixedAssets = () => {
-   const [assets, setAssets] = useState<FixedAsset[]>(initialAssets);
+   const { data: assets, setData: setAssets } = useFetchData(() => articlesApi.getAll(), initialAssets);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const [editingAsset, setEditingAsset] = useState<FixedAsset | null>(null);

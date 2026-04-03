@@ -10,7 +10,8 @@
  import { Plus, Search, Eye, Edit, Trash2, Plane, Calendar, MapPin, DollarSign } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { employeesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
  
  interface BusinessTrip {
    id: string;
@@ -31,7 +32,7 @@ import { apiService } from '@/services/apiService';
  ];
  
  const BusinessTrips = () => {
-   const [trips, setTrips] = useState<BusinessTrip[]>(initialTrips);
+   const { data: trips, setData: setTrips } = useFetchData(() => employeesApi.getAll(), initialTrips);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const [editingTrip, setEditingTrip] = useState<BusinessTrip | null>(null);

@@ -11,7 +11,8 @@
  import { Plus, Search, Bell, Clock, Calendar, Edit, Trash2, CheckCircle } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { clientsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
  
  interface Reminder {
    id: string;
@@ -33,7 +34,7 @@ import { apiService } from '@/services/apiService';
  ];
  
  const Reminders = () => {
-   const [reminders, setReminders] = useState<Reminder[]>(initialReminders);
+   const { data: reminders, setData: setReminders } = useFetchData(() => clientsApi.getAll(), initialReminders);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);

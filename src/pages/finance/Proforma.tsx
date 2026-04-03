@@ -12,7 +12,8 @@ import { InvoiceViewDialog, InvoiceData } from '@/components/dialogs/InvoiceView
 import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { invoicesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const statusColors = {
   draft: 'bg-muted text-muted-foreground',
@@ -33,7 +34,7 @@ const statusLabels = {
 const Proforma = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [invoices, setInvoices] = useState(demoInvoices.filter(inv => inv.type === 'proforma'));
+  const { data: invoices, setData: setInvoices, isLoading: _isLoading, refetch } = useFetchData(() => invoicesApi.getAll(), demoInvoices.filter(inv => inv.type === 'proforma'));
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);

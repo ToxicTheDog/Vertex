@@ -40,7 +40,8 @@ import {
 import { demoArticles } from '@/data/demoData';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { articlesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('sr-RS', {
@@ -51,14 +52,15 @@ const formatCurrency = (value: number) => {
 };
 
 const Articles = () => {
+  const { data: articles } = useFetchData(() => articlesApi.getAll(), demoArticles);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const categories = [...new Set(demoArticles.map(a => a.category))];
+  const categories = [...new Set(articles.map(a => a.category))];
 
-  const filteredArticles = demoArticles.filter(article => {
+  const filteredArticles = articles.filter(article => {
     const matchesSearch = 
       article.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       article.code.toLowerCase().includes(searchTerm.toLowerCase());
@@ -74,8 +76,8 @@ const Articles = () => {
     setIsDialogOpen(false);
   };
 
-  const lowStockCount = demoArticles.filter(a => a.stock <= a.minStock).length;
-  const totalValue = demoArticles.reduce((sum, a) => sum + (a.stock * a.price), 0);
+  const lowStockCount = articles.filter(a => a.stock <= a.minStock).length;
+  const totalValue = articles.reduce((sum, a) => sum + (a.stock * a.price), 0);
 
   return (
     <div className="space-y-6">
@@ -190,7 +192,7 @@ const Articles = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Ukupno artikala</p>
-                <p className="text-2xl font-bold">{demoArticles.length}</p>
+                <p className="text-2xl font-bold">{articles.length}</p>
               </div>
             </div>
           </CardContent>

@@ -12,7 +12,8 @@ import { Plus, CalendarDays, Clock, CheckCircle, XCircle, Eye, Edit, Trash2, Che
 import { toast } from 'sonner';
 import { demoAbsences, demoEmployees, Absence } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { employeesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const typeLabels: Record<string, string> = {
   vacation: 'Godišnji odmor',
@@ -43,7 +44,7 @@ const statusColors: Record<string, string> = {
 };
 
 const Absences = () => {
-  const [absences, setAbsences] = useState<Absence[]>(demoAbsences);
+  const { data: absences, setData: setAbsences, isLoading: _isLoading, refetch } = useFetchData(() => employeesApi.getAll(), demoAbsences);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedAbsence, setSelectedAbsence] = useState<Absence | null>(null);

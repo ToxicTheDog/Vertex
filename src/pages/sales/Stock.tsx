@@ -8,7 +8,8 @@ import { Package, AlertTriangle, TrendingUp, TrendingDown, Eye } from 'lucide-re
 import { Link } from 'react-router-dom';
 import { demoArticles, demoWarehouses } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { articlesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('sr-RS', {
@@ -19,8 +20,10 @@ const formatCurrency = (value: number) => {
 };
 
 const Stock = () => {
-  const articles = demoArticles;
-  const warehouses = demoWarehouses;
+  const { data: articles } = useFetchData(() => articlesApi.getAll(), demoArticles);
+  const { data: warehouses } = useFetchData(() => articlesApi.getAll(), demoWarehouses);
+  
+  
 
   const lowStockItems = articles.filter(a => a.stock <= a.minStock);
   const totalStockValue = articles.reduce((sum, a) => sum + (a.stock * a.price), 0);

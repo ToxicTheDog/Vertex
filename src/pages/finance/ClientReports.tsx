@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { demoClients, demoInvoices, demoSuppliers } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { reportsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const clientStats = demoClients.map(client => {
   const invoices = demoInvoices.filter(i => i.clientId === client.id);
@@ -30,6 +31,9 @@ const topClientsChart = clientStats.slice(0, 5).map(c => ({
 }));
 
 const ClientReports = () => {
+  const { data: clients } = useFetchData(() => reportsApi.getFinancial("", ""), demoClients);
+  const { data: invoices } = useFetchData(() => reportsApi.getSales("", ""), demoInvoices);
+  const { data: suppliers } = useFetchData(() => reportsApi.getFinancial("", ""), demoSuppliers);
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
   };
@@ -58,7 +62,7 @@ const ClientReports = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{demoClients.length}</div>
+            <div className="text-2xl font-bold">{clients.length}</div>
             <p className="text-xs text-success flex items-center gap-1">
               <TrendingUp className="h-3 w-3" /> +3 ovog meseca
             </p>
@@ -139,7 +143,7 @@ const ClientReports = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {demoSuppliers.map((supplier) => (
+                {suppliers.map((supplier) => (
                   <TableRow key={supplier.id}>
                     <TableCell>
                       <div>

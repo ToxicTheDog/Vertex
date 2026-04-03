@@ -10,10 +10,11 @@ import { Plus, Folder, ChevronRight, Eye, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { demoCategories, Category } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { articlesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const Categories = () => {
-  const [categories, setCategories] = useState<Category[]>(demoCategories);
+  const { data: categories, setData: setCategories, isLoading: _isLoading, refetch } = useFetchData(() => articlesApi.getAll(), demoCategories);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);

@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { taxesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 interface PPPDVForm {
   id: string;
@@ -36,13 +37,14 @@ const statusLabels = {
 };
 
 const PPPDV = () => {
+  const { data: forms } = useFetchData(() => taxesApi.getAll(), demoForms);
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
   };
 
-  const totalVatDue = demoForms.reduce((sum, f) => sum + f.vatDue, 0);
-  const totalOutputVat = demoForms.reduce((sum, f) => sum + f.outputVat, 0);
-  const totalInputVat = demoForms.reduce((sum, f) => sum + f.inputVat, 0);
+  const totalVatDue = forms.reduce((sum, f) => sum + f.vatDue, 0);
+  const totalOutputVat = forms.reduce((sum, f) => sum + f.outputVat, 0);
+  const totalInputVat = forms.reduce((sum, f) => sum + f.inputVat, 0);
 
   return (
     <div className="space-y-6">
@@ -120,7 +122,7 @@ const PPPDV = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {demoForms.map((form) => (
+              {forms.map((form) => (
                 <TableRow key={form.id}>
                   <TableCell className="font-medium">{form.period}</TableCell>
                   <TableCell>{form.year}</TableCell>

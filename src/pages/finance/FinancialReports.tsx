@@ -16,7 +16,8 @@ import {
 import { dashboardStats } from '@/data/demoData';
 import { TrendingUp, TrendingDown, DollarSign, Wallet } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { reportsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('sr-RS', {
@@ -35,6 +36,7 @@ const expenseData = [
 ];
 
 const FinancialReports = () => {
+  const { data: stats } = useFetchData(() => reportsApi.getFinancial('', ''), dashboardStats);
   const totalExpenses = expenseData.reduce((sum, e) => sum + e.amount, 0);
 
   return (

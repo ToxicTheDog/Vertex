@@ -9,7 +9,8 @@
  import { Plus, Search, FileText, Edit, Trash2, Printer, CheckCircle } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { employeesApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
  
  interface TravelOrder {
    id: string;
@@ -31,7 +32,7 @@ import { apiService } from '@/services/apiService';
  ];
  
  const TravelOrders = () => {
-   const [orders, setOrders] = useState<TravelOrder[]>(initialOrders);
+   const { data: orders, setData: setOrders } = useFetchData(() => employeesApi.getAll(), initialOrders);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const [editingOrder, setEditingOrder] = useState<TravelOrder | null>(null);

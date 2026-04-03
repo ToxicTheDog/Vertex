@@ -10,10 +10,11 @@ import { Plus, Building, Star, Search, Eye, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { demoSuppliers, Supplier } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { clientsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 const Suppliers = () => {
-  const [suppliers, setSuppliers] = useState<Supplier[]>(demoSuppliers);
+  const { data: suppliers, setData: setSuppliers, isLoading: _isLoading, refetch } = useFetchData(() => clientsApi.getAll(), demoSuppliers);
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);

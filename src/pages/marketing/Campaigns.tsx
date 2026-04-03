@@ -11,7 +11,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { API_ENDPOINTS } from '@/config/api';
-import { apiService } from '@/services/apiService';
+import { clientsApi } from '@/services/apiService';
+import { useFetchData } from '@/hooks/useFetchData';
 
 interface Campaign {
   id: string;
