@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  FileText, 
+import {
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Users,
+  FileText,
   AlertTriangle,
   ArrowUpRight,
   ArrowDownRight,
@@ -15,23 +15,14 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell
 } from 'recharts';
 import { dashboardStats, demoInvoices, demoTransactions, demoArticles } from '@/data/demoData';
 import { Link } from 'react-router-dom';
 import { startRealtimeUpdates } from '@/services/apiService';
+import { dashboardApi } from '@/services/apiService';
 import { DEMO_MODE, REALTIME_UPDATE_INTERVAL } from '@/config/api';
 
 const formatCurrency = (value: number) => {
@@ -66,21 +57,59 @@ const pieData = [
 ];
 
 const Dashboard = () => {
-  const lowStockItems = demoArticles.filter(a => a.stock <= a.minStock);
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [realtimeData, setRealtimeData] = useState<any>(null);
 
+  // Učitavanje statistike sa API-ja ili demo podataka
+  const fetchDashboardStats = async () => {
+    setLoading(true);
+    setError(null);
+
+    if (DEMO_MODE) {
+      await new Promise(resolve => setTimeout(resolve, 400)); // simulacija
+      setStats(dashboardStats);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await dashboardApi.getStats();
+
+      if (response.success && response.data) {
+        setStats(response.data);
+      } else {
+        setError(response.message || 'Greška pri učitavanju dashboarda');
+        // Fallback na demo podatke ako API padne
+        setStats(dashboardStats);
+      }
+    } catch (err) {
+      console.error('Dashboard stats error:', err);
+      setError('Nije moguće učitati podatke sa servera');
+      setStats(dashboardStats); // fallback
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Real-time ažuriranja
   useEffect(() => {
+    fetchDashboardStats();
+
     const stopUpdates = startRealtimeUpdates((data) => {
       setRealtimeData(data);
       setLastUpdate(new Date());
       setIsRealtimeConnected(true);
-    }, REALTIME_UPDATE_INTERVAL);
 
-    // Postavi initial connected status
-    setIsRealtimeConnected(true);
+      // Ako dobijemo nove podatke, možemo osvežiti stats (opciono)
+      if (data?.data) {
+        setStats(prev => ({ ...prev, ...data.data }));
+      }
+    }, REALTIME_UPDATE_INTERVAL);
 
     return () => {
       stopUpdates();
@@ -88,21 +117,38 @@ const Dashboard = () => {
     };
   }, []);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-3">
+          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Učitavanje dashboarda...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const currentStats = stats || dashboardStats;
+  const lowStockItems = demoArticles.filter(a => a.stock <= a.minStock);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Pregled poslovanja - Januar 2024</p>
+          <p className="text-muted-foreground">
+            Pregled poslovanja • {new Date().toLocaleDateString('sr-RS', { month: 'long', year: 'numeric' })}
+          </p>
         </div>
+
         <div className="flex items-center gap-4">
-          {/* Real-time status indikator */}
+          {/* Real-time status */}
           <div className="flex items-center gap-2 text-sm">
             {isRealtimeConnected ? (
               <>
                 <Wifi className="h-4 w-4 text-success animate-pulse" />
                 <span className="text-muted-foreground">
-                  {DEMO_MODE ? 'Demo' : 'Live'} 
+                  {DEMO_MODE ? 'Demo režim' : 'Uživo'}
                   {lastUpdate && ` • ${lastUpdate.toLocaleTimeString('sr-RS')}`}
                 </span>
               </>
@@ -113,6 +159,7 @@ const Dashboard = () => {
               </>
             )}
           </div>
+
           <div className="flex gap-2">
             <Button variant="outline" asChild>
               <Link to="/financial-reports">Izveštaji</Link>
@@ -135,11 +182,10 @@ const Dashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(dashboardStats.totalRevenue)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(currentStats.totalRevenue)}</div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
               <ArrowUpRight className="h-3 w-3 text-success mr-1" />
-              <span className="text-success">+12.5%</span>
-              <span className="ml-1">u odnosu na prošli mesec</span>
+              <span className="text-success">+12.5%</span> u odnosu na prošli mesec
             </p>
           </CardContent>
         </Card>
@@ -150,11 +196,10 @@ const Dashboard = () => {
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(dashboardStats.totalExpenses)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(currentStats.totalExpenses)}</div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
               <ArrowDownRight className="h-3 w-3 text-destructive mr-1" />
-              <span className="text-destructive">+5.2%</span>
-              <span className="ml-1">u odnosu na prošli mesec</span>
+              <span className="text-destructive">+5.2%</span> u odnosu na prošli mesec
             </p>
           </CardContent>
         </Card>
@@ -165,11 +210,10 @@ const Dashboard = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-success">{formatCurrency(dashboardStats.profit)}</div>
+            <div className="text-2xl font-bold text-success">{formatCurrency(currentStats.profit)}</div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
               <ArrowUpRight className="h-3 w-3 text-success mr-1" />
-              <span className="text-success">+18.3%</span>
-              <span className="ml-1">u odnosu na prošli mesec</span>
+              <span className="text-success">+18.3%</span> u odnosu na prošli mesec
             </p>
           </CardContent>
         </Card>
@@ -180,10 +224,8 @@ const Dashboard = () => {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-warning">{formatCurrency(dashboardStats.vatToPay)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Rok: 15. februar 2024
-            </p>
+            <div className="text-2xl font-bold text-warning">{formatCurrency(currentStats.vatToPay)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Rok: 15. februar 2024</p>
           </CardContent>
         </Card>
       </div>
@@ -195,7 +237,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Neplaćene fakture</p>
-                <p className="text-2xl font-bold">{dashboardStats.pendingInvoices}</p>
+                <p className="text-2xl font-bold">{currentStats.pendingInvoices}</p>
               </div>
               <FileText className="h-8 w-8 text-warning" />
             </div>
@@ -206,7 +248,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Dospele fakture</p>
-                <p className="text-2xl font-bold text-destructive">{dashboardStats.overdueInvoices}</p>
+                <p className="text-2xl font-bold text-destructive">{currentStats.overdueInvoices}</p>
               </div>
               <AlertTriangle className="h-8 w-8 text-destructive" />
             </div>
@@ -217,7 +259,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Ukupno klijenata</p>
-                <p className="text-2xl font-bold">{dashboardStats.totalClients}</p>
+                <p className="text-2xl font-bold">{currentStats.totalClients}</p>
               </div>
               <Users className="h-8 w-8 text-primary" />
             </div>
@@ -236,6 +278,7 @@ const Dashboard = () => {
         </Card>
       </div>
 
+      {/* Grafici i tabele ostaju iste (za sada) */}
       {/* Grafici */}
       <div className="grid gap-4 md:grid-cols-7">
         <Card className="md:col-span-4">
@@ -248,39 +291,39 @@ const Dashboard = () => {
               <AreaChart data={dashboardStats.monthlyData}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--chart-4))" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="hsl(var(--chart-4))" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--chart-4))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--chart-4))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${v/1000}k`} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--popover))', 
+                <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${v / 1000}k`} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--popover))',
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px'
                   }}
                   formatter={(value: number) => formatCurrency(value)}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="hsl(var(--chart-1))" 
-                  fillOpacity={1} 
-                  fill="url(#colorRevenue)" 
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="hsl(var(--chart-1))"
+                  fillOpacity={1}
+                  fill="url(#colorRevenue)"
                   name="Prihodi"
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="expenses" 
-                  stroke="hsl(var(--chart-4))" 
-                  fillOpacity={1} 
-                  fill="url(#colorExpenses)" 
+                <Area
+                  type="monotone"
+                  dataKey="expenses"
+                  stroke="hsl(var(--chart-4))"
+                  fillOpacity={1}
+                  fill="url(#colorExpenses)"
                   name="Rashodi"
                 />
               </AreaChart>
@@ -309,9 +352,9 @@ const Dashboard = () => {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--popover))', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--popover))',
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px'
                   }}

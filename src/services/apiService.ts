@@ -3,6 +3,7 @@
 import { DEMO_MODE, API_ENDPOINTS, REALTIME_UPDATE_INTERVAL } from '@/config/api';
 import { logService, LogAction } from './logService';
 import { authService } from './authService';
+import { Branch, CrmNote, FiscalRegister, PosTerminal } from '@/data/demoData';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -63,7 +64,7 @@ async function makeRequest<T>(
     if (response.status === 401) {
       console.warn('[API] 401 Unauthorized - pokušaj refresh tokena');
       const refreshed = await authService.refreshAccessToken();
-      
+
       if (refreshed) {
         // Ponovi originalni zahtev sa novim tokenom
         const newToken = authService.getToken();
@@ -138,6 +139,192 @@ function getCurrentUserName(): string {
   const user = authService.getCurrentUser();
   return user?.name || 'Nepoznat';
 }
+
+// ==================== POSLOVNICE (BRANCHES) ====================
+export const branchesApi = {
+  async getAll(): Promise<ApiResponse<Branch[]>> {
+    return makeRequest(API_ENDPOINTS.branches?.list || '/api/branches', { method: 'GET' }, 'branches', 'view');
+  },
+
+  async getById(id: string): Promise<ApiResponse<Branch>> {
+    return makeRequest(API_ENDPOINTS.branches?.get(id) || `/api/branches/${id}`, { method: 'GET' }, 'branches', 'view');
+  },
+
+  async create(data: any): Promise<ApiResponse<Branch>> {
+    return makeRequest(
+      API_ENDPOINTS.branches?.create || '/api/branches',
+      { method: 'POST', body: JSON.stringify(data) },
+      'branches',
+      'create'
+    );
+  },
+
+  async update(id: string, data: any): Promise<ApiResponse<Branch>> {
+    return makeRequest(
+      API_ENDPOINTS.branches?.update(id) || `/api/branches/${id}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+      'branches',
+      'update'
+    );
+  },
+
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(
+      API_ENDPOINTS.branches?.delete(id) || `/api/branches/${id}`,
+      { method: 'DELETE' },
+      'branches',
+      'delete'
+    );
+  },
+
+  async toggleActive(id: string, isActive: boolean): Promise<ApiResponse<Branch>> {
+    return makeRequest(
+      API_ENDPOINTS.branches?.toggleActive(id) || `/api/branches/${id}/toggle`,
+      { method: 'PATCH', body: JSON.stringify({ isActive }) },
+      'branches',
+      'update'
+    );
+  }
+};
+
+// ==================== POS TERMINALI ====================
+export const posTerminalsApi = {
+  async getAll(): Promise<ApiResponse<PosTerminal[]>> {
+    return makeRequest(
+      API_ENDPOINTS.posTerminals?.list || '/api/pos-terminals',
+      { method: 'GET' },
+      'pos-terminals',
+      'view'
+    );
+  },
+
+  async getById(id: string): Promise<ApiResponse<PosTerminal>> {
+    return makeRequest(
+      API_ENDPOINTS.posTerminals?.get(id) || `/api/pos-terminals/${id}`,
+      { method: 'GET' },
+      'pos-terminals',
+      'view'
+    );
+  },
+
+  async create(data: any): Promise<ApiResponse<PosTerminal>> {
+    return makeRequest(
+      API_ENDPOINTS.posTerminals?.create || '/api/pos-terminals',
+      { method: 'POST', body: JSON.stringify(data) },
+      'pos-terminals',
+      'create'
+    );
+  },
+
+  async update(id: string, data: any): Promise<ApiResponse<PosTerminal>> {
+    return makeRequest(
+      API_ENDPOINTS.posTerminals?.update(id) || `/api/pos-terminals/${id}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+      'pos-terminals',
+      'update'
+    );
+  },
+
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(
+      API_ENDPOINTS.posTerminals?.delete(id) || `/api/pos-terminals/${id}`,
+      { method: 'DELETE' },
+      'pos-terminals',
+      'delete'
+    );
+  }
+};
+
+// ==================== FISKALNE BLAGAJNE ====================
+export const fiscalRegistersApi = {
+  async getAll(): Promise<ApiResponse<FiscalRegister[]>> {
+    return makeRequest(
+      API_ENDPOINTS.fiscalRegisters?.list || '/api/fiscal-registers',
+      { method: 'GET' },
+      'fiscal-registers',
+      'view'
+    );
+  },
+
+  async getById(id: string): Promise<ApiResponse<FiscalRegister>> {
+    return makeRequest(
+      API_ENDPOINTS.fiscalRegisters?.get(id) || `/api/fiscal-registers/${id}`,
+      { method: 'GET' },
+      'fiscal-registers',
+      'view'
+    );
+  },
+
+  async create(data: any): Promise<ApiResponse<FiscalRegister>> {
+    return makeRequest(
+      API_ENDPOINTS.fiscalRegisters?.create || '/api/fiscal-registers',
+      { method: 'POST', body: JSON.stringify(data) },
+      'fiscal-registers',
+      'create'
+    );
+  },
+
+  async update(id: string, data: any): Promise<ApiResponse<FiscalRegister>> {
+    return makeRequest(
+      API_ENDPOINTS.fiscalRegisters?.update(id) || `/api/fiscal-registers/${id}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+      'fiscal-registers',
+      'update'
+    );
+  },
+
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(
+      API_ENDPOINTS.fiscalRegisters?.delete(id) || `/api/fiscal-registers/${id}`,
+      { method: 'DELETE' },
+      'fiscal-registers',
+      'delete'
+    );
+  }
+};
+
+// ==================== CRM BELEŠKE ====================
+export const crmNotesApi = {
+  async getAll(): Promise<ApiResponse<CrmNote[]>> {
+    return makeRequest(API_ENDPOINTS.crmNotes?.list || '/api/crm-notes', { method: 'GET' }, 'crm-notes', 'view');
+  },
+
+  async getById(id: string): Promise<ApiResponse<CrmNote>> {
+    return makeRequest(
+      API_ENDPOINTS.crmNotes?.get(id) || `/api/crm-notes/${id}`,
+      { method: 'GET' },
+      'crm-notes',
+      'view'
+    );
+  },
+
+  async create(data: any): Promise<ApiResponse<CrmNote>> {
+    return makeRequest(
+      API_ENDPOINTS.crmNotes?.create || '/api/crm-notes',
+      { method: 'POST', body: JSON.stringify(data) },
+      'crm-notes',
+      'create'
+    );
+  },
+
+  async update(id: string, data: any): Promise<ApiResponse<CrmNote>> {
+    return makeRequest(
+      API_ENDPOINTS.crmNotes?.update(id) || `/api/crm-notes/${id}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+      'crm-notes',
+      'update'
+    );
+  },
+
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(
+      API_ENDPOINTS.crmNotes?.delete(id) || `/api/crm-notes/${id}`,
+      { method: 'DELETE' },
+      'crm-notes',
+      'delete'
+    );
+  }
+};
 
 // ==================== KLIJENTI ====================
 export const clientsApi = {
@@ -440,10 +627,10 @@ export const bankStatementsApi = {
       await simulateDelay();
       return { success: true, message: 'Demo mod - fajl nije uploadovan' };
     }
-    
+
     const formData = new FormData();
     formData.append('file', file);
-    
+
     return makeRequest(
       API_ENDPOINTS.bankStatements.import,
       { method: 'POST', body: formData, headers: {} },
@@ -628,7 +815,7 @@ export function startRealtimeUpdates(callback: (data: any) => void, interval: nu
         }
       });
     }, interval);
-    
+
     return () => clearInterval(intervalId);
   }
 

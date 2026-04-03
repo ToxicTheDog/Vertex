@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Plus, Building2, MapPin, Phone, Edit, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,17 +8,34 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Building2, MapPin, Phone, Eye, Edit, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { demoBranches, Branch } from '@/data/demoData';
+import { Branch } from '@/data/demoData';
+import { branchesApi } from '@/services/apiService';
+import { DEMO_MODE } from '@/config/api';
+import { demoBranches } from '@/data/demoData';
 
 const Branches = () => {
-  const [branches, setBranches] = useState<Branch[]>(demoBranches);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -27,23 +45,37 @@ const Branches = () => {
     isActive: true,
   });
 
-  const handleSubmit = () => {
-    const newBranch: Branch = {
-      id: isEditing && selectedBranch ? selectedBranch.id : Date.now().toString(),
-      ...formData,
-    };
+  // Učitavanje poslovnica
+  const fetchBranches = async () => {
+    setIsLoading(true);
 
-    if (isEditing && selectedBranch) {
-      setBranches(branches.map(b => b.id === selectedBranch.id ? newBranch : b));
-      toast.success('Poslovnica je uspešno izmenjena');
-    } else {
-      setBranches([newBranch, ...branches]);
-      toast.success('Poslovnica je uspešno kreirana');
+    if (DEMO_MODE) {
+      setBranches(demoBranches);
+      setIsLoading(false);
+      return;
     }
 
-    setDialogOpen(false);
-    resetForm();
+    try {
+      const response = await branchesApi.getAll();
+
+      if (response.success && response.data) {
+        setBranches(response.data);
+      } else {
+        toast.error(response.message || "Greška pri učitavanju poslovnica");
+        setBranches(demoBranches); // fallback
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+      toast.error("Nije moguće učitati poslovnice sa servera");
+      setBranches(demoBranches); // fallback
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchBranches();
+  }, []);
 
   const resetForm = () => {
     setFormData({
@@ -54,8 +86,13 @@ const Branches = () => {
       phone: '',
       isActive: true,
     });
-    setIsEditing(false);
     setSelectedBranch(null);
+    setIsEditing(false);
+  };
+
+  const handleAddNew = () => {
+    resetForm();
+    setDialogOpen(true);
   };
 
   const handleEdit = (branch: Branch) => {
@@ -72,21 +109,99 @@ const Branches = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setBranches(branches.filter(b => b.id !== id));
-    toast.success('Poslovnica je obrisana');
-  };
-
-  const handleView = (branch: Branch) => {
+  const handleDeleteClick = (branch: Branch) => {
     setSelectedBranch(branch);
-    setViewDialogOpen(true);
+    setDeleteDialogOpen(true);
   };
 
-  const toggleActive = (id: string) => {
-    setBranches(branches.map(b => 
-      b.id === id ? { ...b, isActive: !b.isActive } : b
-    ));
+  // Kreiranje ili ažuriranje
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.address || !formData.city) {
+      toast.error("Naziv, adresa i grad su obavezni!");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      if (isEditing && selectedBranch) {
+        // UPDATE
+        if (DEMO_MODE) {
+          const updatedBranch: Branch = { ...selectedBranch, ...formData };
+          setBranches(branches.map(b => b.id === selectedBranch.id ? updatedBranch : b));
+          toast.success('Poslovnica je uspešno izmenjena');
+        } else {
+          const response = await branchesApi.update(selectedBranch.id, formData);
+          if (response.success) {
+            toast.success('Poslovnica je uspešno izmenjena');
+            fetchBranches();
+          } else {
+            throw new Error(response.message || 'Greška pri ažuriranju');
+          }
+        }
+      } else {
+        // CREATE
+        if (DEMO_MODE) {
+          const newBranch: Branch = {
+            id: Date.now().toString(),
+            ...formData,
+          };
+          setBranches([newBranch, ...branches]);
+          toast.success('Nova poslovnica je uspešno kreirana');
+        } else {
+          const response = await branchesApi.create(formData);
+          if (response.success) {
+            toast.success('Nova poslovnica je uspešno kreirana');
+            fetchBranches();
+          } else {
+            throw new Error(response.message || 'Greška pri kreiranju');
+          }
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Došlo je do greške prilikom čuvanja");
+    } finally {
+      setIsSubmitting(false);
+      setDialogOpen(false);
+      resetForm();
+    }
   };
+
+  // Brisanje
+  const confirmDelete = async () => {
+    if (!selectedBranch) return;
+
+    setIsDeleting(true);
+
+    try {
+      if (DEMO_MODE) {
+        setBranches(branches.filter(b => b.id !== selectedBranch.id));
+        toast.success('Poslovnica je uspešno obrisana');
+      } else {
+        const response = await branchesApi.delete(selectedBranch.id);
+        if (response.success) {
+          toast.success('Poslovnica je uspešno obrisana');
+          fetchBranches();
+        } else {
+          throw new Error(response.message || 'Greška pri brisanju');
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Nije moguće obrisati poslovnicu");
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setSelectedBranch(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-96 text-lg">
+        Učitavanje poslovnica...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -95,7 +210,7 @@ const Branches = () => {
           <h1 className="text-3xl font-bold tracking-tight">Poslovnice</h1>
           <p className="text-muted-foreground">Upravljanje poslovnicama i lokacijama</p>
         </div>
-        <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
+        <Button onClick={handleAddNew}>
           <Plus className="mr-2 h-4 w-4" />
           Nova poslovnica
         </Button>
@@ -119,7 +234,9 @@ const Branches = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Aktivne</p>
-                <p className="text-2xl font-bold text-success">{branches.filter(b => b.isActive).length}</p>
+                <p className="text-2xl font-bold text-success">
+                  {branches.filter(b => b.isActive).length}
+                </p>
               </div>
               <div className="h-8 w-8 rounded-full bg-success/20 flex items-center justify-center">
                 <Building2 className="h-4 w-4 text-success" />
@@ -132,7 +249,9 @@ const Branches = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Neaktivne</p>
-                <p className="text-2xl font-bold text-muted-foreground">{branches.filter(b => !b.isActive).length}</p>
+                <p className="text-2xl font-bold text-muted-foreground">
+                  {branches.filter(b => !b.isActive).length}
+                </p>
               </div>
               <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
                 <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -186,13 +305,14 @@ const Branches = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleView(branch)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(branch)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(branch.id)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteClick(branch)}
+                      >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -204,38 +324,37 @@ const Branches = () => {
         </CardContent>
       </Card>
 
-      {/* Dialog za novu/izmenu poslovnice */}
+      {/* Dialog za kreiranje / izmenu */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Izmena poslovnice' : 'Nova poslovnica'}</DialogTitle>
-            <DialogDescription>
-              Unesite podatke o poslovnici
-            </DialogDescription>
+            <DialogDescription>Unesite podatke o poslovnici</DialogDescription>
           </DialogHeader>
+
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Naziv poslovnice</Label>
+              <Label htmlFor="name">Naziv poslovnice *</Label>
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="address">Adresa</Label>
+              <Label htmlFor="address">Adresa *</Label>
               <Input
                 id="address"
                 value={formData.address}
-                onChange={(e) => setFormData({...formData, address: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="city">Grad</Label>
+              <Label htmlFor="city">Grad *</Label>
               <Input
                 id="city"
                 value={formData.city}
-                onChange={(e) => setFormData({...formData, city: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -243,7 +362,7 @@ const Branches = () => {
               <Input
                 id="manager"
                 value={formData.manager}
-                onChange={(e) => setFormData({...formData, manager: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -251,7 +370,7 @@ const Branches = () => {
               <Input
                 id="phone"
                 value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -259,58 +378,51 @@ const Branches = () => {
               <Switch
                 id="active"
                 checked={formData.isActive}
-                onCheckedChange={(checked) => setFormData({...formData, isActive: checked})}
+                onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
               />
             </div>
           </div>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Otkaži</Button>
-            <Button onClick={handleSubmit}>{isEditing ? 'Sačuvaj' : 'Kreiraj'}</Button>
+            <Button
+              variant="outline"
+              onClick={() => { setDialogOpen(false); resetForm(); }}
+            >
+              Otkaži
+            </Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting
+                ? "Čuvanje..."
+                : isEditing
+                  ? "Sačuvaj izmene"
+                  : "Kreiraj poslovnicu"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog za pregled */}
-      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Detalji poslovnice</DialogTitle>
-          </DialogHeader>
-          {selectedBranch && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">{selectedBranch.name}</h3>
-                  <Badge className={selectedBranch.isActive ? 'bg-success text-success-foreground' : 'bg-muted text-muted-foreground'}>
-                    {selectedBranch.isActive ? 'Aktivna' : 'Neaktivna'}
-                  </Badge>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-4">
-                <div>
-                  <Label className="text-muted-foreground">Adresa</Label>
-                  <p className="font-medium">{selectedBranch.address}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Grad</Label>
-                  <p className="font-medium">{selectedBranch.city}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Menadžer</Label>
-                  <p className="font-medium">{selectedBranch.manager}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Telefon</Label>
-                  <p className="font-medium">{selectedBranch.phone}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Potvrda brisanja */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Da li ste sigurni?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ova akcija će trajno obrisati poslovnicu <strong>{selectedBranch?.name}</strong>.<br />
+              Ova radnja se ne može opozvati.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Otkaži</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting ? "Brisanje..." : "Obriši poslovnicu"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

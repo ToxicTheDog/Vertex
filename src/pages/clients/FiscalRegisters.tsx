@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Plus, Printer, Wrench, CheckCircle, AlertTriangle, Eye, Edit, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,9 +8,21 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Printer, Wrench, CheckCircle, AlertTriangle, Eye, Edit, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { demoFiscalRegisters, demoBranches, FiscalRegister } from '@/data/demoData';
+import { FiscalRegister } from '@/data/demoData';
+import { fiscalRegistersApi, branchesApi } from '@/services/apiService'; // ← dodajemo oba
+import { DEMO_MODE } from '@/config/api';
+import { demoFiscalRegisters, demoBranches } from '@/data/demoData';
 
 const statusLabels: Record<string, string> = {
   active: 'Aktivna',
@@ -24,12 +37,19 @@ const statusColors: Record<string, string> = {
 };
 
 const FiscalRegisters = () => {
-  const [registers, setRegisters] = useState<FiscalRegister[]>(demoFiscalRegisters);
+  const [registers, setRegisters] = useState<FiscalRegister[]>([]);
+  const [branches, setBranches] = useState(demoBranches); // za select
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   const [selectedRegister, setSelectedRegister] = useState<FiscalRegister | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     branchId: '',
     serialNumber: '',
@@ -38,34 +58,38 @@ const FiscalRegisters = () => {
     status: 'active' as FiscalRegister['status'],
   });
 
-  const handleSubmit = () => {
-    const branch = demoBranches.find(b => b.id === formData.branchId);
-    if (!branch) {
-      toast.error('Izaberite poslovnicu');
+  // Učitavanje podataka
+  const fetchData = async () => {
+    setIsLoading(true);
+
+    if (DEMO_MODE) {
+      setRegisters(demoFiscalRegisters);
+      setBranches(demoBranches);
+      setIsLoading(false);
       return;
     }
 
-    const newRegister: FiscalRegister = {
-      id: isEditing && selectedRegister ? selectedRegister.id : Date.now().toString(),
-      branchId: formData.branchId,
-      branchName: branch.name,
-      serialNumber: formData.serialNumber,
-      model: formData.model,
-      lastServiceDate: formData.lastServiceDate,
-      status: formData.status,
-    };
+    try {
+      const [registersRes, branchesRes] = await Promise.all([
+        fiscalRegistersApi.getAll(),
+        branchesApi.getAll(),
+      ]);
 
-    if (isEditing && selectedRegister) {
-      setRegisters(registers.map(r => r.id === selectedRegister.id ? newRegister : r));
-      toast.success('Fiskalna blagajna je uspešno izmenjena');
-    } else {
-      setRegisters([newRegister, ...registers]);
-      toast.success('Fiskalna blagajna je uspešno registrovana');
+      if (registersRes.success && registersRes.data) setRegisters(registersRes.data);
+      if (branchesRes.success && branchesRes.data) setBranches(branchesRes.data);
+    } catch (error) {
+      console.error("Error fetching fiscal registers:", error);
+      toast.error("Greška pri učitavanju podataka. Koristim demo podatke.");
+      setRegisters(demoFiscalRegisters);
+      setBranches(demoBranches);
+    } finally {
+      setIsLoading(false);
     }
-
-    setDialogOpen(false);
-    resetForm();
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const resetForm = () => {
     setFormData({
@@ -75,8 +99,13 @@ const FiscalRegisters = () => {
       lastServiceDate: '',
       status: 'active',
     });
-    setIsEditing(false);
     setSelectedRegister(null);
+    setIsEditing(false);
+  };
+
+  const handleAddNew = () => {
+    resetForm();
+    setDialogOpen(true);
   };
 
   const handleEdit = (register: FiscalRegister) => {
@@ -92,15 +121,106 @@ const FiscalRegisters = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setRegisters(registers.filter(r => r.id !== id));
-    toast.success('Fiskalna blagajna je uklonjena');
+  const handleDeleteClick = (register: FiscalRegister) => {
+    setSelectedRegister(register);
+    setDeleteDialogOpen(true);
   };
 
-  const handleView = (register: FiscalRegister) => {
-    setSelectedRegister(register);
-    setViewDialogOpen(true);
+  const handleSubmit = async () => {
+    if (!formData.branchId || !formData.serialNumber || !formData.model) {
+      toast.error("Poslovnica, serijski broj i model su obavezni!");
+      return;
+    }
+
+    const selectedBranch = branches.find(b => b.id === formData.branchId);
+    if (!selectedBranch) {
+      toast.error("Izaberite validnu poslovnicu");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const registerData = {
+      branchId: formData.branchId,
+      branchName: selectedBranch.name,
+      serialNumber: formData.serialNumber,
+      model: formData.model,
+      lastServiceDate: formData.lastServiceDate,
+      status: formData.status,
+    };
+
+    try {
+      if (isEditing && selectedRegister) {
+        if (DEMO_MODE) {
+          const updated: FiscalRegister = { ...selectedRegister, ...registerData };
+          setRegisters(registers.map(r => r.id === selectedRegister.id ? updated : r));
+          toast.success('Fiskalna blagajna uspešno izmenjena');
+        } else {
+          const response = await fiscalRegistersApi.update(selectedRegister.id, registerData);
+          if (response.success) {
+            toast.success('Fiskalna blagajna uspešno izmenjena');
+            fetchData();
+          } else {
+            throw new Error(response.message || "Greška pri ažuriranju");
+          }
+        }
+      } else {
+        if (DEMO_MODE) {
+          const newRegister: FiscalRegister = {
+            id: Date.now().toString(),
+            ...registerData,
+          };
+          setRegisters([newRegister, ...registers]);
+          toast.success('Nova fiskalna blagajna kreirana');
+        } else {
+          const response = await fiscalRegistersApi.create(registerData);
+          if (response.success) {
+            toast.success('Nova fiskalna blagajna kreirana');
+            fetchData();
+          } else {
+            throw new Error(response.message || "Greška pri kreiranju");
+          }
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Došlo je do greške prilikom čuvanja");
+    } finally {
+      setIsSubmitting(false);
+      setDialogOpen(false);
+      resetForm();
+    }
   };
+
+  const confirmDelete = async () => {
+    if (!selectedRegister) return;
+
+    setIsDeleting(true);
+
+    try {
+      if (DEMO_MODE) {
+        setRegisters(registers.filter(r => r.id !== selectedRegister.id));
+        toast.success('Fiskalna blagajna obrisana');
+      } else {
+        const response = await fiscalRegistersApi.delete(selectedRegister.id);
+        if (response.success) {
+          toast.success('Fiskalna blagajna obrisana');
+          fetchData();
+        } else {
+          throw new Error(response.message || "Greška pri brisanju");
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Nije moguće obrisati fiskalnu blagajnu");
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setSelectedRegister(null);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-96">Učitavanje fiskalnih blagajni...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -109,7 +229,7 @@ const FiscalRegisters = () => {
           <h1 className="text-3xl font-bold tracking-tight">Fiskalne blagajne</h1>
           <p className="text-muted-foreground">Evidencija fiskalnih uređaja</p>
         </div>
-        <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
+        <Button onClick={handleAddNew}>
           <Plus className="mr-2 h-4 w-4" />
           Nova blagajna
         </Button>
@@ -133,7 +253,9 @@ const FiscalRegisters = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Aktivne</p>
-                <p className="text-2xl font-bold text-success">{registers.filter(r => r.status === 'active').length}</p>
+                <p className="text-2xl font-bold text-success">
+                  {registers.filter(r => r.status === 'active').length}
+                </p>
               </div>
               <CheckCircle className="h-8 w-8 text-success" />
             </div>
@@ -144,7 +266,9 @@ const FiscalRegisters = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Na servisu</p>
-                <p className="text-2xl font-bold text-warning">{registers.filter(r => r.status === 'service').length}</p>
+                <p className="text-2xl font-bold text-warning">
+                  {registers.filter(r => r.status === 'service').length}
+                </p>
               </div>
               <Wrench className="h-8 w-8 text-warning" />
             </div>
@@ -155,7 +279,9 @@ const FiscalRegisters = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Neaktivne</p>
-                <p className="text-2xl font-bold text-muted-foreground">{registers.filter(r => r.status === 'inactive').length}</p>
+                <p className="text-2xl font-bold text-muted-foreground">
+                  {registers.filter(r => r.status === 'inactive').length}
+                </p>
               </div>
               <AlertTriangle className="h-8 w-8 text-muted-foreground" />
             </div>
@@ -187,7 +313,11 @@ const FiscalRegisters = () => {
                   <TableCell className="font-mono font-medium">{register.serialNumber}</TableCell>
                   <TableCell>{register.model}</TableCell>
                   <TableCell>{register.branchName}</TableCell>
-                  <TableCell>{new Date(register.lastServiceDate).toLocaleDateString('sr-RS')}</TableCell>
+                  <TableCell>
+                    {register.lastServiceDate
+                      ? new Date(register.lastServiceDate).toLocaleDateString('sr-RS')
+                      : '-'}
+                  </TableCell>
                   <TableCell>
                     <Badge className={statusColors[register.status]}>
                       {statusLabels[register.status]}
@@ -195,13 +325,14 @@ const FiscalRegisters = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleView(register)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(register)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(register.id)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteClick(register)}
+                      >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -218,52 +349,62 @@ const FiscalRegisters = () => {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Izmena fiskalne blagajne' : 'Nova fiskalna blagajna'}</DialogTitle>
-            <DialogDescription>
-              Unesite podatke o fiskalnom uređaju
-            </DialogDescription>
+            <DialogDescription>Unesite podatke o fiskalnom uređaju</DialogDescription>
           </DialogHeader>
+
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label>Poslovnica</Label>
-              <Select value={formData.branchId} onValueChange={(v) => setFormData({...formData, branchId: v})}>
+              <Label>Poslovnica *</Label>
+              <Select value={formData.branchId} onValueChange={(v) => setFormData({ ...formData, branchId: v })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Izaberite poslovnicu" />
                 </SelectTrigger>
                 <SelectContent>
-                  {demoBranches.map((branch) => (
-                    <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="serialNumber">Serijski broj</Label>
+              <Label htmlFor="serialNumber">Serijski broj *</Label>
               <Input
                 id="serialNumber"
                 value={formData.serialNumber}
-                onChange={(e) => setFormData({...formData, serialNumber: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
+                placeholder="FR-2024-001"
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="model">Model</Label>
+              <Label htmlFor="model">Model *</Label>
               <Input
                 id="model"
                 value={formData.model}
-                onChange={(e) => setFormData({...formData, model: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                placeholder="GALEB GP-550"
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="lastServiceDate">Datum poslednjeg servisa</Label>
               <Input
                 id="lastServiceDate"
                 type="date"
                 value={formData.lastServiceDate}
-                onChange={(e) => setFormData({...formData, lastServiceDate: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, lastServiceDate: e.target.value })}
               />
             </div>
+
             <div className="space-y-2">
               <Label>Status</Label>
-              <Select value={formData.status} onValueChange={(v: FiscalRegister['status']) => setFormData({...formData, status: v})}>
+              <Select
+                value={formData.status}
+                onValueChange={(v: FiscalRegister['status']) => setFormData({ ...formData, status: v })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -275,50 +416,43 @@ const FiscalRegisters = () => {
               </Select>
             </div>
           </div>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Otkaži</Button>
-            <Button onClick={handleSubmit}>{isEditing ? 'Sačuvaj' : 'Registruj'}</Button>
+            <Button variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>
+              Otkaži
+            </Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting
+                ? "Čuvanje..."
+                : isEditing
+                  ? "Sačuvaj izmene"
+                  : "Registruj blagajnu"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog za pregled */}
-      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Detalji fiskalne blagajne</DialogTitle>
-          </DialogHeader>
-          {selectedRegister && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Printer className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold font-mono">{selectedRegister.serialNumber}</h3>
-                  <Badge className={statusColors[selectedRegister.status]}>
-                    {statusLabels[selectedRegister.status]}
-                  </Badge>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-4">
-                <div>
-                  <Label className="text-muted-foreground">Model</Label>
-                  <p className="font-medium">{selectedRegister.model}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Poslovnica</Label>
-                  <p className="font-medium">{selectedRegister.branchName}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Poslednji servis</Label>
-                  <p className="font-medium">{new Date(selectedRegister.lastServiceDate).toLocaleDateString('sr-RS')}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Potvrda brisanja */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Da li ste sigurni?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ova akcija će trajno obrisati fiskalnu blagajnu <strong>{selectedRegister?.serialNumber}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Otkaži</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting ? "Brisanje..." : "Obriši blagajnu"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
