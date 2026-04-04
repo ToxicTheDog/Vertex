@@ -31,7 +31,7 @@ const statusLabels = {
 };
 
 const Taxes = () => {
-    const { data: taxRecords } = useFetchData(() => taxesApi.getAll(), taxRecords);
+    const { data: taxRecords } = useFetchData(() => taxesApi.getAll(), demoTaxRecords);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
