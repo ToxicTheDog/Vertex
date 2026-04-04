@@ -1255,6 +1255,1020 @@ Lista inventurnih listi
 #### POST `/inventory/lists`
 Kreiranje inventurne liste
 
+#### GET `/inventory/tracking`
+Praćenje inventara
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "track-1",
+      "articleId": "art-1",
+      "articleName": "Laptop Dell XPS 15",
+      "warehouseId": "wh-1",
+      "quantity": 15,
+      "lastUpdated": "2024-03-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### Magacini (Warehouses)
+
+#### GET `/warehouses`
+Lista magacina
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "wh-1",
+      "name": "Glavni magacin",
+      "address": "Industrijska zona bb",
+      "city": "Beograd",
+      "capacity": 5000,
+      "currentOccupancy": 3200,
+      "status": "active"
+    }
+  ]
+}
+```
+
+#### GET `/warehouses/:id`
+Detalji magacina
+
+#### POST `/warehouses`
+Kreiranje magacina
+
+**Request:**
+```json
+{
+  "name": "Novi magacin",
+  "address": "Adresa 123",
+  "city": "Novi Sad",
+  "capacity": 2000
+}
+```
+
+#### PUT `/warehouses/:id`
+Ažuriranje magacina
+
+#### DELETE `/warehouses/:id`
+Brisanje magacina
+
+#### GET `/warehouses/:id/stock`
+Stanje zaliha u magacinu
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "articleId": "art-1",
+      "articleName": "Laptop Dell XPS 15",
+      "quantity": 15,
+      "minStock": 5
+    }
+  ]
+}
+```
+
+---
+
+### Profakture (Proforma)
+
+#### GET `/proforma`
+Lista profaktura
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "prof-1",
+      "number": "PROF-2024-001",
+      "clientId": "1",
+      "clientName": "Tech Solutions d.o.o.",
+      "date": "2024-03-15",
+      "dueDate": "2024-04-15",
+      "items": [
+        {
+          "name": "Konsultantske usluge",
+          "quantity": 10,
+          "unit": "sat",
+          "price": 5000,
+          "vatRate": 20,
+          "total": 50000
+        }
+      ],
+      "subtotal": 50000,
+      "vat": 10000,
+      "total": 60000,
+      "status": "draft"
+    }
+  ]
+}
+```
+
+#### GET `/proforma/:id`
+Detalji profakture
+
+#### POST `/proforma`
+Kreiranje profakture
+
+**Request:**
+```json
+{
+  "clientId": "1",
+  "date": "2024-03-15",
+  "dueDate": "2024-04-15",
+  "items": [
+    {
+      "name": "Usluga",
+      "quantity": 5,
+      "unit": "sat",
+      "price": 6000,
+      "vatRate": 20
+    }
+  ]
+}
+```
+
+#### PUT `/proforma/:id`
+Ažuriranje profakture
+
+#### DELETE `/proforma/:id`
+Brisanje profakture
+
+#### POST `/proforma/:id/convert`
+Konverzija profakture u fakturu
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "invoiceId": "inv-new-1",
+    "invoiceNumber": "FAK-2024-015"
+  },
+  "message": "Profaktura konvertovana u fakturu"
+}
+```
+
+#### POST `/proforma/:id/send`
+Slanje profakture klijentu
+
+---
+
+### Primljene fakture (Received Invoices)
+
+#### GET `/received-invoices`
+Lista primljenih faktura
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "ri-1",
+      "number": "ULAZ-2024-001",
+      "supplierId": "supplier-1",
+      "supplierName": "Dobavljač d.o.o.",
+      "date": "2024-03-10",
+      "dueDate": "2024-04-10",
+      "subtotal": 80000,
+      "vat": 16000,
+      "total": 96000,
+      "status": "pending"
+    }
+  ]
+}
+```
+
+#### GET `/received-invoices/:id`
+Detalji primljene fakture
+
+#### POST `/received-invoices`
+Unos primljene fakture
+
+**Request:**
+```json
+{
+  "supplierId": "supplier-1",
+  "number": "ULAZ-2024-002",
+  "date": "2024-03-15",
+  "dueDate": "2024-04-15",
+  "items": [
+    {
+      "name": "Kancelarijski materijal",
+      "quantity": 100,
+      "price": 200,
+      "vatRate": 20
+    }
+  ]
+}
+```
+
+#### PUT `/received-invoices/:id`
+Ažuriranje primljene fakture
+
+#### DELETE `/received-invoices/:id`
+Brisanje primljene fakture
+
+#### PUT `/received-invoices/:id/approve`
+Odobrenje primljene fakture
+
+---
+
+### Ponavljajuće fakture (Recurring Invoices)
+
+#### GET `/recurring-invoices`
+Lista ponavljajućih faktura
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "rec-1",
+      "clientId": "1",
+      "clientName": "Tech Solutions d.o.o.",
+      "frequency": "monthly",
+      "nextDate": "2024-04-01",
+      "items": [
+        {
+          "name": "Mesečno održavanje",
+          "quantity": 1,
+          "price": 30000,
+          "vatRate": 20
+        }
+      ],
+      "total": 36000,
+      "isActive": true
+    }
+  ]
+}
+```
+
+#### POST `/recurring-invoices`
+Kreiranje ponavljajuće fakture
+
+**Request:**
+```json
+{
+  "clientId": "1",
+  "frequency": "monthly",
+  "startDate": "2024-04-01",
+  "items": [
+    {
+      "name": "Mesečno održavanje",
+      "quantity": 1,
+      "price": 30000,
+      "vatRate": 20
+    }
+  ]
+}
+```
+
+#### PUT `/recurring-invoices/:id`
+Ažuriranje ponavljajuće fakture
+
+#### DELETE `/recurring-invoices/:id`
+Brisanje ponavljajuće fakture
+
+#### PUT `/recurring-invoices/:id/toggle`
+Aktivacija/deaktivacija ponavljajuće fakture
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "rec-1",
+    "isActive": false
+  }
+}
+```
+
+---
+
+### Knjiga evidencije (Ledger)
+
+#### GET `/ledger`
+Lista stavki knjige evidencije
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "ledger-1",
+      "date": "2024-03-15",
+      "account": "4110",
+      "description": "Prihod od usluga",
+      "debit": 0,
+      "credit": 60000,
+      "reference": "FAK-2024-001"
+    }
+  ]
+}
+```
+
+#### GET `/ledger/:id`
+Detalji stavke
+
+#### POST `/ledger`
+Kreiranje stavke
+
+**Request:**
+```json
+{
+  "date": "2024-03-15",
+  "account": "4110",
+  "description": "Prihod od usluga",
+  "debit": 0,
+  "credit": 60000,
+  "reference": "FAK-2024-001"
+}
+```
+
+#### GET `/ledger/summary`
+Sumarni pregled knjige evidencije
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "totalDebit": 5000000,
+    "totalCredit": 5000000,
+    "balance": 0,
+    "accountSummary": [
+      {
+        "account": "4110",
+        "name": "Prihod od usluga",
+        "debit": 0,
+        "credit": 3000000
+      }
+    ]
+  }
+}
+```
+
+#### GET `/ledger/export`
+Izvoz knjige evidencije (CSV/PDF)
+
+---
+
+### Izveštaji po klijentima (Client Reports)
+
+#### GET `/reports/clients`
+Lista izveštaja po klijentima
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "clientId": "1",
+      "clientName": "Tech Solutions d.o.o.",
+      "totalInvoiced": 500000,
+      "totalPaid": 400000,
+      "outstanding": 100000,
+      "invoiceCount": 5
+    }
+  ]
+}
+```
+
+#### GET `/reports/clients/:clientId`
+Detaljan izveštaj za klijenta
+
+#### GET `/reports/clients/export`
+Izvoz izveštaja po klijentima
+
+---
+
+### Plaćanja dobavljačima (Supplier Payments)
+
+#### GET `/supplier-payments`
+Lista plaćanja dobavljačima
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "sp-1",
+      "supplierId": "supplier-1",
+      "supplierName": "Dobavljač d.o.o.",
+      "invoiceNumber": "ULAZ-2024-001",
+      "amount": 96000,
+      "date": "2024-03-15",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+#### POST `/supplier-payments`
+Kreiranje plaćanja
+
+**Request:**
+```json
+{
+  "supplierId": "supplier-1",
+  "invoiceId": "ri-1",
+  "amount": 96000,
+  "date": "2024-03-15"
+}
+```
+
+#### GET `/supplier-payments/:id`
+Detalji plaćanja
+
+#### PUT `/supplier-payments/:id/approve`
+Odobrenje plaćanja
+
+---
+
+### PDV evidencija (VAT Records)
+
+#### GET `/vat-records`
+Lista PDV zapisa
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "vat-1",
+      "period": "2024-03",
+      "type": "output",
+      "invoiceId": "inv-1",
+      "baseAmount": 50000,
+      "vatRate": 20,
+      "vatAmount": 10000,
+      "date": "2024-03-15"
+    }
+  ]
+}
+```
+
+#### POST `/vat-records`
+Kreiranje PDV zapisa
+
+**Request:**
+```json
+{
+  "period": "2024-03",
+  "type": "output",
+  "invoiceId": "inv-1",
+  "baseAmount": 50000,
+  "vatRate": 20,
+  "vatAmount": 10000
+}
+```
+
+#### GET `/vat-records/:id`
+Detalji PDV zapisa
+
+#### GET `/vat-records/export`
+Izvoz PDV evidencije
+
+---
+
+### PPPDV (Prethodna prijava PDV-a)
+
+#### GET `/pppdv`
+Lista PPPDV prijava
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "pppdv-1",
+      "period": "2024-03",
+      "outputVat": 1000000,
+      "inputVat": 700000,
+      "netVat": 300000,
+      "status": "draft",
+      "createdAt": "2024-04-01"
+    }
+  ]
+}
+```
+
+#### POST `/pppdv/generate`
+Generisanje PPPDV prijave
+
+**Request:**
+```json
+{
+  "period": "2024-03"
+}
+```
+
+#### GET `/pppdv/:id`
+Detalji PPPDV prijave
+
+#### PUT `/pppdv/:id/submit`
+Podnošenje PPPDV prijave
+
+#### GET `/pppdv/:id/export`
+Izvoz PPPDV prijave (PDF)
+
+---
+
+### Zalihe (Stock)
+
+#### GET `/stock`
+Lista zaliha
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "stock-1",
+      "articleId": "art-1",
+      "articleName": "Laptop Dell XPS 15",
+      "warehouseId": "wh-1",
+      "warehouseName": "Glavni magacin",
+      "quantity": 15,
+      "minStock": 5,
+      "status": "ok"
+    }
+  ]
+}
+```
+
+#### GET `/stock/:id`
+Detalji zalihe
+
+#### PUT `/stock/:id/adjust`
+Korekcija zalihe
+
+**Request:**
+```json
+{
+  "quantity": 20,
+  "reason": "Inventura - korekcija"
+}
+```
+
+#### POST `/stock/transfer`
+Transfer između magacina
+
+**Request:**
+```json
+{
+  "articleId": "art-1",
+  "fromWarehouseId": "wh-1",
+  "toWarehouseId": "wh-2",
+  "quantity": 5
+}
+```
+
+#### GET `/stock/low-stock`
+Lista artikala sa niskim zalihama
+
+---
+
+### Kampanje (Campaigns)
+
+#### GET `/campaigns`
+Lista marketinških kampanja
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "camp-1",
+      "name": "Prolećna kampanja",
+      "description": "Promotivna kampanja za proleće",
+      "startDate": "2024-03-01",
+      "endDate": "2024-05-31",
+      "budget": 500000,
+      "spent": 200000,
+      "status": "active"
+    }
+  ]
+}
+```
+
+#### GET `/campaigns/:id`
+Detalji kampanje
+
+#### POST `/campaigns`
+Kreiranje kampanje
+
+**Request:**
+```json
+{
+  "name": "Letnja kampanja",
+  "description": "Opis kampanje",
+  "startDate": "2024-06-01",
+  "endDate": "2024-08-31",
+  "budget": 300000
+}
+```
+
+#### PUT `/campaigns/:id`
+Ažuriranje kampanje
+
+#### DELETE `/campaigns/:id`
+Brisanje kampanje
+
+#### GET `/campaigns/:id/stats`
+Statistike kampanje
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "impressions": 50000,
+    "clicks": 5000,
+    "conversions": 500,
+    "revenue": 2500000,
+    "roi": 400
+  }
+}
+```
+
+---
+
+### Projekti (Projects)
+
+#### GET `/projects`
+Lista projekata
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "proj-1",
+      "name": "ERP Implementacija",
+      "description": "Implementacija ERP sistema",
+      "clientId": "1",
+      "clientName": "Tech Solutions d.o.o.",
+      "startDate": "2024-01-15",
+      "endDate": "2024-06-30",
+      "budget": 2000000,
+      "status": "active",
+      "progress": 45
+    }
+  ]
+}
+```
+
+#### GET `/projects/:id`
+Detalji projekta
+
+#### POST `/projects`
+Kreiranje projekta
+
+**Request:**
+```json
+{
+  "name": "Novi projekat",
+  "description": "Opis projekta",
+  "clientId": "1",
+  "startDate": "2024-04-01",
+  "endDate": "2024-09-30",
+  "budget": 1500000
+}
+```
+
+#### PUT `/projects/:id`
+Ažuriranje projekta
+
+#### DELETE `/projects/:id`
+Brisanje projekta
+
+---
+
+### Zadaci (Tasks)
+
+#### GET `/tasks`
+Lista zadataka
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "task-1",
+      "title": "Dizajn baze podataka",
+      "description": "Kreirati šemu baze",
+      "projectId": "proj-1",
+      "assigneeId": "emp-1",
+      "assigneeName": "Marko Marković",
+      "priority": "high",
+      "dueDate": "2024-04-15",
+      "status": "in_progress"
+    }
+  ]
+}
+```
+
+#### GET `/tasks/:id`
+Detalji zadatka
+
+#### POST `/tasks`
+Kreiranje zadatka
+
+**Request:**
+```json
+{
+  "title": "Novi zadatak",
+  "description": "Opis zadatka",
+  "projectId": "proj-1",
+  "assigneeId": "emp-1",
+  "priority": "medium",
+  "dueDate": "2024-04-30"
+}
+```
+
+#### PUT `/tasks/:id`
+Ažuriranje zadatka
+
+#### DELETE `/tasks/:id`
+Brisanje zadatka
+
+#### PUT `/tasks/:id/status`
+Ažuriranje statusa zadatka
+
+**Request:**
+```json
+{
+  "status": "completed"
+}
+```
+
+#### GET `/projects/:projectId/tasks`
+Zadaci po projektu
+
+---
+
+### HR - Godišnja obrada (Yearly Processing)
+
+#### GET `/yearly-processing`
+Lista godišnjih obrada
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "yp-1",
+      "year": 2024,
+      "type": "annual_leave_carryover",
+      "description": "Prenos godišnjeg odmora",
+      "status": "pending",
+      "createdAt": "2024-01-05"
+    }
+  ]
+}
+```
+
+#### POST `/yearly-processing`
+Kreiranje godišnje obrade
+
+#### GET `/yearly-processing/:id`
+Detalji obrade
+
+#### PUT `/yearly-processing/:id/execute`
+Izvršavanje obrade
+
+---
+
+### Automatizacija (Automation)
+
+#### GET `/automation/rules`
+Lista pravila automatizacije
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "rule-1",
+      "name": "Automatsko slanje faktura",
+      "trigger": "invoice_created",
+      "action": "send_email",
+      "conditions": {
+        "clientType": "premium"
+      },
+      "isActive": true,
+      "createdAt": "2024-01-15"
+    }
+  ]
+}
+```
+
+#### GET `/automation/rules/:id`
+Detalji pravila
+
+#### POST `/automation/rules`
+Kreiranje pravila
+
+**Request:**
+```json
+{
+  "name": "Podsetnik za plaćanje",
+  "trigger": "invoice_overdue",
+  "action": "send_reminder",
+  "conditions": {
+    "daysOverdue": 7
+  }
+}
+```
+
+#### PUT `/automation/rules/:id`
+Ažuriranje pravila
+
+#### DELETE `/automation/rules/:id`
+Brisanje pravila
+
+#### PUT `/automation/rules/:id/toggle`
+Aktivacija/deaktivacija pravila
+
+#### GET `/automation/logs`
+Logovi izvršavanja automatizacije
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "alog-1",
+      "ruleId": "rule-1",
+      "ruleName": "Automatsko slanje faktura",
+      "executedAt": "2024-03-15T10:00:00Z",
+      "status": "success",
+      "details": "Email poslat na info@techsolutions.rs"
+    }
+  ]
+}
+```
+
+---
+
+### Profil korisnika (Profile)
+
+#### GET `/profile`
+Podaci o profilu prijavljenog korisnika
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "user-1",
+    "email": "admin@vertex.com",
+    "name": "Admin Korisnik",
+    "role": "admin",
+    "phone": "+381 64 123 4567",
+    "avatar": "https://api.vertex.com/avatars/user-1.jpg"
+  }
+}
+```
+
+#### PUT `/profile`
+Ažuriranje profila
+
+**Request:**
+```json
+{
+  "name": "Novo Ime",
+  "phone": "+381 64 999 9999"
+}
+```
+
+#### PUT `/profile/change-password`
+Promena lozinke
+
+**Request:**
+```json
+{
+  "currentPassword": "stara_lozinka",
+  "newPassword": "nova_lozinka_123"
+}
+```
+
+#### GET `/profile/notifications`
+Podešavanja notifikacija
+
+#### PUT `/profile/notifications`
+Ažuriranje podešavanja notifikacija
+
+**Request:**
+```json
+{
+  "emailNotifications": true,
+  "invoiceReminders": true,
+  "paymentAlerts": true,
+  "systemUpdates": false
+}
+```
+
+---
+
+### Podešavanja sistema (Settings)
+
+#### GET `/settings`
+Sistemska podešavanja
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "currency": "RSD",
+    "language": "sr",
+    "dateFormat": "DD.MM.YYYY",
+    "vatRate": 20,
+    "invoicePrefix": "FAK",
+    "autoBackup": true
+  }
+}
+```
+
+#### PUT `/settings`
+Ažuriranje podešavanja
+
+#### GET `/settings/company`
+Podaci o kompaniji
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "name": "Vertex d.o.o.",
+    "pib": "123456789",
+    "maticniBroj": "12345678",
+    "address": "Bulevar Kralja Aleksandra 73",
+    "city": "Beograd",
+    "email": "info@vertex.com",
+    "phone": "+381 11 123 4567",
+    "bankAccount": "265-1234567890-12"
+  }
+}
+```
+
+#### PUT `/settings/company`
+Ažuriranje podataka kompanije
+
+---
+
+### Sistemski logovi (System Logs)
+
+#### GET `/logs`
+Lista svih sistemskih logova
+
+**Query parametri:**
+- `from` - od datuma (YYYY-MM-DD)
+- `to` - do datuma (YYYY-MM-DD)
+- `action` - tip akcije
+- `userId` - ID korisnika
+
+#### GET `/logs/:id`
+Detalji loga
+
+#### DELETE `/logs/clear`
+Brisanje logova
+
+#### GET `/logs/export`
+Izvoz logova
+
 ---
 
 ## 👨‍💼 Admin API Endpointi
