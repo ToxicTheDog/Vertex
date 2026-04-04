@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { taxRecords } from '@/data/demoData';
+import { demoTaxRecords } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
 import { taxesApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
@@ -31,7 +31,7 @@ const statusLabels = {
 };
 
 const Taxes = () => {
-    const { data: taxRecords } = useFetchData(() => taxesApi.getAll(), taxRecords);
+    const { data: taxRecords } = useFetchData(() => taxesApi.getAll(), demoTaxRecords);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');

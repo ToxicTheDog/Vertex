@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { allLedgerEntries } from '@/data/demoData';
+import { demoLedgerEntries } from '@/data/demoData';
 import { useLocation } from 'react-router-dom';
 import { API_ENDPOINTS } from '@/config/api';
 import { invoicesApi } from '@/services/apiService';
@@ -19,7 +19,7 @@ const documentTypeLabels = {
 };
 
 const Ledger = () => {
-    const { data: allLedgerEntries } = useFetchData(() => invoicesApi.getAll(), allLedgerEntries);
+    const { data: allLedgerEntries } = useFetchData(() => invoicesApi.getAll(), demoLedgerEntries);
   const location = useLocation();
   const isIncoming = location.pathname.includes('incoming');
   
