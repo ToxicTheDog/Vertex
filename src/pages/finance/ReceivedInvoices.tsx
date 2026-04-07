@@ -11,7 +11,7 @@ import { InvoiceViewDialog, InvoiceData } from '@/components/dialogs/InvoiceView
 import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { invoicesApi } from '@/services/apiService';
+import { receivedInvoicesApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const statusColors = {

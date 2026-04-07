@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { API_ENDPOINTS } from '@/config/api';
-import { taxesApi } from '@/services/apiService';
+import { vatRecordsApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 interface VatRecord {

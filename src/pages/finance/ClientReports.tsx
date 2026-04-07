@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { demoClients, demoInvoices, demoSuppliers } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { reportsApi } from '@/services/apiService';
+import { clientReportsApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const clientStats = demoClients.map(client => {
