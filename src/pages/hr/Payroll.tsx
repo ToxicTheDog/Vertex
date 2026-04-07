@@ -8,7 +8,7 @@ import { Wallet, Calculator, CheckCircle, FileText, Eye, Check, Send } from 'luc
 import { toast } from 'sonner';
 import { demoPayrollEntries, PayrollEntry } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { employeesApi } from '@/services/apiService';
+import { payrollApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const statusLabels: Record<string, string> = {
