@@ -11,7 +11,7 @@ import { Plus, List, Calendar, CheckCircle, XCircle, Eye, Edit, Trash2 } from 'l
 import { toast } from 'sonner';
 import { demoPriceLists, PriceList } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { articlesApi } from '@/services/apiService';
+import { priceListsApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const formatCurrency = (value: number) => {

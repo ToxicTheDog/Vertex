@@ -15,7 +15,7 @@ import { ProjectDialog, ProjectFormData } from '@/components/dialogs/ProjectDial
 import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { clientsApi } from '@/services/apiService';
+import { projectsApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 interface Project {

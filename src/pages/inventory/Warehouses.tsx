@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { demoWarehouses, demoArticles } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { articlesApi } from '@/services/apiService';
+import { warehousesApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const Warehouses = () => {

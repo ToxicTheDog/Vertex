@@ -11,7 +11,7 @@ import { Plus, ShoppingCart, Package, Truck, CheckCircle, Eye, Edit, Trash2 } fr
 import { toast } from 'sonner';
 import { demoReceivedOrders, demoClients, demoArticles, Order } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { invoicesApi } from '@/services/apiService';
+import { ordersApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const statusLabels: Record<string, string> = {

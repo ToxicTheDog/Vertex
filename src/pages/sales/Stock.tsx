@@ -8,7 +8,7 @@ import { Package, AlertTriangle, TrendingUp, TrendingDown, Eye } from 'lucide-re
 import { Link } from 'react-router-dom';
 import { demoArticles, demoWarehouses } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { articlesApi } from '@/services/apiService';
+import { stockApi, warehousesApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const formatCurrency = (value: number) => {

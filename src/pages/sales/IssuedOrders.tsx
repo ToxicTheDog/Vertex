@@ -11,7 +11,7 @@ import { Plus, Send, Package, Truck, CheckCircle, Eye, Trash2 } from 'lucide-rea
 import { toast } from 'sonner';
 import { demoIssuedOrders, demoSuppliers, demoArticles, Order } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { invoicesApi } from '@/services/apiService';
+import { ordersApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const statusLabels: Record<string, string> = {

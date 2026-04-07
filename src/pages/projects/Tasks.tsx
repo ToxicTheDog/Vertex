@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { API_ENDPOINTS } from '@/config/api';
-import { clientsApi } from '@/services/apiService';
+import { tasksApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 interface Task {
