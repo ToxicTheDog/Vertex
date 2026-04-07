@@ -15,7 +15,7 @@ import { timeTrackingApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const TimeTracking = () => {
-  const { data: entries, setData: setEntries, isLoading: _isLoading, refetch } = useFetchData(() => employeesApi.getAll(), demoTimeEntries);
+  const { data: entries, setData: setEntries, isLoading: _isLoading, refetch } = useFetchData(() => timeTrackingApi.getAll(), demoTimeEntries);
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);

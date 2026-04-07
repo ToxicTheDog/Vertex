@@ -33,7 +33,7 @@ import { useFetchData } from '@/hooks/useFetchData';
  ];
  
  const FixedAssets = () => {
-   const { data: assets, setData: setAssets } = useFetchData(() => articlesApi.getAll(), initialAssets);
+   const { data: assets, setData: setAssets } = useFetchData(() => fixedAssetsApi.getAll(), initialAssets);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const [editingAsset, setEditingAsset] = useState<FixedAsset | null>(null);

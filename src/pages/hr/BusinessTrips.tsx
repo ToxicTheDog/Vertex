@@ -32,7 +32,7 @@ import { useFetchData } from '@/hooks/useFetchData';
  ];
  
  const BusinessTrips = () => {
-   const { data: trips, setData: setTrips } = useFetchData(() => employeesApi.getAll(), initialTrips);
+   const { data: trips, setData: setTrips } = useFetchData(() => businessTripsApi.getAll(), initialTrips);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const [editingTrip, setEditingTrip] = useState<BusinessTrip | null>(null);

@@ -44,7 +44,7 @@ const statusColors: Record<string, string> = {
 };
 
 const Absences = () => {
-  const { data: absences, setData: setAbsences, isLoading: _isLoading, refetch } = useFetchData(() => employeesApi.getAll(), demoAbsences);
+  const { data: absences, setData: setAbsences, isLoading: _isLoading, refetch } = useFetchData(() => absencesApi.getAll(), demoAbsences);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedAbsence, setSelectedAbsence] = useState<Absence | null>(null);

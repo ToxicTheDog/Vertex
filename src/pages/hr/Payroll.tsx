@@ -32,7 +32,7 @@ const formatCurrency = (value: number) => {
 };
 
 const Payroll = () => {
-  const { data: entries, setData: setEntries, isLoading: _isLoading, refetch } = useFetchData(() => employeesApi.getAll(), demoPayrollEntries);
+  const { data: entries, setData: setEntries, isLoading: _isLoading, refetch } = useFetchData(() => payrollApi.getAll(), demoPayrollEntries);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<PayrollEntry | null>(null);
 

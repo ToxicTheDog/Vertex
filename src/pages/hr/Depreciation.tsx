@@ -46,7 +46,7 @@ import { useFetchData } from '@/hooks/useFetchData';
  
  const Depreciation = () => {
    const [year, setYear] = useState('2024');
-   const { data: records } = useFetchData(() => articlesApi.getAll(), depreciationData);
+   const { data: records } = useFetchData(() => depreciationApi.getAll(), depreciationData);
    const { toast } = useToast();
  
    const totalPurchaseValue = records.reduce((sum, r) => sum + r.purchaseValue, 0);
