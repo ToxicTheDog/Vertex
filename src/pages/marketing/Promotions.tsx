@@ -10,7 +10,7 @@
  import { Plus, Search, Megaphone, Edit, Trash2, Percent, Calendar, Tag } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { clientsApi } from '@/services/apiService';
+import { promotionsApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
  
  interface Promotion {
@@ -34,7 +34,7 @@ import { useFetchData } from '@/hooks/useFetchData';
  ];
  
  const Promotions = () => {
-   const { data: promotions, setData: setPromotions } = useFetchData(() => clientsApi.getAll(), initialPromotions);
+   const { data: promotions, setData: setPromotions } = useFetchData(() => promotionsApi.getAll(), initialPromotions);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const [editingPromo, setEditingPromo] = useState<Promotion | null>(null);

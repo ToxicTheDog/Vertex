@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { API_ENDPOINTS } from '@/config/api';
-import { taxesApi } from '@/services/apiService';
+import { vatRecordsApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 interface VatRecord {
@@ -52,7 +52,7 @@ const statusLabels: Record<string, string> = {
 };
 
 const VatRecords = () => {
-  const { data: vatRecords } = useFetchData(() => taxesApi.getAll(), demoVatRecords);
+  const { data: vatRecords } = useFetchData(() => vatRecordsApi.getAll(), demoVatRecords);
   const totalInputVat = vatRecords.reduce((sum, r) => sum + r.inputVat, 0);
   const totalOutputVat = vatRecords.reduce((sum, r) => sum + r.outputVat, 0);
   const totalDifference = totalOutputVat - totalInputVat;

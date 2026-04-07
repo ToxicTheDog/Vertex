@@ -11,7 +11,7 @@ import { Plus, Send, Package, Truck, CheckCircle, Eye, Trash2 } from 'lucide-rea
 import { toast } from 'sonner';
 import { demoIssuedOrders, demoSuppliers, demoArticles, Order } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { invoicesApi } from '@/services/apiService';
+import { ordersApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const statusLabels: Record<string, string> = {
@@ -39,7 +39,7 @@ const formatCurrency = (value: number) => {
 };
 
 const IssuedOrders = () => {
-  const { data: orders, setData: setOrders, isLoading: _isLoading, refetch } = useFetchData(() => invoicesApi.getAll(), demoIssuedOrders);
+  const { data: orders, setData: setOrders, isLoading: _isLoading, refetch } = useFetchData(() => ordersApi.getIssued(), demoIssuedOrders);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);

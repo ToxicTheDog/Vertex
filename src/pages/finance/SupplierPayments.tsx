@@ -8,11 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { demoReceivedInvoices, demoSuppliers } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { invoicesApi } from '@/services/apiService';
+import { supplierPaymentsApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const SupplierPayments = () => {
-    const { data: receivedInvoices } = useFetchData(() => invoicesApi.getAll(), demoReceivedInvoices);
+    const { data: receivedInvoices } = useFetchData(() => supplierPaymentsApi.getAll(), demoReceivedInvoices);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { API_ENDPOINTS } from '@/config/api';
-import { taxesApi } from '@/services/apiService';
+import { pppdvApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 interface PPPDVForm {
@@ -37,7 +37,7 @@ const statusLabels = {
 };
 
 const PPPDV = () => {
-  const { data: forms } = useFetchData(() => taxesApi.getAll(), demoForms);
+  const { data: forms } = useFetchData(() => pppdvApi.getAll(), demoForms);
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
   };

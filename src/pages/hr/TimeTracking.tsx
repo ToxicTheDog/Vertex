@@ -11,11 +11,11 @@ import { Plus, Clock, Calendar, User, Search, Eye, Edit, Trash2, Play, Pause } f
 import { toast } from 'sonner';
 import { demoTimeEntries, demoEmployees, TimeEntry } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { employeesApi } from '@/services/apiService';
+import { timeTrackingApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const TimeTracking = () => {
-  const { data: entries, setData: setEntries, isLoading: _isLoading, refetch } = useFetchData(() => employeesApi.getAll(), demoTimeEntries);
+  const { data: entries, setData: setEntries, isLoading: _isLoading, refetch } = useFetchData(() => timeTrackingApi.getAll(), demoTimeEntries);
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);

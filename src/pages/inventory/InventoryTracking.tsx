@@ -8,7 +8,7 @@
  import { PackageSearch, AlertTriangle, TrendingUp, TrendingDown, Search, BarChart3 } from 'lucide-react';
  import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { API_ENDPOINTS } from '@/config/api';
-import { articlesApi } from '@/services/apiService';
+import { inventoryApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
  
  interface InventoryItem {
@@ -45,7 +45,7 @@ import { useFetchData } from '@/hooks/useFetchData';
  const InventoryTracking = () => {
    const [searchTerm, setSearchTerm] = useState('');
    const [categoryFilter, setCategoryFilter] = useState('all');
-   const { data: items } = useFetchData(() => articlesApi.getAll(), inventoryData);
+   const { data: items } = useFetchData(() => inventoryApi.getTracking(), inventoryData);
  
    const filteredItems = items.filter(item => {
      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.sku.toLowerCase().includes(searchTerm.toLowerCase());

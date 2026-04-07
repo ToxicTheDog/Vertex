@@ -800,10 +800,575 @@ export const adminApi = {
   }
 };
 
+// ==================== PROFAKTURE ====================
+export const proformaApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.proforma.list, { method: 'GET' }, 'proforma', 'view');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.proforma.get(id), { method: 'GET' }, 'proforma', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.proforma.create, { method: 'POST', body: JSON.stringify(data) }, 'proforma', 'create');
+  },
+  async update(id: string, data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.proforma.update(id), { method: 'PUT', body: JSON.stringify(data) }, 'proforma', 'update');
+  },
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(API_ENDPOINTS.proforma.delete(id), { method: 'DELETE' }, 'proforma', 'delete');
+  },
+  async convertToInvoice(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.proforma.convertToInvoice(id), { method: 'POST' }, 'proforma', 'create');
+  },
+  async send(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(API_ENDPOINTS.proforma.send(id), { method: 'POST' }, 'proforma', 'send');
+  }
+};
+
+// ==================== PRIMLJENE FAKTURE ====================
+export const receivedInvoicesApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.receivedInvoices.list, { method: 'GET' }, 'received-invoices', 'view');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.receivedInvoices.get(id), { method: 'GET' }, 'received-invoices', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.receivedInvoices.create, { method: 'POST', body: JSON.stringify(data) }, 'received-invoices', 'create');
+  },
+  async update(id: string, data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.receivedInvoices.update(id), { method: 'PUT', body: JSON.stringify(data) }, 'received-invoices', 'update');
+  },
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(API_ENDPOINTS.receivedInvoices.delete(id), { method: 'DELETE' }, 'received-invoices', 'delete');
+  },
+  async approve(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.receivedInvoices.approve(id), { method: 'PUT' }, 'received-invoices', 'approve');
+  }
+};
+
+// ==================== PONAVLJAJUĆE FAKTURE ====================
+export const recurringInvoicesApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.recurringInvoices.list, { method: 'GET' }, 'recurring-invoices', 'view');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.recurringInvoices.get(id), { method: 'GET' }, 'recurring-invoices', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.recurringInvoices.create, { method: 'POST', body: JSON.stringify(data) }, 'recurring-invoices', 'create');
+  },
+  async update(id: string, data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.recurringInvoices.update(id), { method: 'PUT', body: JSON.stringify(data) }, 'recurring-invoices', 'update');
+  },
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(API_ENDPOINTS.recurringInvoices.delete(id), { method: 'DELETE' }, 'recurring-invoices', 'delete');
+  },
+  async toggle(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.recurringInvoices.toggle(id), { method: 'PUT' }, 'recurring-invoices', 'update');
+  }
+};
+
+// ==================== KNJIGA EVIDENCIJE (LEDGER) ====================
+export const ledgerApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.ledger.list, { method: 'GET' }, 'ledger', 'view');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.ledger.get(id), { method: 'GET' }, 'ledger', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.ledger.create, { method: 'POST', body: JSON.stringify(data) }, 'ledger', 'create');
+  },
+  async getSummary(): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.ledger.summary, { method: 'GET' }, 'ledger', 'view');
+  },
+  async export(): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.ledger.export, { method: 'GET' }, 'ledger', 'export');
+  }
+};
+
+// ==================== IZVEŠTAJI PO KLIJENTIMA ====================
+export const clientReportsApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.clientReports.list, { method: 'GET' }, 'client-reports', 'view');
+  },
+  async getById(clientId: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.clientReports.get(clientId), { method: 'GET' }, 'client-reports', 'view');
+  },
+  async export(): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.clientReports.export, { method: 'GET' }, 'client-reports', 'export');
+  }
+};
+
+// ==================== PLAĆANJA DOBAVLJAČIMA ====================
+export const supplierPaymentsApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.supplierPayments.list, { method: 'GET' }, 'supplier-payments', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.supplierPayments.create, { method: 'POST', body: JSON.stringify(data) }, 'supplier-payments', 'create');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.supplierPayments.get(id), { method: 'GET' }, 'supplier-payments', 'view');
+  },
+  async approve(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.supplierPayments.approve(id), { method: 'PUT' }, 'supplier-payments', 'approve');
+  }
+};
+
+// ==================== PDV EVIDENCIJA ====================
+export const vatRecordsApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.vatRecords.list, { method: 'GET' }, 'vat-records', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.vatRecords.create, { method: 'POST', body: JSON.stringify(data) }, 'vat-records', 'create');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.vatRecords.get(id), { method: 'GET' }, 'vat-records', 'view');
+  },
+  async export(): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.vatRecords.export, { method: 'GET' }, 'vat-records', 'export');
+  }
+};
+
+// ==================== PPPDV ====================
+export const pppdvApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.pppdv.list, { method: 'GET' }, 'pppdv', 'view');
+  },
+  async generate(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.pppdv.generate, { method: 'POST', body: JSON.stringify(data) }, 'pppdv', 'create');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.pppdv.get(id), { method: 'GET' }, 'pppdv', 'view');
+  },
+  async submit(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.pppdv.submit(id), { method: 'POST' }, 'pppdv', 'create');
+  },
+  async export(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.pppdv.export(id), { method: 'GET' }, 'pppdv', 'export');
+  }
+};
+
+// ==================== DOBAVLJAČI ====================
+export const suppliersApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.suppliers.list, { method: 'GET' }, 'suppliers', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.suppliers.create, { method: 'POST', body: JSON.stringify(data) }, 'suppliers', 'create');
+  },
+  async update(id: string, data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.suppliers.update(id), { method: 'PUT', body: JSON.stringify(data) }, 'suppliers', 'update');
+  }
+};
+
+// ==================== NARUDŽBE ====================
+export const ordersApi = {
+  async getReceived(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.orders.received, { method: 'GET' }, 'orders', 'view');
+  },
+  async getIssued(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.orders.issued, { method: 'GET' }, 'orders', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.orders.create, { method: 'POST', body: JSON.stringify(data) }, 'orders', 'create');
+  },
+  async updateStatus(id: string, status: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.orders.updateStatus(id), { method: 'PUT', body: JSON.stringify({ status }) }, 'orders', 'update');
+  }
+};
+
+// ==================== CENOVNICI ====================
+export const priceListsApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.priceLists.list, { method: 'GET' }, 'price-lists', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.priceLists.create, { method: 'POST', body: JSON.stringify(data) }, 'price-lists', 'create');
+  }
+};
+
+// ==================== KATEGORIJE ====================
+export const categoriesApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.categories.list, { method: 'GET' }, 'categories', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.categories.create, { method: 'POST', body: JSON.stringify(data) }, 'categories', 'create');
+  }
+};
+
+// ==================== SERIJSKI BROJEVI ====================
+export const serialNumbersApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.serialNumbers.list, { method: 'GET' }, 'serial-numbers', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.serialNumbers.create, { method: 'POST', body: JSON.stringify(data) }, 'serial-numbers', 'create');
+  }
+};
+
+// ==================== ZALIHE (STOCK) ====================
+export const stockApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.stock.list, { method: 'GET' }, 'stock', 'view');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.stock.get(id), { method: 'GET' }, 'stock', 'view');
+  },
+  async adjust(id: string, data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.stock.adjust(id), { method: 'PUT', body: JSON.stringify(data) }, 'stock', 'update');
+  },
+  async transfer(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.stock.transfer, { method: 'POST', body: JSON.stringify(data) }, 'stock', 'create');
+  },
+  async getLowStock(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.stock.lowStock, { method: 'GET' }, 'stock', 'view');
+  }
+};
+
+// ==================== MAGACINI ====================
+export const warehousesApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.warehouses.list, { method: 'GET' }, 'warehouses', 'view');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.warehouses.get(id), { method: 'GET' }, 'warehouses', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.warehouses.create, { method: 'POST', body: JSON.stringify(data) }, 'warehouses', 'create');
+  },
+  async update(id: string, data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.warehouses.update(id), { method: 'PUT', body: JSON.stringify(data) }, 'warehouses', 'update');
+  },
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(API_ENDPOINTS.warehouses.delete(id), { method: 'DELETE' }, 'warehouses', 'delete');
+  },
+  async getStock(id: string): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.warehouses.stock(id), { method: 'GET' }, 'warehouses', 'view');
+  }
+};
+
+// ==================== INVENTAR ====================
+export const inventoryApi = {
+  async getMovements(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.inventory.movements, { method: 'GET' }, 'inventory', 'view');
+  },
+  async createMovement(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.inventory.createMovement, { method: 'POST', body: JSON.stringify(data) }, 'inventory', 'create');
+  },
+  async getLists(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.inventory.lists, { method: 'GET' }, 'inventory', 'view');
+  },
+  async createList(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.inventory.createList, { method: 'POST', body: JSON.stringify(data) }, 'inventory', 'create');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.inventory.get(id), { method: 'GET' }, 'inventory', 'view');
+  },
+  async getTracking(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.inventory.tracking, { method: 'GET' }, 'inventory', 'view');
+  }
+};
+
+// ==================== PROJEKTI ====================
+export const projectsApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.projects.list, { method: 'GET' }, 'projects', 'view');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.projects.get(id), { method: 'GET' }, 'projects', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.projects.create, { method: 'POST', body: JSON.stringify(data) }, 'projects', 'create');
+  },
+  async update(id: string, data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.projects.update(id), { method: 'PUT', body: JSON.stringify(data) }, 'projects', 'update');
+  },
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(API_ENDPOINTS.projects.delete(id), { method: 'DELETE' }, 'projects', 'delete');
+  }
+};
+
+// ==================== ZADACI ====================
+export const tasksApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.tasks.list, { method: 'GET' }, 'tasks', 'view');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.tasks.get(id), { method: 'GET' }, 'tasks', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.tasks.create, { method: 'POST', body: JSON.stringify(data) }, 'tasks', 'create');
+  },
+  async update(id: string, data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.tasks.update(id), { method: 'PUT', body: JSON.stringify(data) }, 'tasks', 'update');
+  },
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(API_ENDPOINTS.tasks.delete(id), { method: 'DELETE' }, 'tasks', 'delete');
+  },
+  async updateStatus(id: string, status: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.tasks.updateStatus(id), { method: 'PUT', body: JSON.stringify({ status }) }, 'tasks', 'update');
+  },
+  async getByProject(projectId: string): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.tasks.byProject(projectId), { method: 'GET' }, 'tasks', 'view');
+  }
+};
+
+// ==================== PODSETNICI ====================
+export const remindersApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.reminders.list, { method: 'GET' }, 'reminders', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.reminders.create, { method: 'POST', body: JSON.stringify(data) }, 'reminders', 'create');
+  },
+  async complete(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.reminders.complete(id), { method: 'PUT' }, 'reminders', 'update');
+  }
+};
+
+// ==================== KAMPANJE ====================
+export const campaignsApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.campaigns.list, { method: 'GET' }, 'campaigns', 'view');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.campaigns.get(id), { method: 'GET' }, 'campaigns', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.campaigns.create, { method: 'POST', body: JSON.stringify(data) }, 'campaigns', 'create');
+  },
+  async update(id: string, data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.campaigns.update(id), { method: 'PUT', body: JSON.stringify(data) }, 'campaigns', 'update');
+  },
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(API_ENDPOINTS.campaigns.delete(id), { method: 'DELETE' }, 'campaigns', 'delete');
+  },
+  async getStats(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.campaigns.stats(id), { method: 'GET' }, 'campaigns', 'view');
+  }
+};
+
+// ==================== PROMOCIJE ====================
+export const promotionsApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.promotions.list, { method: 'GET' }, 'promotions', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.promotions.create, { method: 'POST', body: JSON.stringify(data) }, 'promotions', 'create');
+  }
+};
+
+// ==================== POVRATNE INFORMACIJE ====================
+export const feedbackApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.feedback.list, { method: 'GET' }, 'feedback', 'view');
+  },
+  async updateStatus(id: string, status: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.feedback.updateStatus(id), { method: 'PUT', body: JSON.stringify({ status }) }, 'feedback', 'update');
+  }
+};
+
+// ==================== HR - EVIDENCIJA RADNOG VREMENA ====================
+export const timeTrackingApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.timeTracking.list, { method: 'GET' }, 'time-tracking', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.timeTracking.create, { method: 'POST', body: JSON.stringify(data) }, 'time-tracking', 'create');
+  }
+};
+
+// ==================== HR - OBRAČUN ZARADA ====================
+export const payrollApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.payroll.list, { method: 'GET' }, 'payroll', 'view');
+  },
+  async calculate(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.payroll.calculate, { method: 'POST', body: JSON.stringify(data) }, 'payroll', 'create');
+  },
+  async approve(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.payroll.approve(id), { method: 'PUT' }, 'payroll', 'approve');
+  }
+};
+
+// ==================== HR - ODSUSTVA ====================
+export const absencesApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.absences.list, { method: 'GET' }, 'absences', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.absences.create, { method: 'POST', body: JSON.stringify(data) }, 'absences', 'create');
+  },
+  async approve(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.absences.approve(id), { method: 'PUT' }, 'absences', 'approve');
+  }
+};
+
+// ==================== HR - SLUŽBENA PUTOVANJA ====================
+export const businessTripsApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.businessTrips.list, { method: 'GET' }, 'business-trips', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.businessTrips.create, { method: 'POST', body: JSON.stringify(data) }, 'business-trips', 'create');
+  }
+};
+
+// ==================== HR - PUTNI NALOZI ====================
+export const travelOrdersApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.travelOrders.list, { method: 'GET' }, 'travel-orders', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.travelOrders.create, { method: 'POST', body: JSON.stringify(data) }, 'travel-orders', 'create');
+  }
+};
+
+// ==================== OSNOVNA SREDSTVA ====================
+export const fixedAssetsApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.fixedAssets.list, { method: 'GET' }, 'fixed-assets', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.fixedAssets.create, { method: 'POST', body: JSON.stringify(data) }, 'fixed-assets', 'create');
+  }
+};
+
+// ==================== AMORTIZACIJA ====================
+export const depreciationApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.depreciation.list, { method: 'GET' }, 'depreciation', 'view');
+  },
+  async calculate(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.depreciation.calculate, { method: 'POST', body: JSON.stringify(data) }, 'depreciation', 'create');
+  }
+};
+
+// ==================== GODIŠNJA OBRADA ====================
+export const yearlyProcessingApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.yearlyProcessing.list, { method: 'GET' }, 'yearly-processing', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.yearlyProcessing.create, { method: 'POST', body: JSON.stringify(data) }, 'yearly-processing', 'create');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.yearlyProcessing.get(id), { method: 'GET' }, 'yearly-processing', 'view');
+  },
+  async execute(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.yearlyProcessing.execute(id), { method: 'POST' }, 'yearly-processing', 'execute');
+  }
+};
+
+// ==================== AUTOMATIZACIJA ====================
+export const automationApi = {
+  async getRules(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.automation.rules, { method: 'GET' }, 'automation', 'view');
+  },
+  async getRule(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.automation.getRule(id), { method: 'GET' }, 'automation', 'view');
+  },
+  async createRule(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.automation.createRule, { method: 'POST', body: JSON.stringify(data) }, 'automation', 'create');
+  },
+  async updateRule(id: string, data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.automation.updateRule(id), { method: 'PUT', body: JSON.stringify(data) }, 'automation', 'update');
+  },
+  async deleteRule(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(API_ENDPOINTS.automation.deleteRule(id), { method: 'DELETE' }, 'automation', 'delete');
+  },
+  async toggleRule(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.automation.toggleRule(id), { method: 'PUT' }, 'automation', 'update');
+  },
+  async getLogs(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.automation.logs, { method: 'GET' }, 'automation', 'view');
+  }
+};
+
+// ==================== LOGOVI ====================
+export const logsApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.logs.list, { method: 'GET' }, 'logs', 'view');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.logs.get(id), { method: 'GET' }, 'logs', 'view');
+  },
+  async clear(): Promise<ApiResponse<void>> {
+    return makeRequest(API_ENDPOINTS.logs.clear, { method: 'DELETE' }, 'logs', 'delete');
+  },
+  async export(): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.logs.export, { method: 'GET' }, 'logs', 'export');
+  }
+};
+
+// ==================== KORISNICI (ADMIN) ====================
+export const usersApi = {
+  async getAll(): Promise<ApiResponse<any[]>> {
+    return makeRequest(API_ENDPOINTS.users.list, { method: 'GET' }, 'users', 'view');
+  },
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.users.get(id), { method: 'GET' }, 'users', 'view');
+  },
+  async create(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.users.create, { method: 'POST', body: JSON.stringify(data) }, 'users', 'create');
+  },
+  async update(id: string, data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.users.update(id), { method: 'PUT', body: JSON.stringify(data) }, 'users', 'update');
+  },
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(API_ENDPOINTS.users.delete(id), { method: 'DELETE' }, 'users', 'delete');
+  },
+  async getPermissions(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.users.permissions(id), { method: 'GET' }, 'users', 'view');
+  },
+  async updatePermissions(id: string, permissions: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.users.updatePermissions(id), { method: 'PUT', body: JSON.stringify(permissions) }, 'users', 'update');
+  }
+};
+
+// ==================== PROFIL ====================
+export const profileApi = {
+  async get(): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.profile.get, { method: 'GET' }, 'profile', 'view');
+  },
+  async update(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.profile.update, { method: 'PUT', body: JSON.stringify(data) }, 'profile', 'update');
+  },
+  async changePassword(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.profile.changePassword, { method: 'POST', body: JSON.stringify(data) }, 'profile', 'update');
+  },
+  async getNotifications(): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.profile.notifications, { method: 'GET' }, 'profile', 'view');
+  },
+  async updateNotifications(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.profile.updateNotifications, { method: 'PUT', body: JSON.stringify(data) }, 'profile', 'update');
+  }
+};
+
+// ==================== PODEŠAVANJA ====================
+export const settingsApi = {
+  async get(): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.settings.get, { method: 'GET' }, 'settings', 'view');
+  },
+  async update(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.settings.update, { method: 'PUT', body: JSON.stringify(data) }, 'settings', 'update');
+  },
+  async getCompany(): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.settings.company, { method: 'GET' }, 'settings', 'view');
+  },
+  async updateCompany(data: any): Promise<ApiResponse<any>> {
+    return makeRequest(API_ENDPOINTS.settings.updateCompany, { method: 'PUT', body: JSON.stringify(data) }, 'settings', 'update');
+  }
+};
+
 // Real-time update helper
 export function startRealtimeUpdates(callback: (data: any) => void, interval: number = REALTIME_UPDATE_INTERVAL) {
   if (DEMO_MODE) {
-    // U demo modu, simuliraj random promene
     const intervalId = setInterval(() => {
       callback({
         type: 'demo_update',
@@ -819,7 +1384,6 @@ export function startRealtimeUpdates(callback: (data: any) => void, interval: nu
     return () => clearInterval(intervalId);
   }
 
-  // Za production, koristi polling ili WebSocket
   const intervalId = setInterval(async () => {
     const response = await dashboardApi.getRealtimeUpdates();
     if (response.success && response.data) {

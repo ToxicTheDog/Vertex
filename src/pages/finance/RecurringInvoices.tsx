@@ -11,7 +11,7 @@ import { RecurringInvoiceDialog, RecurringInvoiceFormData } from '@/components/d
 import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { invoicesApi } from '@/services/apiService';
+import { recurringInvoicesApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const frequencyLabels = {
@@ -23,7 +23,7 @@ const frequencyLabels = {
 
 const RecurringInvoices = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { data: invoices, setData: setInvoices, isLoading: _isLoading, refetch } = useFetchData(() => invoicesApi.getAll(), demoRecurringInvoices);
+  const { data: invoices, setData: setInvoices, isLoading: _isLoading, refetch } = useFetchData(() => recurringInvoicesApi.getAll(), demoRecurringInvoices);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
   const [selectedInvoice, setSelectedInvoice] = useState<RecurringInvoiceFormData | null>(null);

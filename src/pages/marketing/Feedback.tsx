@@ -10,7 +10,7 @@
  import { MessageCircle, Star, ThumbsUp, ThumbsDown, Search, Eye, Reply, Trash2 } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { clientsApi } from '@/services/apiService';
+import { feedbackApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
  
  interface FeedbackItem {
@@ -34,7 +34,7 @@ import { useFetchData } from '@/hooks/useFetchData';
  ];
  
  const Feedback = () => {
-   const { data: feedback, setData: setFeedback } = useFetchData(() => clientsApi.getAll(), initialFeedback);
+   const { data: feedback, setData: setFeedback } = useFetchData(() => feedbackApi.getAll(), initialFeedback);
    const [searchTerm, setSearchTerm] = useState('');
    const [viewDialogOpen, setViewDialogOpen] = useState(false);
    const [replyDialogOpen, setReplyDialogOpen] = useState(false);

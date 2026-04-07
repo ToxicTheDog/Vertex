@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Save, Mail, MessageSquare, FileText, Bell, Percent, Zap } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
-import { clientsApi } from '@/services/apiService';
+import { automationApi } from '@/services/apiService';
 
 const AutomationSettings = () => {
   return (

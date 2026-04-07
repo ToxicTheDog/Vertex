@@ -11,7 +11,7 @@ import { Plus, List, Calendar, CheckCircle, XCircle, Eye, Edit, Trash2 } from 'l
 import { toast } from 'sonner';
 import { demoPriceLists, PriceList } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { articlesApi } from '@/services/apiService';
+import { priceListsApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const formatCurrency = (value: number) => {
@@ -23,7 +23,7 @@ const formatCurrency = (value: number) => {
 };
 
 const PriceLists = () => {
-  const { data: priceLists, setData: setPriceLists, isLoading: _isLoading, refetch } = useFetchData(() => articlesApi.getAll(), demoPriceLists);
+  const { data: priceLists, setData: setPriceLists, isLoading: _isLoading, refetch } = useFetchData(() => priceListsApi.getAll(), demoPriceLists);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedPriceList, setSelectedPriceList] = useState<PriceList | null>(null);

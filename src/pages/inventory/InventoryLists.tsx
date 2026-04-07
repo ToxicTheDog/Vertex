@@ -10,7 +10,7 @@
  import { Plus, Search, ClipboardCheck, Eye, Edit, Trash2, Play, CheckCircle } from 'lucide-react';
  import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { articlesApi } from '@/services/apiService';
+import { inventoryApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
  
  interface InventoryList {
@@ -33,7 +33,7 @@ import { useFetchData } from '@/hooks/useFetchData';
  ];
  
  const InventoryLists = () => {
-   const { data: lists, setData: setLists } = useFetchData(() => articlesApi.getAll(), initialLists);
+   const { data: lists, setData: setLists } = useFetchData(() => inventoryApi.getLists(), initialLists);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const { toast } = useToast();

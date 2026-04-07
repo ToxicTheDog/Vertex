@@ -11,7 +11,7 @@ import { Plus, Hash, Package, CheckCircle, Clock, Search, Eye, Edit, Trash2 } fr
 import { toast } from 'sonner';
 import { demoSerialNumbers, demoArticles, demoWarehouses, SerialNumber } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { articlesApi } from '@/services/apiService';
+import { serialNumbersApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const statusLabels: Record<string, string> = {
@@ -27,7 +27,7 @@ const statusColors: Record<string, string> = {
 };
 
 const SerialNumbers = () => {
-  const { data: serialNumbers, setData: setSerialNumbers, isLoading: _isLoading, refetch } = useFetchData(() => articlesApi.getAll(), demoSerialNumbers);
+  const { data: serialNumbers, setData: setSerialNumbers, isLoading: _isLoading, refetch } = useFetchData(() => serialNumbersApi.getAll(), demoSerialNumbers);
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);

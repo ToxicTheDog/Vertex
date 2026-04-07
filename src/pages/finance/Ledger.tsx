@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { demoLedgerEntries } from '@/data/demoData';
 import { useLocation } from 'react-router-dom';
 import { API_ENDPOINTS } from '@/config/api';
-import { invoicesApi } from '@/services/apiService';
+import { ledgerApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const documentTypeLabels = {
@@ -19,7 +19,7 @@ const documentTypeLabels = {
 };
 
 const Ledger = () => {
-    const { data: allLedgerEntries } = useFetchData(() => invoicesApi.getAll(), demoLedgerEntries);
+    const { data: allLedgerEntries } = useFetchData(() => ledgerApi.getAll(), demoLedgerEntries);
   const location = useLocation();
   const isIncoming = location.pathname.includes('incoming');
   
