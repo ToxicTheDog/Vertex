@@ -36,7 +36,7 @@ import { useFetchData } from '@/hooks/useFetchData';
  ];
  
  const StockMovements = () => {
-   const { data: movements, setData: setMovements } = useFetchData(() => articlesApi.getAll(), initialMovements);
+   const { data: movements, setData: setMovements } = useFetchData(() => inventoryApi.getMovements(), initialMovements);
    const [searchTerm, setSearchTerm] = useState('');
    const [typeFilter, setTypeFilter] = useState('all');
    const [dialogOpen, setDialogOpen] = useState(false);

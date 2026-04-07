@@ -34,7 +34,7 @@ import { useFetchData } from '@/hooks/useFetchData';
  ];
  
  const Feedback = () => {
-   const { data: feedback, setData: setFeedback } = useFetchData(() => clientsApi.getAll(), initialFeedback);
+   const { data: feedback, setData: setFeedback } = useFetchData(() => feedbackApi.getAll(), initialFeedback);
    const [searchTerm, setSearchTerm] = useState('');
    const [viewDialogOpen, setViewDialogOpen] = useState(false);
    const [replyDialogOpen, setReplyDialogOpen] = useState(false);

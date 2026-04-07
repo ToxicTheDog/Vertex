@@ -34,7 +34,7 @@ import { useFetchData } from '@/hooks/useFetchData';
  ];
  
  const Reminders = () => {
-   const { data: reminders, setData: setReminders } = useFetchData(() => clientsApi.getAll(), initialReminders);
+   const { data: reminders, setData: setReminders } = useFetchData(() => remindersApi.getAll(), initialReminders);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);

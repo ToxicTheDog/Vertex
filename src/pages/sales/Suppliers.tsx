@@ -14,7 +14,7 @@ import { suppliersApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const Suppliers = () => {
-  const { data: suppliers, setData: setSuppliers, isLoading: _isLoading, refetch } = useFetchData(() => clientsApi.getAll(), demoSuppliers);
+  const { data: suppliers, setData: setSuppliers, isLoading: _isLoading, refetch } = useFetchData(() => suppliersApi.getAll(), demoSuppliers);
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);

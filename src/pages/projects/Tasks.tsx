@@ -46,7 +46,7 @@ const priorityLabels = {
 };
 
 const Tasks = () => {
-  const { data: tasks, setData: setTasks } = useFetchData(() => clientsApi.getAll(), initialTasks);
+  const { data: tasks, setData: setTasks } = useFetchData(() => tasksApi.getAll(), initialTasks);
   const [newTask, setNewTask] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 

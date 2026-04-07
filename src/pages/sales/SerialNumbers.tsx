@@ -27,7 +27,7 @@ const statusColors: Record<string, string> = {
 };
 
 const SerialNumbers = () => {
-  const { data: serialNumbers, setData: setSerialNumbers, isLoading: _isLoading, refetch } = useFetchData(() => articlesApi.getAll(), demoSerialNumbers);
+  const { data: serialNumbers, setData: setSerialNumbers, isLoading: _isLoading, refetch } = useFetchData(() => serialNumbersApi.getAll(), demoSerialNumbers);
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);

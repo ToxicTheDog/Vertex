@@ -34,7 +34,7 @@ import { useFetchData } from '@/hooks/useFetchData';
  ];
  
  const Promotions = () => {
-   const { data: promotions, setData: setPromotions } = useFetchData(() => clientsApi.getAll(), initialPromotions);
+   const { data: promotions, setData: setPromotions } = useFetchData(() => promotionsApi.getAll(), initialPromotions);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const [editingPromo, setEditingPromo] = useState<Promotion | null>(null);

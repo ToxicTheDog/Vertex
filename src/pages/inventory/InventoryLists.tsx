@@ -33,7 +33,7 @@ import { useFetchData } from '@/hooks/useFetchData';
  ];
  
  const InventoryLists = () => {
-   const { data: lists, setData: setLists } = useFetchData(() => articlesApi.getAll(), initialLists);
+   const { data: lists, setData: setLists } = useFetchData(() => inventoryApi.getLists(), initialLists);
    const [searchTerm, setSearchTerm] = useState('');
    const [dialogOpen, setDialogOpen] = useState(false);
    const { toast } = useToast();

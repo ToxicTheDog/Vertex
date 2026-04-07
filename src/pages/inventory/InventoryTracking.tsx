@@ -45,7 +45,7 @@ import { useFetchData } from '@/hooks/useFetchData';
  const InventoryTracking = () => {
    const [searchTerm, setSearchTerm] = useState('');
    const [categoryFilter, setCategoryFilter] = useState('all');
-   const { data: items } = useFetchData(() => articlesApi.getAll(), inventoryData);
+   const { data: items } = useFetchData(() => inventoryApi.getTracking(), inventoryData);
  
    const filteredItems = items.filter(item => {
      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.sku.toLowerCase().includes(searchTerm.toLowerCase());

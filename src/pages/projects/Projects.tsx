@@ -80,7 +80,7 @@ const statusLabels = {
 };
 
 const Projects = () => {
-  const { data: projects, setData: setProjects } = useFetchData(() => clientsApi.getAll(), initialProjects);
+  const { data: projects, setData: setProjects } = useFetchData(() => projectsApi.getAll(), initialProjects);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('create');
   const [selectedProject, setSelectedProject] = useState<ProjectFormData | null>(null);

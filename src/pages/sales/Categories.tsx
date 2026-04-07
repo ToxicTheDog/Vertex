@@ -14,7 +14,7 @@ import { categoriesApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const Categories = () => {
-  const { data: categories, setData: setCategories, isLoading: _isLoading, refetch } = useFetchData(() => articlesApi.getAll(), demoCategories);
+  const { data: categories, setData: setCategories, isLoading: _isLoading, refetch } = useFetchData(() => categoriesApi.getAll(), demoCategories);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);

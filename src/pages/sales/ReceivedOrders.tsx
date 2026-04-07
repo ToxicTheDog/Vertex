@@ -39,7 +39,7 @@ const formatCurrency = (value: number) => {
 };
 
 const ReceivedOrders = () => {
-  const { data: orders, setData: setOrders, isLoading: _isLoading, refetch } = useFetchData(() => invoicesApi.getAll(), demoReceivedOrders);
+  const { data: orders, setData: setOrders, isLoading: _isLoading, refetch } = useFetchData(() => ordersApi.getReceived(), demoReceivedOrders);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);

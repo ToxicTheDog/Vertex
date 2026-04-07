@@ -20,8 +20,8 @@ const formatCurrency = (value: number) => {
 };
 
 const Stock = () => {
-  const { data: articles } = useFetchData(() => articlesApi.getAll(), demoArticles);
-  const { data: warehouses } = useFetchData(() => articlesApi.getAll(), demoWarehouses);
+  const { data: articles } = useFetchData(() => stockApi.getAll(), demoArticles);
+  const { data: warehouses } = useFetchData(() => warehousesApi.getAll(), demoWarehouses);
   
   
 
