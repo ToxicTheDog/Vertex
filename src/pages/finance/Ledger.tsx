@@ -19,7 +19,7 @@ const documentTypeLabels = {
 };
 
 const Ledger = () => {
-    const { data: allLedgerEntries } = useFetchData(() => invoicesApi.getAll(), demoLedgerEntries);
+    const { data: allLedgerEntries } = useFetchData(() => ledgerApi.getAll(), demoLedgerEntries);
   const location = useLocation();
   const isIncoming = location.pathname.includes('incoming');
   

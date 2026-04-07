@@ -31,9 +31,9 @@ const topClientsChart = clientStats.slice(0, 5).map(c => ({
 }));
 
 const ClientReports = () => {
-  const { data: clients } = useFetchData(() => reportsApi.getFinancial("", ""), demoClients);
-  const { data: invoices } = useFetchData(() => reportsApi.getSales("", ""), demoInvoices);
-  const { data: suppliers } = useFetchData(() => reportsApi.getFinancial("", ""), demoSuppliers);
+  const { data: clients } = useFetchData(() => clientReportsApi.getAll(), demoClients);
+  const { data: invoices } = useFetchData(() => clientReportsApi.getAll(), demoInvoices);
+  const { data: suppliers } = useFetchData(() => clientReportsApi.getAll(), demoSuppliers);
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
   };

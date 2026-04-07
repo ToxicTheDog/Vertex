@@ -43,7 +43,7 @@ const sefStatusLabels = {
 const ReceivedInvoices = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const { data: invoices, setData: setInvoices, isLoading: _isLoading, refetch } = useFetchData(() => invoicesApi.getAll(), demoReceivedInvoices);
+  const { data: invoices, setData: setInvoices, isLoading: _isLoading, refetch } = useFetchData(() => receivedInvoicesApi.getAll(), demoReceivedInvoices);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);

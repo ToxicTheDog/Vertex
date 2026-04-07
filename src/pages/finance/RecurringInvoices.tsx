@@ -23,7 +23,7 @@ const frequencyLabels = {
 
 const RecurringInvoices = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { data: invoices, setData: setInvoices, isLoading: _isLoading, refetch } = useFetchData(() => invoicesApi.getAll(), demoRecurringInvoices);
+  const { data: invoices, setData: setInvoices, isLoading: _isLoading, refetch } = useFetchData(() => recurringInvoicesApi.getAll(), demoRecurringInvoices);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
   const [selectedInvoice, setSelectedInvoice] = useState<RecurringInvoiceFormData | null>(null);

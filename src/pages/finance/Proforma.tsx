@@ -34,7 +34,7 @@ const statusLabels = {
 const Proforma = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const { data: invoices, setData: setInvoices, isLoading: _isLoading, refetch } = useFetchData(() => invoicesApi.getAll(), demoInvoices.filter(inv => inv.type === 'proforma'));
+  const { data: invoices, setData: setInvoices, isLoading: _isLoading, refetch } = useFetchData(() => proformaApi.getAll(), demoInvoices.filter(inv => inv.type === 'proforma'));
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);

@@ -52,7 +52,7 @@ const statusLabels: Record<string, string> = {
 };
 
 const VatRecords = () => {
-  const { data: vatRecords } = useFetchData(() => taxesApi.getAll(), demoVatRecords);
+  const { data: vatRecords } = useFetchData(() => vatRecordsApi.getAll(), demoVatRecords);
   const totalInputVat = vatRecords.reduce((sum, r) => sum + r.inputVat, 0);
   const totalOutputVat = vatRecords.reduce((sum, r) => sum + r.outputVat, 0);
   const totalDifference = totalOutputVat - totalInputVat;

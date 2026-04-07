@@ -12,7 +12,7 @@ import { supplierPaymentsApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const SupplierPayments = () => {
-    const { data: receivedInvoices } = useFetchData(() => invoicesApi.getAll(), demoReceivedInvoices);
+    const { data: receivedInvoices } = useFetchData(() => supplierPaymentsApi.getAll(), demoReceivedInvoices);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
