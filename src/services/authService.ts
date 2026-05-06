@@ -264,6 +264,56 @@ class AuthService {
     return this.getToken();
   }
 
+  async register(name: string, email: string, password: string): Promise<{ success: boolean; user?: User; error?: string }> {
+    logService.log({
+      action: 'create',
+      resource: 'auth',
+      details: `Pokušaj registracije: ${email}`,
+      userId: 'unknown',
+      userName: email
+    });
+
+    if (DEMO_MODE) {
+      const users = this.getUsers();
+      if (users.find(u => u.email === email)) {
+        return { success: false, error: 'Korisnik sa ovim emailom već postoji' };
+      }
+
+      const user = this.createUser({ name, email, role: 'viewer', isActive: true });
+      this.setCurrentUser(user);
+      return { success: true, user };
+    }
+
+    try {
+      const response = await fetch(API_ENDPOINTS.auth.register, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.message || 'Greška pri registraciji' };
+      }
+
+      // Ako server vrati token, automatski prijavi korisnika
+      if (data.accessToken) {
+        const expiresAt = Date.now() + (TOKEN_CONFIG.accessTokenExpiryMinutes * 60 * 1000);
+        this.setTokenData({
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          expiresAt
+        });
+        this.setCurrentUser(data.user);
+      }
+
+      return { success: true, user: data.user };
+    } catch (error) {
+      return { success: false, error: 'Nije moguće povezati se sa serverom' };
+    }
+  }
+
   async login(email: string, password: string): Promise<{ success: boolean; user?: User; error?: string }> {
     logService.log({
       action: 'login',
