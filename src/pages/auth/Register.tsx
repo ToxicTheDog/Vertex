@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/services/authService';
-import { DEMO_MODE } from '@/config/api';
 
 export default function Register() {
   const navigate = useNavigate();
