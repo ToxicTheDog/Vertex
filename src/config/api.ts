@@ -45,9 +45,10 @@ export const API_ENDPOINTS = {
   // Autentifikacija
   auth: {
     login: `${API_BASE_URL}auth/login`,
+    register: `${API_BASE_URL}auth/register`,
     logout: `${API_BASE_URL}auth/logout`,
     me: `${API_BASE_URL}auth/me`,
-    refresh: `${API_BASE_URL}auth/refresh`, // Refresh token endpoint
+    refresh: `${API_BASE_URL}auth/refresh`,
   },
 
   // Klijenti
