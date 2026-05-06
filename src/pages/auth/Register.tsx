@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/services/authService';
-import { DEMO_MODE } from '@/config/api';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -47,44 +46,25 @@ export default function Register() {
 
     setIsLoading(true);
     try {
-      if (DEMO_MODE) {
-        // U demo modu, kreiraj korisnika lokalno
-        const existingUsers = authService.getUsers();
-        if (existingUsers.find((u) => u.email === formData.email.trim())) {
-          toast({
-            title: 'Greška',
-            description: 'Korisnik sa ovim emailom već postoji',
-            variant: 'destructive',
-          });
-          setIsLoading(false);
-          return;
-        }
+      const result = await authService.register(
+        formData.name.trim(),
+        formData.email.trim(),
+        formData.password
+      );
 
-        authService.createUser({
-          name: formData.name.trim(),
-          email: formData.email.trim(),
-          role: 'viewer',
-          isActive: true,
+      if (result.success) {
+        toast({
+          title: 'Nalog kreiran!',
+          description: 'Uspešno ste se registrovali.',
         });
-
-        // Automatski prijavi korisnika
-        const loginResult = await authService.login(formData.email.trim(), 'demo');
-        if (loginResult.success) {
-          toast({
-            title: 'Nalog kreiran!',
-            description: 'Uspešno ste se registrovali i prijavljeni ste.',
-          });
-          navigate('/');
-          return;
-        }
+        navigate(result.user ? '/' : '/login');
+      } else {
+        toast({
+          title: 'Greška',
+          description: result.error || 'Nije moguće kreirati nalog.',
+          variant: 'destructive',
+        });
       }
-
-      // Za produkciju - API poziv
-      toast({
-        title: 'Nalog kreiran!',
-        description: 'Uspešno ste se registrovali. Možete se prijaviti.',
-      });
-      navigate('/login');
     } catch {
       toast({
         title: 'Greška',
