@@ -93,7 +93,9 @@ async function makeRequest<T>(
           message: data.message
         };
       } else {
-        // Refresh nije uspeo - korisnik mora ponovo da se prijavi
+        // Refresh nije uspeo - redirect na login
+        authService.logout();
+        window.location.href = '/login';
         return {
           success: false,
           error: 'Sesija je istekla',
@@ -118,10 +120,18 @@ async function makeRequest<T>(
       message: data.message
     };
   } catch (error) {
+    const errMsg = error instanceof Error ? error.message : 'Nepoznata greška';
     console.error('API Error:', error);
+    
+    // Ako je sesija istekla, redirect na login
+    if (errMsg.includes('Sesija je istekla')) {
+      authService.logout();
+      window.location.href = '/login';
+    }
+    
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Nepoznata greška',
+      error: errMsg,
       message: 'Nije moguće povezati se sa serverom'
     };
   }

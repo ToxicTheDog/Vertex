@@ -1,10 +1,15 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { Header } from './Header';
 import { PageBreadcrumb } from './PageBreadcrumb';
+import { authService } from '@/services/authService';
 
 export function MainLayout() {
+  if (!authService.isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full">
