@@ -93,7 +93,9 @@ async function makeRequest<T>(
           message: data.message
         };
       } else {
-        // Refresh nije uspeo - korisnik mora ponovo da se prijavi
+        // Refresh nije uspeo - redirect na login
+        authService.logout();
+        window.location.href = '/login';
         return {
           success: false,
           error: 'Sesija je istekla',
