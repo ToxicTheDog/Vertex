@@ -21,11 +21,11 @@
 // ============================================================
 
 // Promenite na false kada je backend API spreman
-export const DEMO_MODE = true;
+export const DEMO_MODE = false;
 
 // Jedina tačka komunikacije sa serverom
 // Frontend NIKADA ne komunicira direktno sa bazom podataka
-export const API_BASE_URL = 'https://api.vertex.com/';
+export const API_BASE_URL = 'http://localhost:3000';
 
 // Token konfiguracija
 export const TOKEN_CONFIG = {
