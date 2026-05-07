@@ -171,6 +171,7 @@ const App = () => (
             {/* Auth stranice - bez sidebar-a */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/prices" element={<Prices />} />
              
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
