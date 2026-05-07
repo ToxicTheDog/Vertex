@@ -68,6 +68,7 @@ import InventoryLists from "./pages/inventory/InventoryLists";
 import Settings from "./pages/admin/Settings";
 import Profile from "./pages/Profile";
 import { MenuLayout } from "./components/layout/MenuLayout";
+import Prices from "./pages/Prices";
 
 const queryClient = new QueryClient();
 
