@@ -30,6 +30,7 @@ const categoryLabels: Record<keyof UserPermissions['categories'], string> = {
 const roleLabels: Record<User['role'], string> = {
   admin: 'Administrator',
   accountant: 'Knjigovođa',
+  user: 'Korisnik',
   viewer: 'Pregled'
 };
 

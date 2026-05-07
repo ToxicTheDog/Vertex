@@ -1,359 +1,415 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Check, Minus, Plus, Crown, Zap, Building2, Briefcase, Rocket, Settings2, ArrowLeft } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
+import { Check, Star, Zap, Shield, Crown, Settings2, Users, Calculator, ChevronRight } from 'lucide-react';
 
-// ── Data ──────────────────────────────────────────────
-
-interface Subcategory {
-  key: string;
-  label: string;
-  customPrice: number;
-}
-
-const SUBCATEGORIES: Subcategory[] = [
-  { key: 'racuni', label: 'Računi i fakture', customPrice: 0 }, // included in Core
-  { key: 'banka', label: 'Banka i plaćanja', customPrice: 10 },
-  { key: 'knjig', label: 'Knjigovodstvo i porezi', customPrice: 15 },
-  { key: 'analitike', label: 'Analitike i izveštaji', customPrice: 10 },
-  { key: 'ugovori', label: 'Ugovori', customPrice: 5 },
-  { key: 'klijenti', label: 'Klijenti i kontakti', customPrice: 6 },
-  { key: 'poslovnice', label: 'Poslovnice i fiskalizacija', customPrice: 8 },
-  { key: 'narudzbe', label: 'Narudžbine', customPrice: 6 },
-  { key: 'artikli', label: 'Artikli i cene', customPrice: 7 },
-  { key: 'radnici', label: 'Radnici i evidencija', customPrice: 12 },
-  { key: 'putovanja', label: 'Službena putovanja', customPrice: 5 },
-  { key: 'sredstva', label: 'Osnovna sredstva', customPrice: 7 },
-  { key: 'kampanje', label: 'Kampanje', customPrice: 6 },
-  { key: 'promocije', label: 'Promocije i popusti', customPrice: 4 },
-  { key: 'povratne', label: 'Povratne informacije', customPrice: 3 },
-  { key: 'upravljanje', label: 'Upravljanje (Projekti i zadaci)', customPrice: 5 },
-  { key: 'skladiste', label: 'Skladište', customPrice: 10 },
-  { key: 'automatizacija', label: 'Podešavanja (Automatizacija)', customPrice: 12 },
-];
-
+// ── Tipovi ──
 interface Plan {
-  id: string;
   name: string;
   price: number;
-  description: string;
   icon: React.ReactNode;
-  includedKeys: string[];
-  popular?: boolean;
+  description: string;
+  highlight?: boolean;
+  badge?: string;
+  seats: { admin: number; knjigovođa: number; viewer: number };
+  features: string[];
 }
 
-const PLANS: Plan[] = [
+interface CustomModule {
+  key: string;
+  label: string;
+  price: number;
+  category: string;
+}
+
+// ── Podaci ──
+const standardPlans: Plan[] = [
   {
-    id: 'core',
     name: 'Core',
     price: 29,
-    description: 'Za malu firmu koja kreće sa fakturisanjem',
-    icon: <Zap className="h-6 w-6" />,
-    includedKeys: ['racuni'],
+    icon: <Shield className="h-6 w-6" />,
+    description: 'Računi, fakture i osnovno knjigovodstvo',
+    seats: { admin: 1, knjigovođa: 1, viewer: 1 },
+    features: [
+      'Računi i fakture (kompletno)',
+      'Dashboard & Profil',
+      '1 Knjigovođa + 1 Viewer uključeni',
+      'Admin se ne naplaćuje',
+    ],
   },
   {
-    id: 'operativa',
     name: 'Operativa',
     price: 49,
-    description: 'Za prodaju i rad sa klijentima',
-    icon: <Briefcase className="h-6 w-6" />,
-    includedKeys: ['racuni', 'klijenti', 'narudzbe', 'artikli', 'upravljanje'],
+    icon: <Zap className="h-6 w-6" />,
+    description: 'Core + klijenti, banka, PDV',
+    seats: { admin: 1, knjigovođa: 1, viewer: 2 },
+    features: [
+      'Sve iz Core plana',
+      'Klijenti & CRM beleške',
+      'Banka (izvodi, nalozi)',
+      'PDV evidencija & PPPDV',
+      '2 Viewer-a uključena',
+    ],
   },
   {
-    id: 'komercijala',
     name: 'Komercijala Plus',
     price: 69,
-    description: 'Za robu, poslovnice i naplatu',
-    icon: <Building2 className="h-6 w-6" />,
-    includedKeys: ['racuni', 'klijenti', 'narudzbe', 'artikli', 'upravljanje', 'poslovnice', 'banka', 'skladiste', 'kampanje'],
-    popular: true,
+    icon: <Star className="h-6 w-6" />,
+    description: 'Operativa + prodaja, nabavka, lager',
+    highlight: true,
+    badge: 'Popularno',
+    seats: { admin: 1, knjigovođa: 2, viewer: 3 },
+    features: [
+      'Sve iz Operativa plana',
+      'Prodaja & Nabavka',
+      'Artikli, Cenovnici, Kategorije',
+      'Lager & Serijski brojevi',
+      '2 Knjigovođe + 3 Viewer-a',
+    ],
   },
   {
-    id: 'administracija',
     name: 'Administracija',
     price: 89,
-    description: 'Za finansije i HR',
-    icon: <Crown className="h-6 w-6" />,
-    includedKeys: ['racuni', 'klijenti', 'narudzbe', 'artikli', 'upravljanje', 'poslovnice', 'banka', 'skladiste', 'kampanje', 'knjig', 'analitike', 'ugovori', 'radnici'],
+    icon: <Users className="h-6 w-6" />,
+    description: 'Komercijala + HR, plate, inventar',
+    seats: { admin: 1, knjigovođa: 3, viewer: 5 },
+    features: [
+      'Sve iz Komercijala Plus plana',
+      'Zaposleni, evidencija rada',
+      'Plate & odsustva',
+      'Skladišta & inventar',
+      '3 Knjigovođe + 5 Viewer-a',
+    ],
   },
   {
-    id: 'enterprise',
     name: 'Enterprise',
     price: 119,
-    description: 'Za kompletan sistem',
-    icon: <Rocket className="h-6 w-6" />,
-    includedKeys: SUBCATEGORIES.map(s => s.key),
+    icon: <Crown className="h-6 w-6" />,
+    description: 'Sve funkcionalnosti + automatizacija',
+    badge: 'Kompletno',
+    seats: { admin: 1, knjigovođa: 5, viewer: 10 },
+    features: [
+      'Sve iz Administracija plana',
+      'Marketing & kampanje',
+      'Projekti & taskovi',
+      'Automatizacija (fakture, PDV, izvještaji)',
+      'Osnovna sredstva & amortizacija',
+      '5 Knjigovođa + 10 Viewer-a',
+    ],
   },
 ];
 
-// ── Components ────────────────────────────────────────
+const customModules: CustomModule[] = [
+  { key: 'racuni', label: 'Računi i fakture', price: 15, category: 'Finansije' },
+  { key: 'banka', label: 'Banka', price: 8, category: 'Finansije' },
+  { key: 'pdv', label: 'PDV evidencija', price: 7, category: 'Finansije' },
+  { key: 'pppdv', label: 'PPPDV', price: 5, category: 'Finansije' },
+  { key: 'porezi', label: 'Porezi', price: 6, category: 'Finansije' },
+  { key: 'knjig', label: 'Knjigovodstvo (KUF/KIF)', price: 8, category: 'Finansije' },
+  { key: 'klijenti', label: 'Klijenti & CRM', price: 7, category: 'Klijenti' },
+  { key: 'prodaja', label: 'Prodaja & narudžbe', price: 10, category: 'Prodaja' },
+  { key: 'nabavka', label: 'Nabavka & dobavljači', price: 8, category: 'Prodaja' },
+  { key: 'artikli', label: 'Artikli & cenovnici', price: 6, category: 'Prodaja' },
+  { key: 'lager', label: 'Lager & serijski br.', price: 7, category: 'Prodaja' },
+  { key: 'skladiste', label: 'Skladišta & inventar', price: 8, category: 'Inventar' },
+  { key: 'zaposleni', label: 'Zaposleni & evidencija', price: 9, category: 'HR' },
+  { key: 'plate', label: 'Plate & odsustva', price: 10, category: 'HR' },
+  { key: 'marketing', label: 'Marketing & kampanje', price: 8, category: 'Marketing' },
+  { key: 'projekti', label: 'Projekti & taskovi', price: 7, category: 'Projekti' },
+  { key: 'automatizacija', label: 'Automatizacija', price: 12, category: 'Premium' },
+];
 
-function PlanCard({ plan, onSelect }: { plan: Plan; onSelect: () => void }) {
-  return (
-    <Card className={cn(
-      'relative flex flex-col transition-all duration-200 hover:shadow-lg hover:-translate-y-1',
-      plan.popular && 'border-primary shadow-md ring-2 ring-primary/20'
-    )}>
-      {plan.popular && (
-        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3">
-          Najpopularniji
-        </Badge>
-      )}
-      <CardHeader className="text-center pb-2">
-        <div className={cn(
-          'mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl',
-          plan.popular ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
-        )}>
-          {plan.icon}
-        </div>
-        <CardTitle className="text-xl">{plan.name}</CardTitle>
-        <p className="text-sm text-muted-foreground">{plan.description}</p>
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col">
-        <div className="text-center mb-4">
-          <span className="text-4xl font-bold">{plan.price} €</span>
-          <span className="text-muted-foreground"> / mesec</span>
-        </div>
+const EXTRA_VIEWER_PRICE = 3;
+const EXTRA_KNJIGOVODJA_PRICE = 7;
 
-        <Separator className="mb-4" />
-
-        <p className="text-xs text-muted-foreground mb-2 font-medium">Uključuje Core (1 viewer + 1 knjigovođa)</p>
-
-        <ul className="space-y-2 flex-1 mb-6">
-          {SUBCATEGORIES.map(sub => {
-            const included = plan.includedKeys.includes(sub.key);
-            return (
-              <li key={sub.key} className={cn('flex items-center gap-2 text-sm', !included && 'text-muted-foreground/40')}>
-                {included
-                  ? <Check className="h-4 w-4 shrink-0 text-primary" />
-                  : <Minus className="h-4 w-4 shrink-0" />}
-                {sub.label}
-              </li>
-            );
-          })}
-        </ul>
-
-        <Button
-          onClick={onSelect}
-          variant={plan.popular ? 'default' : 'outline'}
-          className="w-full"
-        >
-          Izaberi {plan.name}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-function CustomConfigurator() {
-  const [selected, setSelected] = useState<Set<string>>(new Set(['racuni']));
+const Prices = () => {
+  const [annual, setAnnual] = useState(false);
+  const [selectedModules, setSelectedModules] = useState<Set<string>>(new Set(['racuni']));
   const [extraViewers, setExtraViewers] = useState(0);
-  const [extraAccountants, setExtraAccountants] = useState(0);
+  const [extraKnjigovodje, setExtraKnjigovodje] = useState(0);
 
-  const toggle = (key: string) => {
-    if (key === 'racuni') return; // Core always checked
-    setSelected(prev => {
+  const discount = annual ? 0.8 : 1;
+
+  const customTotal = useMemo(() => {
+    let base = 0;
+    selectedModules.forEach((key) => {
+      const mod = customModules.find((m) => m.key === key);
+      if (mod) base += mod.price;
+    });
+    base += extraViewers * EXTRA_VIEWER_PRICE;
+    base += extraKnjigovodje * EXTRA_KNJIGOVODJA_PRICE;
+    return Math.round(base * discount);
+  }, [selectedModules, extraViewers, extraKnjigovodje, discount]);
+
+  const suggestedPlan = useMemo(() => {
+    return standardPlans.find((p) => Math.round(p.price * discount) <= customTotal + 5);
+  }, [customTotal, discount]);
+
+  const toggleModule = (key: string) => {
+    if (key === 'racuni') return; // Core obavezan
+    setSelectedModules((prev) => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
 
-  const totalSubcategories = useMemo(
-    () => SUBCATEGORIES.filter(s => selected.has(s.key)).reduce((sum, s) => sum + s.customPrice, 0),
-    [selected]
-  );
-
-  const total = 29 + totalSubcategories + extraViewers * 4 + extraAccountants * 9;
-
-  // Check if a standard plan would be cheaper
-  const cheaperPlan = useMemo(() => {
-    for (const plan of [...PLANS].reverse()) {
-      if (plan.id === 'core') continue;
-      const allIncluded = [...selected].every(k => plan.includedKeys.includes(k));
-      if (allIncluded && plan.price < total) {
-        return plan;
-      }
-    }
-    return null;
-  }, [selected, total]);
-
-  return (
-    <Card className="border-dashed border-2">
-      <CardHeader className="text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-foreground">
-          <Settings2 className="h-6 w-6" />
-        </div>
-        <CardTitle className="text-xl">Custom</CardTitle>
-        <p className="text-sm text-muted-foreground">Sastavi svoj paket — kreće od Core baze</p>
-      </CardHeader>
-      <CardContent>
-        {/* Subcategory toggles */}
-        <div className="grid gap-2 mb-6">
-          {SUBCATEGORIES.map(sub => {
-            const isCore = sub.key === 'racuni';
-            const checked = selected.has(sub.key);
-            return (
-              <label
-                key={sub.key}
-                className={cn(
-                  'flex items-center justify-between rounded-lg border px-4 py-2.5 cursor-pointer transition-colors',
-                  checked ? 'border-primary/40 bg-primary/5' : 'border-border hover:bg-muted/50',
-                  isCore && 'opacity-80 cursor-default'
-                )}
-                onClick={() => toggle(sub.key)}
-              >
-                <span className="flex items-center gap-2 text-sm">
-                  {checked
-                    ? <Check className="h-4 w-4 text-primary" />
-                    : <div className="h-4 w-4 rounded border border-muted-foreground/30" />}
-                  {sub.label}
-                  {isCore && <Badge variant="secondary" className="text-[10px] ml-1">Obavezno</Badge>}
-                </span>
-                <span className="text-xs text-muted-foreground font-medium">
-                  {isCore ? 'Uklj.' : `+${sub.customPrice} €`}
-                </span>
-              </label>
-            );
-          })}
-        </div>
-
-        <Separator className="mb-4" />
-
-        {/* User seats */}
-        <p className="text-sm font-medium mb-3">Dodatni korisnici</p>
-        <p className="text-xs text-muted-foreground mb-4">Uključeno: 1 viewer + 1 knjigovođa · Admin = 0 €</p>
-
-        <div className="space-y-3 mb-6">
-          <SeatCounter label="Dodatni Viewer" price={4} value={extraViewers} onChange={setExtraViewers} />
-          <SeatCounter label="Dodatni Knjigovođa" price={9} value={extraAccountants} onChange={setExtraAccountants} />
-        </div>
-
-        <Separator className="mb-4" />
-
-        {/* Price summary */}
-        <div className="space-y-1 text-sm mb-2">
-          <div className="flex justify-between"><span>Core baza</span><span>29 €</span></div>
-          {totalSubcategories > 0 && (
-            <div className="flex justify-between"><span>Podkategorije</span><span>+{totalSubcategories} €</span></div>
-          )}
-          {extraViewers > 0 && (
-            <div className="flex justify-between"><span>{extraViewers}× viewer</span><span>+{extraViewers * 4} €</span></div>
-          )}
-          {extraAccountants > 0 && (
-            <div className="flex justify-between"><span>{extraAccountants}× knjigovođa</span><span>+{extraAccountants * 9} €</span></div>
-          )}
-        </div>
-        <div className="flex justify-between items-baseline font-bold text-lg border-t pt-2 mt-2">
-          <span>Ukupno</span>
-          <span>{total} € <span className="text-sm font-normal text-muted-foreground">/ mesec</span></span>
-        </div>
-
-        {cheaperPlan && (
-          <p className="text-xs text-warning mt-3 text-center">
-            💡 Plan <strong>{cheaperPlan.name}</strong> pokriva sve izabrano za samo {cheaperPlan.price} € / mesec
-          </p>
-        )}
-
-        <Button className="w-full mt-4">Kontaktirajte nas</Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-function SeatCounter({ label, price, value, onChange }: { label: string; price: number; value: number; onChange: (v: number) => void }) {
-  return (
-    <div className="flex items-center justify-between">
-      <div>
-        <span className="text-sm">{label}</span>
-        <span className="text-xs text-muted-foreground ml-2">+{price} € / mesec</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => onChange(Math.max(0, value - 1))} disabled={value === 0}>
-          <Minus className="h-3 w-3" />
-        </Button>
-        <span className="w-6 text-center text-sm font-medium">{value}</span>
-        <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => onChange(value + 1)}>
-          <Plus className="h-3 w-3" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-// ── Page ──────────────────────────────────────────────
-
-export default function Prices() {
-  const navigate = useNavigate();
-  const [showAnnual, setShowAnnual] = useState(false);
+  const categories = [...new Set(customModules.map((m) => m.category))];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b">
-        <div className="mx-auto max-w-7xl px-4 py-4 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Cene</h1>
-            <p className="text-sm text-muted-foreground">Izaberite plan koji odgovara vašem poslovanju</p>
+      <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold tracking-tight mb-3">VERTEX Cenovnik</h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Izaberite standardni plan ili kreirajte Custom paket prema vašim potrebama.
+          </p>
+
+          {/* Billing toggle */}
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <Label className={!annual ? 'font-semibold' : 'text-muted-foreground'}>Mesečno</Label>
+            <Switch checked={annual} onCheckedChange={setAnnual} />
+            <Label className={annual ? 'font-semibold' : 'text-muted-foreground'}>
+              Godišnje
+              <Badge variant="secondary" className="ml-2 text-xs">-20%</Badge>
+            </Label>
           </div>
         </div>
-      </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 space-y-10">
-        {/* Billing toggle */}
-        <div className="flex items-center justify-center gap-3">
-          <span className={cn('text-sm', !showAnnual && 'font-semibold')}>Mesečno</span>
-          <Switch checked={showAnnual} onCheckedChange={setShowAnnual} />
-          <span className={cn('text-sm', showAnnual && 'font-semibold')}>
-            Godišnje <Badge variant="secondary" className="ml-1 text-[10px]">-20%</Badge>
-          </span>
+        {/* ── Standardni planovi ── */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-16">
+          {standardPlans.map((plan) => (
+            <Card
+              key={plan.name}
+              className={`relative flex flex-col ${
+                plan.highlight
+                  ? 'border-primary shadow-lg shadow-primary/10 ring-2 ring-primary/20'
+                  : ''
+              }`}
+            >
+              {plan.badge && (
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground">
+                  {plan.badge}
+                </Badge>
+              )}
+              <CardHeader className="text-center pb-2">
+                <div className="mx-auto mb-2 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  {plan.icon}
+                </div>
+                <CardTitle className="text-xl">{plan.name}</CardTitle>
+                <CardDescription className="text-sm min-h-[40px]">{plan.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col">
+                <div className="text-center mb-4">
+                  <span className="text-4xl font-bold">{Math.round(plan.price * discount)}€</span>
+                  <span className="text-muted-foreground text-sm">/mesečno</span>
+                </div>
+                <div className="text-xs text-muted-foreground text-center mb-4">
+                  {plan.seats.admin} Admin (besplatan) · {plan.seats.knjigovođa} Knjigovođa · {plan.seats.viewer} Viewer
+                </div>
+                <ul className="space-y-2 flex-1">
+                  {plan.features.map((f, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button className="w-full mt-6" variant={plan.highlight ? 'default' : 'outline'}>
+                  Izaberi {plan.name}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Included seats info */}
-        <div className="text-center space-y-1">
-          <p className="text-sm text-muted-foreground">
-            Svi planovi uključuju <strong>1 viewer + 1 knjigovođa</strong>. Admin nalog je besplatan.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Dodatni viewer <strong>+4 €</strong> · Dodatni knjigovođa <strong>+9 €</strong> / mesec
-          </p>
-        </div>
-
-        {/* Standard plans */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {PLANS.map(plan => {
-            const displayPlan = showAnnual
-              ? { ...plan, price: Math.round(plan.price * 0.8) }
-              : plan;
-            return (
-              <PlanCard
-                key={plan.id}
-                plan={displayPlan}
-                onSelect={() => navigate('/register')}
-              />
-            );
-          })}
-        </div>
-
-        <Separator />
-
-        {/* Custom configurator */}
-        <div className="max-w-lg mx-auto">
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-bold">Custom plan</h2>
-            <p className="text-sm text-muted-foreground">Sastavite paket prema vašim potrebama</p>
+        {/* ── Custom konfigurator ── */}
+        <div id="custom" className="scroll-mt-8">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 mb-2">
+              <Settings2 className="h-6 w-6 text-primary" />
+              <h2 className="text-3xl font-bold">Custom Plan</h2>
+            </div>
+            <p className="text-muted-foreground">Sastavite sopstveni paket — plaćate samo ono što koristite.</p>
           </div>
-          <CustomConfigurator />
+
+          <div className="grid gap-8 lg:grid-cols-3">
+            {/* Moduli */}
+            <div className="lg:col-span-2 space-y-6">
+              {categories.map((cat) => (
+                <Card key={cat}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">{cat}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-3 sm:grid-cols-2">
+                    {customModules
+                      .filter((m) => m.category === cat)
+                      .map((mod) => {
+                        const isCore = mod.key === 'racuni';
+                        const active = selectedModules.has(mod.key);
+                        return (
+                          <button
+                            key={mod.key}
+                            onClick={() => toggleModule(mod.key)}
+                            className={`flex items-center justify-between rounded-lg border p-3 text-left transition-colors ${
+                              active
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border hover:border-primary/40'
+                            } ${isCore ? 'opacity-80 cursor-default' : 'cursor-pointer'}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`h-4 w-4 rounded border flex items-center justify-center ${
+                                  active ? 'bg-primary border-primary' : 'border-muted-foreground/40'
+                                }`}
+                              >
+                                {active && <Check className="h-3 w-3 text-primary-foreground" />}
+                              </div>
+                              <span className="text-sm font-medium">{mod.label}</span>
+                              {isCore && (
+                                <Badge variant="outline" className="text-[10px] ml-1">
+                                  Obavezno
+                                </Badge>
+                              )}
+                            </div>
+                            <span className="text-sm font-semibold text-primary">{mod.price}€</span>
+                          </button>
+                        );
+                      })}
+                  </CardContent>
+                </Card>
+              ))}
+
+              {/* Dodaci korisnika */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Dodatni korisnici</CardTitle>
+                  <CardDescription>Core uključuje 1 Knjigovođu + 1 Viewer-a. Admin je besplatan.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Dodatni Viewer-i ({EXTRA_VIEWER_PRICE}€/kom)</Label>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setExtraViewers(Math.max(0, extraViewers - 1))}
+                      >
+                        -
+                      </Button>
+                      <span className="w-8 text-center font-semibold">{extraViewers}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setExtraViewers(extraViewers + 1)}
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>Dodatne Knjigovođe ({EXTRA_KNJIGOVODJA_PRICE}€/kom)</Label>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setExtraKnjigovodje(Math.max(0, extraKnjigovodje - 1))}
+                      >
+                        -
+                      </Button>
+                      <span className="w-8 text-center font-semibold">{extraKnjigovodje}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setExtraKnjigovodje(extraKnjigovodje + 1)}
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Rekapitulacija */}
+            <div>
+              <Card className="sticky top-6 border-primary/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calculator className="h-5 w-5" />
+                    Vaš Custom plan
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-2 text-sm">
+                    {[...selectedModules].map((key) => {
+                      const mod = customModules.find((m) => m.key === key);
+                      if (!mod) return null;
+                      return (
+                        <li key={key} className="flex justify-between">
+                          <span>{mod.label}</span>
+                          <span className="font-medium">{mod.price}€</span>
+                        </li>
+                      );
+                    })}
+                    {extraViewers > 0 && (
+                      <li className="flex justify-between">
+                        <span>{extraViewers}× Viewer</span>
+                        <span className="font-medium">{extraViewers * EXTRA_VIEWER_PRICE}€</span>
+                      </li>
+                    )}
+                    {extraKnjigovodje > 0 && (
+                      <li className="flex justify-between">
+                        <span>{extraKnjigovodje}× Knjigovođa</span>
+                        <span className="font-medium">{extraKnjigovodje * EXTRA_KNJIGOVODJA_PRICE}€</span>
+                      </li>
+                    )}
+                  </ul>
+
+                  <div className="border-t pt-3">
+                    {annual && (
+                      <p className="text-xs text-muted-foreground mb-1">Godišnji popust: -20%</p>
+                    )}
+                    <div className="flex items-end justify-between">
+                      <span className="text-sm font-medium">Ukupno</span>
+                      <div className="text-right">
+                        <span className="text-3xl font-bold">{customTotal}€</span>
+                        <span className="text-muted-foreground text-sm">/mes</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {suggestedPlan && Math.round(suggestedPlan.price * discount) <= customTotal && (
+                    <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-sm">
+                      <p className="font-medium text-primary mb-1">💡 Preporuka</p>
+                      <p className="text-muted-foreground">
+                        Plan <strong>{suggestedPlan.name}</strong> ({Math.round(suggestedPlan.price * discount)}€/mes)
+                        nudi više funkcionalnosti za sličnu ili nižu cenu.
+                      </p>
+                    </div>
+                  )}
+
+                  <Button className="w-full" size="lg">
+                    Započni sa Custom planom
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default Prices;
