@@ -23,9 +23,10 @@ import {
   TableFooter,
 } from '@/components/ui/table';
 import { demoClients, demoArticles } from '@/data/demoData';
+import { useFetchData } from '@/hooks/useFetchData';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { invoicesApi } from '@/services/apiService';
+import { articlesApi, clientsApi, invoicesApi } from '@/services/apiService';
 
 interface InvoiceItem {
   id: string;
@@ -54,6 +55,8 @@ const CreateInvoice = () => {
   const [dueDate, setDueDate] = useState('');
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [notes, setNotes] = useState('');
+  const { data: clients } = useFetchData(() => clientsApi.getAll(), demoClients);
+  const { data: articles } = useFetchData(() => articlesApi.getAll(), demoArticles);
 
   const addItem = () => {
     const newItem: InvoiceItem = {
@@ -78,7 +81,7 @@ const CreateInvoice = () => {
       if (item.id === id) {
         const updated = { ...item, [field]: value };
         if (field === 'articleId') {
-          const article = demoArticles.find(a => a.id === value);
+          const article = articles.find(a => a.id === value);
           if (article) {
             updated.name = article.name;
             updated.price = article.price;
@@ -155,7 +158,7 @@ const CreateInvoice = () => {
                   <SelectValue placeholder="Izaberite klijenta" />
                 </SelectTrigger>
                 <SelectContent>
-                  {demoClients.map((client) => (
+                  {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.name}
                     </SelectItem>
@@ -166,7 +169,7 @@ const CreateInvoice = () => {
             {selectedClient && (
               <div className="p-4 bg-muted rounded-lg space-y-1">
                 {(() => {
-                  const client = demoClients.find(c => c.id === selectedClient);
+                  const client = clients.find(c => c.id === selectedClient);
                   if (!client) return null;
                   return (
                     <>
@@ -261,7 +264,7 @@ const CreateInvoice = () => {
                           <SelectValue placeholder="Izaberite artikal" />
                         </SelectTrigger>
                         <SelectContent>
-                          {demoArticles.map((article) => (
+                          {articles.map((article) => (
                             <SelectItem key={article.id} value={article.id}>
                               {article.name}
                             </SelectItem>

@@ -7,49 +7,79 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { demoTaxRecords } from '@/data/demoData';
-import { API_ENDPOINTS } from '@/config/api';
 import { taxesApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
-const typeLabels = {
+const typeLabels: Record<string, string> = {
   vat: 'PDV',
   income_tax: 'Porez na dobit',
   payroll_tax: 'Porez na zarade',
   property_tax: 'Porez na imovinu'
 };
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   pending: 'bg-warning/20 text-warning',
   paid: 'bg-success/20 text-success',
   overdue: 'bg-destructive/20 text-destructive'
 };
 
-const statusLabels = {
-  pending: 'Na čekanju',
-  paid: 'Plaćen',
-  overdue: 'Prekoračen'
+const statusLabels: Record<string, string> = {
+  pending: 'Na cekanju',
+  paid: 'Placeno',
+  overdue: 'Prekoraceno'
+};
+
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
+
+const formatDate = (value?: string) => {
+  if (!value) {
+    return '-';
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString('sr-RS');
 };
 
 const Taxes = () => {
-    const { data: taxRecords } = useFetchData(() => taxesApi.getAll(), demoTaxRecords);
+  const { data: taxRecords, setData: setTaxRecords } = useFetchData(() => taxesApi.getAll(), demoTaxRecords);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
 
-  const filteredRecords = taxRecords.filter(record => {
+  const filteredRecords = taxRecords.filter((record) => {
     const matchesSearch = record.period.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || record.status === statusFilter;
     const matchesType = typeFilter === 'all' || record.type === typeFilter;
     return matchesSearch && matchesStatus && matchesType;
   });
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
-  };
+  const totalPending = taxRecords
+    .filter((record) => record.status === 'pending')
+    .reduce((sum, record) => sum + record.amount, 0);
+  const totalOverdue = taxRecords
+    .filter((record) => record.status === 'overdue')
+    .reduce((sum, record) => sum + record.amount, 0);
+  const totalPaid = taxRecords
+    .filter((record) => record.status === 'paid')
+    .reduce((sum, record) => sum + record.amount, 0);
 
-  const totalPending = taxRecords.filter(r => r.status === 'pending').reduce((sum, r) => sum + r.amount, 0);
-  const totalOverdue = taxRecords.filter(r => r.status === 'overdue').reduce((sum, r) => sum + r.amount, 0);
-  const totalPaid = taxRecords.filter(r => r.status === 'paid').reduce((sum, r) => sum + r.amount, 0);
+  const nextDueRecord = [...taxRecords]
+    .filter((record) => record.status === 'pending' || record.status === 'overdue')
+    .sort((first, second) => new Date(first.dueDate).getTime() - new Date(second.dueDate).getTime())[0];
+
+  const handlePay = async (id: string) => {
+    const paidDate = new Date().toISOString().split('T')[0];
+    const response = await taxesApi.pay(id, paidDate);
+
+    if (!response.success) {
+      return;
+    }
+
+    setTaxRecords((current) =>
+      current.map((record) => record.id === id ? { ...record, status: 'paid', paidDate } : record)
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -63,17 +93,17 @@ const Taxes = () => {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Za plaćanje</CardTitle>
+            <CardTitle className="text-sm font-medium">Za placanje</CardTitle>
             <Clock className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalPending)}</div>
-            <p className="text-xs text-muted-foreground">{taxRecords.filter(r => r.status === 'pending').length} obaveza</p>
+            <p className="text-xs text-muted-foreground">{taxRecords.filter((record) => record.status === 'pending').length} obaveza</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Prekoračeno</CardTitle>
+            <CardTitle className="text-sm font-medium">Prekoraceno</CardTitle>
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
@@ -82,7 +112,7 @@ const Taxes = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Plaćeno</CardTitle>
+            <CardTitle className="text-sm font-medium">Placeno</CardTitle>
             <CheckCircle className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
@@ -91,14 +121,12 @@ const Taxes = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Sledeći rok</CardTitle>
+            <CardTitle className="text-sm font-medium">Sledeci rok</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {new Date(taxRecords.filter(r => r.status === 'pending')[0]?.dueDate || '').toLocaleDateString('sr-RS')}
-            </div>
-            <p className="text-xs text-muted-foreground">PDV</p>
+            <div className="text-2xl font-bold">{formatDate(nextDueRecord?.dueDate)}</div>
+            <p className="text-xs text-muted-foreground">{nextDueRecord ? typeLabels[nextDueRecord.type] : 'Nema obaveza'}</p>
           </CardContent>
         </Card>
       </div>
@@ -113,9 +141,9 @@ const Taxes = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Pretraži po periodu..."
+                placeholder="Pretrazi po periodu..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(event) => setSearchTerm(event.target.value)}
                 className="pl-10"
               />
             </div>
@@ -139,9 +167,9 @@ const Taxes = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Svi statusi</SelectItem>
-                <SelectItem value="pending">Na čekanju</SelectItem>
-                <SelectItem value="paid">Plaćen</SelectItem>
-                <SelectItem value="overdue">Prekoračen</SelectItem>
+                <SelectItem value="pending">Na cekanju</SelectItem>
+                <SelectItem value="paid">Placeno</SelectItem>
+                <SelectItem value="overdue">Prekoraceno</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -151,10 +179,10 @@ const Taxes = () => {
               <TableRow>
                 <TableHead>Tip poreza</TableHead>
                 <TableHead>Period</TableHead>
-                <TableHead>Rok plaćanja</TableHead>
+                <TableHead>Rok placanja</TableHead>
                 <TableHead className="text-right">Iznos</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Datum plaćanja</TableHead>
+                <TableHead>Datum placanja</TableHead>
                 <TableHead className="text-right">Akcije</TableHead>
               </TableRow>
             </TableHeader>
@@ -165,19 +193,17 @@ const Taxes = () => {
                     <Badge variant="outline">{typeLabels[record.type]}</Badge>
                   </TableCell>
                   <TableCell>{record.period}</TableCell>
-                  <TableCell>{new Date(record.dueDate).toLocaleDateString('sr-RS')}</TableCell>
+                  <TableCell>{formatDate(record.dueDate)}</TableCell>
                   <TableCell className="text-right font-medium">{formatCurrency(record.amount)}</TableCell>
                   <TableCell>
                     <Badge className={statusColors[record.status]}>
                       {statusLabels[record.status]}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    {record.paidDate ? new Date(record.paidDate).toLocaleDateString('sr-RS') : '-'}
-                  </TableCell>
+                  <TableCell>{formatDate(record.paidDate)}</TableCell>
                   <TableCell className="text-right">
                     {record.status !== 'paid' && (
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => handlePay(record.id)}>
                         <CheckCircle className="h-4 w-4 mr-2" />
                         Plati
                       </Button>
@@ -185,6 +211,13 @@ const Taxes = () => {
                   </TableCell>
                 </TableRow>
               ))}
+              {filteredRecords.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                    Nema poreskih obaveza za prikaz.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

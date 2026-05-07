@@ -11,7 +11,7 @@ import { Plus, ShoppingCart, Package, Truck, CheckCircle, Eye, Edit, Trash2 } fr
 import { toast } from 'sonner';
 import { demoReceivedOrders, demoClients, demoArticles, Order } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { ordersApi } from '@/services/apiService';
+import { articlesApi, clientsApi, ordersApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const statusLabels: Record<string, string> = {
@@ -40,6 +40,8 @@ const formatCurrency = (value: number) => {
 
 const ReceivedOrders = () => {
   const { data: orders, setData: setOrders, isLoading: _isLoading, refetch } = useFetchData(() => ordersApi.getReceived(), demoReceivedOrders);
+  const { data: clients } = useFetchData(() => clientsApi.getAll(), demoClients);
+  const { data: articles } = useFetchData(() => articlesApi.getAll(), demoArticles);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -52,8 +54,8 @@ const ReceivedOrders = () => {
   });
 
   const handleSubmit = () => {
-    const client = demoClients.find(c => c.id === formData.clientId);
-    const article = demoArticles.find(a => a.id === formData.articleId);
+    const client = clients.find(c => c.id === formData.clientId);
+    const article = articles.find(a => a.id === formData.articleId);
     
     if (!client || !article) {
       toast.error('Izaberite klijenta i artikal');
@@ -254,7 +256,7 @@ const ReceivedOrders = () => {
                   <SelectValue placeholder="Izaberite klijenta" />
                 </SelectTrigger>
                 <SelectContent>
-                  {demoClients.map((client) => (
+                  {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -267,7 +269,7 @@ const ReceivedOrders = () => {
                   <SelectValue placeholder="Izaberite artikal" />
                 </SelectTrigger>
                 <SelectContent>
-                  {demoArticles.map((article) => (
+                  {articles.map((article) => (
                     <SelectItem key={article.id} value={article.id}>
                       {article.name} - {formatCurrency(article.price)}
                     </SelectItem>

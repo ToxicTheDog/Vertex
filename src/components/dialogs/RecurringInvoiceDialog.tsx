@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { demoClients } from '@/data/demoData';
+import { useFetchData } from '@/hooks/useFetchData';
+import { clientsApi } from '@/services/apiService';
 
 export interface RecurringInvoiceFormData {
   id?: string;
@@ -57,6 +59,7 @@ const frequencyLabels = {
 
 export const RecurringInvoiceDialog = ({ open, onOpenChange, invoice, onSave, mode }: RecurringInvoiceDialogProps) => {
   const [formData, setFormData] = useState<RecurringInvoiceFormData>(emptyInvoice);
+  const { data: clients } = useFetchData(() => clientsApi.getAll(), demoClients, { autoFetch: open });
 
   useEffect(() => {
     if (invoice) {
@@ -67,7 +70,7 @@ export const RecurringInvoiceDialog = ({ open, onOpenChange, invoice, onSave, mo
   }, [invoice, open]);
 
   const handleClientChange = (clientId: string) => {
-    const client = demoClients.find(c => c.id === clientId);
+    const client = clients.find(c => c.id === clientId);
     setFormData({
       ...formData,
       clientId,
@@ -101,7 +104,7 @@ export const RecurringInvoiceDialog = ({ open, onOpenChange, invoice, onSave, mo
                 <SelectValue placeholder="Izaberite klijenta" />
               </SelectTrigger>
               <SelectContent>
-                {demoClients.map(client => (
+                {clients.map(client => (
                   <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
                 ))}
               </SelectContent>

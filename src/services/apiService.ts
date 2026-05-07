@@ -18,10 +18,51 @@ export interface PaginatedResponse<T> {
   total: number;
   page: number;
   pageSize: number;
+  totalPages?: number;
+  month?: string;
+}
+
+export interface PaginationParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: string;
+  month?: string;
+  [key: string]: string | number | undefined;
 }
 
 // Helper za demo delay simulaciju
 const simulateDelay = (ms: number = 300) => new Promise(resolve => setTimeout(resolve, ms));
+
+function buildRequestHeaders(token: string, headers: HeadersInit = {}, body?: BodyInit | null): Headers {
+  const mergedHeaders = new Headers(headers);
+
+  if (token) {
+    mergedHeaders.set('Authorization', `Bearer ${token}`);
+  }
+
+  if (!(body instanceof FormData) && !mergedHeaders.has('Content-Type')) {
+    mergedHeaders.set('Content-Type', 'application/json');
+  }
+
+  return mergedHeaders;
+}
+
+function extractResponseData<T>(payload: any): T {
+  return (payload && payload.data !== undefined ? payload.data : payload) as T;
+}
+
+function buildListUrl(endpoint: string, params: PaginationParams = {}): string {
+  const url = new URL(endpoint, window.location.origin);
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      url.searchParams.set(key, String(value));
+    }
+  });
+
+  return url.toString();
+}
 
 // Centralni API request handler sa automatskim token refresh-om
 async function makeRequest<T>(
@@ -53,11 +94,7 @@ async function makeRequest<T>(
 
     const response = await fetch(endpoint, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        ...options.headers,
-      },
+      headers: buildRequestHeaders(token, options.headers, options.body),
     });
 
     // Ako je 401, pokušaj refresh i ponovi zahtev
@@ -70,11 +107,7 @@ async function makeRequest<T>(
         const newToken = authService.getToken();
         const retryResponse = await fetch(endpoint, {
           ...options,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${newToken}`,
-            ...options.headers,
-          },
+          headers: buildRequestHeaders(newToken, options.headers, options.body),
         });
 
         if (!retryResponse.ok) {
@@ -89,7 +122,7 @@ async function makeRequest<T>(
         const data = await retryResponse.json();
         return {
           success: true,
-          data: data.data || data,
+          data: extractResponseData<T>(data),
           message: data.message
         };
       } else {
@@ -116,7 +149,7 @@ async function makeRequest<T>(
     const data = await response.json();
     return {
       success: true,
-      data: data.data || data,
+      data: extractResponseData<T>(data),
       message: data.message
     };
   } catch (error) {
@@ -137,6 +170,102 @@ async function makeRequest<T>(
   }
 }
 
+async function makePaginatedRequest<T>(
+  endpoint: string,
+  params: PaginationParams,
+  resourceType: string,
+  action: LogAction
+): Promise<PaginatedResponse<T>> {
+  if (DEMO_MODE) {
+    await simulateDelay();
+    return {
+      success: true,
+      data: [],
+      total: 0,
+      page: params.page || 1,
+      pageSize: params.pageSize || 25,
+      totalPages: 0,
+      ...(params.month ? { month: String(params.month) } : {}),
+    };
+  }
+
+  const url = buildListUrl(endpoint, params);
+  logService.log({
+    action,
+    resource: resourceType,
+    details: `GET ${url}`,
+    userId: getCurrentUserId(),
+    userName: getCurrentUserName()
+  });
+
+  try {
+    const token = await authService.ensureValidToken();
+    let response = await fetch(url, {
+      method: 'GET',
+      headers: buildRequestHeaders(token),
+    });
+
+    if (response.status === 401) {
+      const refreshed = await authService.refreshAccessToken();
+
+      if (!refreshed) {
+        authService.logout();
+        window.location.href = '/login';
+        return {
+          success: false,
+          data: [],
+          total: 0,
+          page: params.page || 1,
+          pageSize: params.pageSize || 25,
+          totalPages: 0,
+          month: typeof params.month === 'string' ? params.month : undefined,
+        };
+      }
+
+      const newToken = authService.getToken();
+      response = await fetch(url, {
+        method: 'GET',
+        headers: buildRequestHeaders(newToken),
+      });
+    }
+
+    if (!response.ok) {
+      return {
+        success: false,
+        data: [],
+        total: 0,
+        page: params.page || 1,
+        pageSize: params.pageSize || 25,
+        totalPages: 0,
+        month: typeof params.month === 'string' ? params.month : undefined,
+      };
+    }
+
+    const payload = await response.json();
+
+    return {
+      success: Boolean(payload?.success ?? true),
+      data: Array.isArray(payload?.data) ? payload.data : [],
+      total: Number(payload?.total) || 0,
+      page: Number(payload?.page) || params.page || 1,
+      pageSize: Number(payload?.pageSize) || params.pageSize || 25,
+      totalPages: Number(payload?.totalPages) || 0,
+      month: payload?.month,
+    };
+  } catch (error) {
+    console.error('Paginated API Error:', error);
+    return {
+      success: false,
+      data: [],
+      total: 0,
+      page: params.page || 1,
+      pageSize: params.pageSize || 25,
+      totalPages: 0,
+      month: typeof params.month === 'string' ? params.month : undefined,
+    };
+  }
+}
+
 // Helper funkcije za auth
 function getCurrentUserId(): string {
   if (DEMO_MODE) return 'demo-user';
@@ -153,7 +282,10 @@ function getCurrentUserName(): string {
 // ==================== POSLOVNICE (BRANCHES) ====================
 export const branchesApi = {
   async getAll(): Promise<ApiResponse<Branch[]>> {
-    return makeRequest(API_ENDPOINTS.branches?.list || '/api/branches', { method: 'GET' }, 'branches', 'view');
+    return makeRequest(buildListUrl(API_ENDPOINTS.branches?.list || '/api/branches', { page: 1, pageSize: 1000 }), { method: 'GET' }, 'branches', 'view');
+  },
+  async getPage(params: PaginationParams = {}): Promise<PaginatedResponse<Branch>> {
+    return makePaginatedRequest(API_ENDPOINTS.branches?.list || '/api/branches', params, 'branches', 'view');
   },
 
   async getById(id: string): Promise<ApiResponse<Branch>> {
@@ -203,6 +335,14 @@ export const posTerminalsApi = {
     return makeRequest(
       API_ENDPOINTS.posTerminals?.list || '/api/pos-terminals',
       { method: 'GET' },
+      'pos-terminals',
+      'view'
+    );
+  },
+  async getPage(params: PaginationParams = {}): Promise<PaginatedResponse<PosTerminal>> {
+    return makePaginatedRequest(
+      API_ENDPOINTS.posTerminals?.list || '/api/pos-terminals',
+      params,
       'pos-terminals',
       'view'
     );
@@ -307,6 +447,14 @@ export const crmNotesApi = {
       'view'
     );
   },
+  async getPage(params: PaginationParams = {}): Promise<PaginatedResponse<CrmNote>> {
+    return makePaginatedRequest(
+      API_ENDPOINTS.crmNotes?.list || '/api/crm-notes',
+      params,
+      'crm-notes',
+      'view'
+    );
+  },
 
   async create(data: any): Promise<ApiResponse<CrmNote>> {
     return makeRequest(
@@ -339,7 +487,11 @@ export const crmNotesApi = {
 // ==================== KLIJENTI ====================
 export const clientsApi = {
   async getAll(): Promise<ApiResponse<any[]>> {
-    return makeRequest(API_ENDPOINTS.clients.list, { method: 'GET' }, 'clients', 'view');
+    return makeRequest(buildListUrl(API_ENDPOINTS.clients.list, { page: 1, pageSize: 1000 }), { method: 'GET' }, 'clients', 'view');
+  },
+
+  async getPage(params: PaginationParams = {}): Promise<PaginatedResponse<any>> {
+    return makePaginatedRequest(API_ENDPOINTS.clients.list, params, 'clients', 'view');
   },
 
   async getById(id: string): Promise<ApiResponse<any>> {
@@ -377,7 +529,11 @@ export const clientsApi = {
 // ==================== FAKTURE ====================
 export const invoicesApi = {
   async getAll(): Promise<ApiResponse<any[]>> {
-    return makeRequest(API_ENDPOINTS.invoices.list, { method: 'GET' }, 'invoices', 'view');
+    return makeRequest(buildListUrl(API_ENDPOINTS.invoices.list, { page: 1, pageSize: 1000 }), { method: 'GET' }, 'invoices', 'view');
+  },
+
+  async getPage(params: PaginationParams = {}): Promise<PaginatedResponse<any>> {
+    return makePaginatedRequest(API_ENDPOINTS.invoices.list, params, 'invoices', 'view');
   },
 
   async getById(id: string): Promise<ApiResponse<any>> {
@@ -435,6 +591,9 @@ export const paymentOrdersApi = {
   async getAll(): Promise<ApiResponse<any[]>> {
     return makeRequest(API_ENDPOINTS.paymentOrders.list, { method: 'GET' }, 'payment-orders', 'view');
   },
+  async getPage(params: PaginationParams = {}): Promise<PaginatedResponse<any>> {
+    return makePaginatedRequest(API_ENDPOINTS.paymentOrders.list, params, 'payment-orders', 'view');
+  },
 
   async create(data: any): Promise<ApiResponse<any>> {
     return makeRequest(
@@ -476,7 +635,11 @@ export const paymentOrdersApi = {
 // ==================== ZAPOSLENI ====================
 export const employeesApi = {
   async getAll(): Promise<ApiResponse<any[]>> {
-    return makeRequest(API_ENDPOINTS.employees.list, { method: 'GET' }, 'employees', 'view');
+    return makeRequest(buildListUrl(API_ENDPOINTS.employees.list, { page: 1, pageSize: 1000 }), { method: 'GET' }, 'employees', 'view');
+  },
+
+  async getPage(params: PaginationParams = {}): Promise<PaginatedResponse<any>> {
+    return makePaginatedRequest(API_ENDPOINTS.employees.list, params, 'employees', 'view');
   },
 
   async getById(id: string): Promise<ApiResponse<any>> {
@@ -514,7 +677,11 @@ export const employeesApi = {
 // ==================== ARTIKLI ====================
 export const articlesApi = {
   async getAll(): Promise<ApiResponse<any[]>> {
-    return makeRequest(API_ENDPOINTS.articles.list, { method: 'GET' }, 'articles', 'view');
+    return makeRequest(buildListUrl(API_ENDPOINTS.articles.list, { page: 1, pageSize: 1000 }), { method: 'GET' }, 'articles', 'view');
+  },
+
+  async getPage(params: PaginationParams = {}): Promise<PaginatedResponse<any>> {
+    return makePaginatedRequest(API_ENDPOINTS.articles.list, params, 'articles', 'view');
   },
 
   async getById(id: string): Promise<ApiResponse<any>> {
@@ -739,7 +906,7 @@ export const adminApi = {
 
   async createUser(data: any): Promise<ApiResponse<any>> {
     return makeRequest(
-      `${API_ENDPOINTS.auth.login}/register`,
+      API_ENDPOINTS.auth.register,
       { method: 'POST', body: JSON.stringify(data) },
       'admin',
       'create'
@@ -1004,10 +1171,19 @@ export const priceListsApi = {
 // ==================== KATEGORIJE ====================
 export const categoriesApi = {
   async getAll(): Promise<ApiResponse<any[]>> {
-    return makeRequest(API_ENDPOINTS.categories.list, { method: 'GET' }, 'categories', 'view');
+    return makeRequest(buildListUrl(API_ENDPOINTS.categories.list, { page: 1, pageSize: 1000 }), { method: 'GET' }, 'categories', 'view');
+  },
+  async getPage(params: PaginationParams = {}): Promise<PaginatedResponse<any>> {
+    return makePaginatedRequest(API_ENDPOINTS.categories.list, params, 'categories', 'view');
   },
   async create(data: any): Promise<ApiResponse<any>> {
     return makeRequest(API_ENDPOINTS.categories.create, { method: 'POST', body: JSON.stringify(data) }, 'categories', 'create');
+  },
+  async update(id: string, data: any): Promise<ApiResponse<any>> {
+    return makeRequest(`${API_ENDPOINTS.categories.create}/${id}`, { method: 'PUT', body: JSON.stringify(data) }, 'categories', 'update');
+  },
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(`${API_ENDPOINTS.categories.create}/${id}`, { method: 'DELETE' }, 'categories', 'delete');
   }
 };
 
@@ -1188,8 +1364,17 @@ export const timeTrackingApi = {
   async getAll(): Promise<ApiResponse<any[]>> {
     return makeRequest(API_ENDPOINTS.timeTracking.list, { method: 'GET' }, 'time-tracking', 'view');
   },
+  async getPage(params: PaginationParams = {}): Promise<PaginatedResponse<any>> {
+    return makePaginatedRequest(API_ENDPOINTS.timeTracking.list, params, 'time-tracking', 'view');
+  },
   async create(data: any): Promise<ApiResponse<any>> {
     return makeRequest(API_ENDPOINTS.timeTracking.create, { method: 'POST', body: JSON.stringify(data) }, 'time-tracking', 'create');
+  },
+  async update(id: string, data: any): Promise<ApiResponse<any>> {
+    return makeRequest(`${API_ENDPOINTS.timeTracking.create}/${id}`, { method: 'PUT', body: JSON.stringify(data) }, 'time-tracking', 'update');
+  },
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return makeRequest(`${API_ENDPOINTS.timeTracking.create}/${id}`, { method: 'DELETE' }, 'time-tracking', 'delete');
   }
 };
 
@@ -1198,11 +1383,17 @@ export const payrollApi = {
   async getAll(): Promise<ApiResponse<any[]>> {
     return makeRequest(API_ENDPOINTS.payroll.list, { method: 'GET' }, 'payroll', 'view');
   },
+  async getPage(params: PaginationParams = {}): Promise<PaginatedResponse<any>> {
+    return makePaginatedRequest(API_ENDPOINTS.payroll.list, params, 'payroll', 'view');
+  },
   async calculate(data: any): Promise<ApiResponse<any>> {
     return makeRequest(API_ENDPOINTS.payroll.calculate, { method: 'POST', body: JSON.stringify(data) }, 'payroll', 'create');
   },
   async approve(id: string): Promise<ApiResponse<any>> {
     return makeRequest(API_ENDPOINTS.payroll.approve(id), { method: 'PUT' }, 'payroll', 'approve');
+  },
+  async pay(id: string): Promise<ApiResponse<any>> {
+    return makeRequest(`${API_ENDPOINTS.payroll.list}/${id}/pay`, { method: 'PUT' }, 'payroll', 'update');
   }
 };
 

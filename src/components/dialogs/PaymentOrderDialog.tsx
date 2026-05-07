@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { DatePickerField } from '@/components/shared/DatePickerField';
 
 export interface PaymentOrderFormData {
   id?: string;
@@ -116,11 +117,9 @@ export const PaymentOrderDialog = ({ open, onOpenChange, paymentOrder, onSave, m
             </div>
             <div className="grid gap-2">
               <Label htmlFor="date">Datum</Label>
-              <Input
-                id="date"
-                type="date"
+              <DatePickerField
                 value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                onChange={(value) => setFormData({ ...formData, date: value })}
                 disabled={isViewMode}
               />
             </div>

@@ -11,7 +11,7 @@ import { Plus, Hash, Package, CheckCircle, Clock, Search, Eye, Edit, Trash2 } fr
 import { toast } from 'sonner';
 import { demoSerialNumbers, demoArticles, demoWarehouses, SerialNumber } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { serialNumbersApi } from '@/services/apiService';
+import { articlesApi, serialNumbersApi, warehousesApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const statusLabels: Record<string, string> = {
@@ -28,6 +28,8 @@ const statusColors: Record<string, string> = {
 
 const SerialNumbers = () => {
   const { data: serialNumbers, setData: setSerialNumbers, isLoading: _isLoading, refetch } = useFetchData(() => serialNumbersApi.getAll(), demoSerialNumbers);
+  const { data: articles } = useFetchData(() => articlesApi.getAll(), demoArticles);
+  const { data: warehouses } = useFetchData(() => warehousesApi.getAll(), demoWarehouses);
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -49,8 +51,8 @@ const SerialNumbers = () => {
   );
 
   const handleSubmit = () => {
-    const article = demoArticles.find(a => a.id === formData.articleId);
-    const warehouse = demoWarehouses.find(w => w.id === formData.warehouseId);
+    const article = articles.find(a => a.id === formData.articleId);
+    const warehouse = warehouses.find(w => w.id === formData.warehouseId);
     
     if (!article || !warehouse) {
       toast.error('Izaberite artikal i magacin');
@@ -263,7 +265,7 @@ const SerialNumbers = () => {
                   <SelectValue placeholder="Izaberite artikal" />
                 </SelectTrigger>
                 <SelectContent>
-                  {demoArticles.map((article) => (
+                  {articles.map((article) => (
                     <SelectItem key={article.id} value={article.id}>{article.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -303,7 +305,7 @@ const SerialNumbers = () => {
                   <SelectValue placeholder="Izaberite magacin" />
                 </SelectTrigger>
                 <SelectContent>
-                  {demoWarehouses.map((warehouse) => (
+                  {warehouses.map((warehouse) => (
                     <SelectItem key={warehouse.id} value={warehouse.id}>{warehouse.name}</SelectItem>
                   ))}
                 </SelectContent>

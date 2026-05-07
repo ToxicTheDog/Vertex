@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Phone, Mail, Users, FileText, Search, Eye, Edit, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,9 +23,8 @@ import {
 import { toast } from 'sonner';
 import { CrmNote } from '@/data/demoData';
 import { crmNotesApi, clientsApi } from '@/services/apiService';
-import { DEMO_MODE } from '@/config/api';
-import { demoCrmNotes, demoClients } from '@/data/demoData';
-import { API_ENDPOINTS } from '@/config/api';
+
+const PAGE_SIZE = 10;
 
 const typeIcons: Record<string, React.ReactNode> = {
   call: <Phone className="h-4 w-4" />,
@@ -37,7 +37,7 @@ const typeLabels: Record<string, string> = {
   call: 'Poziv',
   email: 'Email',
   meeting: 'Sastanak',
-  note: 'Beleška',
+  note: 'BeleÅ¡ka',
 };
 
 const typeColors: Record<string, string> = {
@@ -47,23 +47,27 @@ const typeColors: Record<string, string> = {
   note: 'bg-orange-500/10 text-orange-500',
 };
 
+const formatDate = (value?: string) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString('sr-RS');
+};
+
 const CrmNotes = () => {
   const [notes, setNotes] = useState<CrmNote[]>([]);
-  const [clients, setClients] = useState(demoClients);
+  const [clients, setClients] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredNotes, setFilteredNotes] = useState<CrmNote[]>([]);
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
   const [selectedNote, setSelectedNote] = useState<CrmNote | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-
   const [formData, setFormData] = useState({
     clientId: '',
     type: 'note' as CrmNote['type'],
@@ -72,52 +76,23 @@ const CrmNotes = () => {
     author: 'Korisnik',
   });
 
-  // Učitavanje podataka
-  const fetchData = async () => {
+  const fetchNotes = async (page = currentPage, search = searchTerm) => {
     setIsLoading(true);
+    const [notesResponse, clientsResponse] = await Promise.all([
+      crmNotesApi.getPage({ page, pageSize: PAGE_SIZE, search }),
+      clientsApi.getAll(),
+    ]);
 
-    if (DEMO_MODE) {
-      setNotes(demoCrmNotes);
-      setClients(demoClients);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const [notesRes, clientsRes] = await Promise.all([
-        crmNotesApi.getAll(),
-        clientsApi.getAll(),
-      ]);
-
-      if (notesRes.success && notesRes.data) {
-        setNotes(notesRes.data);
-      }
-      if (clientsRes.success && clientsRes.data) {
-        setClients(clientsRes.data);
-      }
-    } catch (error) {
-      console.error("Error fetching CRM data:", error);
-      toast.error("Greška pri učitavanju podataka. Koristim demo podatke.");
-      setNotes(demoCrmNotes);
-      setClients(demoClients);
-    } finally {
-      setIsLoading(false);
-    }
+    setNotes(notesResponse.success ? notesResponse.data : []);
+    setTotalPages(notesResponse.success ? notesResponse.totalPages || 0 : 0);
+    setTotalItems(notesResponse.success ? notesResponse.total || 0 : 0);
+    setClients(clientsResponse.success && clientsResponse.data ? clientsResponse.data : []);
+    setIsLoading(false);
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  // Filtriranje beleški
-  useEffect(() => {
-    const filtered = notes.filter((note) =>
-      note.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      note.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      note.content.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredNotes(filtered);
-  }, [searchTerm, notes]);
+    fetchNotes(currentPage, searchTerm);
+  }, [currentPage, searchTerm]);
 
   const resetForm = () => {
     setFormData({
@@ -161,19 +136,18 @@ const CrmNotes = () => {
 
   const handleSubmit = async () => {
     if (!formData.clientId || !formData.subject || !formData.content) {
-      toast.error("Klijent, predmet i sadržaj su obavezni!");
+      toast.error('Klijent, predmet i sadrzaj su obavezni.');
       return;
     }
 
-    const selectedClient = clients.find((c) => c.id === formData.clientId);
+    const selectedClient = clients.find((client) => client.id === formData.clientId);
     if (!selectedClient) {
-      toast.error("Izaberite validnog klijenta");
+      toast.error('Izaberite validnog klijenta.');
       return;
     }
 
     setIsSubmitting(true);
-
-    const noteData = {
+    const payload = {
       clientId: formData.clientId,
       clientName: selectedClient.name,
       type: formData.type,
@@ -182,94 +156,60 @@ const CrmNotes = () => {
       author: formData.author,
     };
 
-    try {
-      if (isEditing && selectedNote) {
-        if (DEMO_MODE) {
-          const updatedNote: CrmNote = { ...selectedNote, ...noteData, date: selectedNote.date };
-          setNotes(notes.map((n) => (n.id === selectedNote.id ? updatedNote : n)));
-          toast.success("Beleška uspešno izmenjena");
-        } else {
-          const response = await crmNotesApi.update(selectedNote.id, noteData);
-          if (response.success) {
-            toast.success("Beleška uspešno izmenjena");
-            fetchData();
-          } else {
-            throw new Error(response.message || "Greška pri ažuriranju");
-          }
-        }
-      } else {
-        if (DEMO_MODE) {
-          const newNote: CrmNote = {
-            id: Date.now().toString(),
-            date: new Date().toISOString().split("T")[0],
-            ...noteData,
-          };
-          setNotes([newNote, ...notes]);
-          toast.success("Nova beleška kreirana");
-        } else {
-          const response = await crmNotesApi.create(noteData);
-          if (response.success) {
-            toast.success("Nova beleška kreirana");
-            fetchData();
-          } else {
-            throw new Error(response.message || "Greška pri kreiranju");
-          }
-        }
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Došlo je do greške prilikom čuvanja");
-    } finally {
-      setIsSubmitting(false);
-      setDialogOpen(false);
-      resetForm();
+    const response = isEditing && selectedNote
+      ? await crmNotesApi.update(selectedNote.id, payload)
+      : await crmNotesApi.create(payload);
+    setIsSubmitting(false);
+
+    if (!response.success) {
+      toast.error(response.message || 'CRM beleÅ¡ka nije sacuvana.');
+      return;
     }
+
+    toast.success(isEditing ? 'BeleÅ¡ka je uspesno izmenjena.' : 'Nova beleÅ¡ka je kreirana.');
+    setDialogOpen(false);
+    resetForm();
+    fetchNotes(currentPage, searchTerm);
   };
 
   const confirmDelete = async () => {
-    if (!selectedNote) return;
+    if (!selectedNote) {
+      return;
+    }
 
     setIsDeleting(true);
+    const response = await crmNotesApi.delete(selectedNote.id);
+    setIsDeleting(false);
 
-    try {
-      if (DEMO_MODE) {
-        setNotes(notes.filter((n) => n.id !== selectedNote.id));
-        toast.success("Beleška uspešno obrisana");
-      } else {
-        const response = await crmNotesApi.delete(selectedNote.id);
-        if (response.success) {
-          toast.success("Beleška uspešno obrisana");
-          fetchData();
-        } else {
-          throw new Error(response.message || "Greška pri brisanju");
-        }
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Nije moguće obrisati belešku");
-    } finally {
-      setIsDeleting(false);
-      setDeleteDialogOpen(false);
-      setSelectedNote(null);
+    if (!response.success) {
+      toast.error(response.message || 'Nije moguce obrisati beleÅ¡ku.');
+      return;
+    }
+
+    toast.success('BeleÅ¡ka je uspesno obrisana.');
+    setDeleteDialogOpen(false);
+    setSelectedNote(null);
+
+    if (notes.length === 1 && currentPage > 1) {
+      setCurrentPage((page) => page - 1);
+    } else {
+      fetchNotes(currentPage, searchTerm);
     }
   };
-
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-96">Učitavanje CRM beleški...</div>;
-  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">CRM Beleške</h1>
+          <h1 className="text-3xl font-bold tracking-tight">CRM beleÅ¡ke</h1>
           <p className="text-muted-foreground">Evidencija komunikacije sa klijentima</p>
         </div>
         <Button onClick={handleAddNew}>
           <Plus className="mr-2 h-4 w-4" />
-          Nova beleška
+          Nova beleÅ¡ka
         </Button>
       </div>
 
-      {/* Statistika */}
       <div className="grid gap-4 md:grid-cols-4">
         {Object.entries(typeLabels).map(([type, label]) => (
           <Card key={type}>
@@ -277,7 +217,7 @@ const CrmNotes = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{label}</p>
-                  <p className="text-2xl font-bold">{notes.filter((n) => n.type === type).length}</p>
+                  <p className="text-2xl font-bold">{notes.filter((note) => note.type === type).length}</p>
                 </div>
                 <div className={`p-3 rounded-full ${typeColors[type]}`}>
                   {typeIcons[type]}
@@ -288,26 +228,28 @@ const CrmNotes = () => {
         ))}
       </div>
 
-      {/* Lista beleški */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <CardTitle>Sve beleške</CardTitle>
-              <CardDescription>Ukupno {notes.length} beleški</CardDescription>
+              <CardTitle>Sve beleÅ¡ke</CardTitle>
+              <CardDescription>Ukupno {totalItems} beleÅ¡ki</CardDescription>
             </div>
             <div className="relative w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Pretraži beleške..."
+                placeholder="Pretrazi beleÅ¡ke..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setCurrentPage(1);
+                }}
                 className="pl-8"
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Table>
             <TableHeader>
               <TableRow>
@@ -320,9 +262,9 @@ const CrmNotes = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredNotes.map((note) => (
+              {notes.map((note) => (
                 <TableRow key={note.id}>
-                  <TableCell>{new Date(note.date).toLocaleDateString('sr-RS')}</TableCell>
+                  <TableCell>{formatDate(note.date)}</TableCell>
                   <TableCell>
                     <Badge className={typeColors[note.type]}>
                       <span className="flex items-center gap-1">
@@ -349,45 +291,72 @@ const CrmNotes = () => {
                   </TableCell>
                 </TableRow>
               ))}
+              {!isLoading && notes.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
+                    Nema CRM beleÅ¡ki za prikaz.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
 
-          {filteredNotes.length === 0 && searchTerm && (
-            <div className="text-center py-12 text-muted-foreground">
-              Nema pronađenih beleški za zadatu pretragu.
-            </div>
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious href="#" className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''} onClick={(event) => {
+                    event.preventDefault();
+                    if (currentPage > 1) setCurrentPage((page) => page - 1);
+                  }} />
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, index) => index + 1)
+                  .slice(Math.max(0, currentPage - 3), Math.max(0, currentPage - 3) + 5)
+                  .map((pageNumber) => (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink href="#" isActive={pageNumber === currentPage} onClick={(event) => {
+                        event.preventDefault();
+                        setCurrentPage(pageNumber);
+                      }}>
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                <PaginationItem>
+                  <PaginationNext href="#" className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''} onClick={(event) => {
+                    event.preventDefault();
+                    if (currentPage < totalPages) setCurrentPage((page) => page + 1);
+                  }} />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           )}
         </CardContent>
       </Card>
 
-      {/* Dialog za kreiranje / izmenu */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>{isEditing ? 'Izmena beleške' : 'Nova beleška'}</DialogTitle>
-            <DialogDescription>Zabeležite komunikaciju sa klijentom</DialogDescription>
+            <DialogTitle>{isEditing ? 'Izmena beleÅ¡ke' : 'Nova beleÅ¡ka'}</DialogTitle>
+            <DialogDescription>Zabelezite komunikaciju sa klijentom</DialogDescription>
           </DialogHeader>
-
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label>Klijent *</Label>
-              <Select value={formData.clientId} onValueChange={(v) => setFormData({ ...formData, clientId: v })}>
+              <Select value={formData.clientId} onValueChange={(value) => setFormData({ ...formData, clientId: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Izaberite klijenta" />
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
-                    </SelectItem>
+                    <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
               <Label>Tip komunikacije</Label>
-              <Select value={formData.type} onValueChange={(v: CrmNote['type']) => setFormData({ ...formData, type: v })}>
+              <Select value={formData.type} onValueChange={(value: CrmNote['type']) => setFormData({ ...formData, type: value })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -398,45 +367,28 @@ const CrmNotes = () => {
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="subject">Predmet *</Label>
-              <Input
-                id="subject"
-                value={formData.subject}
-                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                placeholder="Tema komunikacije"
-              />
+              <Input id="subject" value={formData.subject} onChange={(event) => setFormData({ ...formData, subject: event.target.value })} />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="content">Sadržaj beleške *</Label>
-              <Textarea
-                id="content"
-                rows={5}
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                placeholder="Unesite detalje komunikacije..."
-              />
+              <Label htmlFor="content">Sadrzaj beleÅ¡ke *</Label>
+              <Textarea id="content" rows={5} value={formData.content} onChange={(event) => setFormData({ ...formData, content: event.target.value })} />
             </div>
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>
-              Otkaži
-            </Button>
+            <Button variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>Otkazi</Button>
             <Button onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? "Čuvanje..." : isEditing ? "Sačuvaj izmene" : "Kreiraj belešku"}
+              {isSubmitting ? 'Cuvanje...' : isEditing ? 'Sacuvaj izmene' : 'Kreiraj beleÅ¡ku'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Pregled beleške */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Detalji beleške</DialogTitle>
+            <DialogTitle>Detalji beleÅ¡ke</DialogTitle>
           </DialogHeader>
           {selectedNote && (
             <div className="space-y-4">
@@ -444,9 +396,7 @@ const CrmNotes = () => {
                 <Badge className={typeColors[selectedNote.type]}>
                   {typeIcons[selectedNote.type]} {typeLabels[selectedNote.type]}
                 </Badge>
-                <span className="text-muted-foreground">
-                  {new Date(selectedNote.date).toLocaleDateString('sr-RS')}
-                </span>
+                <span className="text-muted-foreground">{formatDate(selectedNote.date)}</span>
               </div>
               <div>
                 <Label className="text-muted-foreground">Klijent</Label>
@@ -457,7 +407,7 @@ const CrmNotes = () => {
                 <p className="font-medium">{selectedNote.subject}</p>
               </div>
               <div>
-                <Label className="text-muted-foreground">Sadržaj</Label>
+                <Label className="text-muted-foreground">Sadrzaj</Label>
                 <p className="mt-2 p-4 bg-muted rounded-lg whitespace-pre-wrap">{selectedNote.content}</p>
               </div>
               <div>
@@ -469,23 +419,18 @@ const CrmNotes = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Potvrda brisanja */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Da li ste sigurni?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ova akcija će trajno obrisati belešku za klijenta <strong>{selectedNote?.clientName}</strong>.
+              Ova akcija ce trajno obrisati beleÅ¡ku za klijenta <strong>{selectedNote?.clientName}</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Otkaži</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={isDeleting}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              {isDeleting ? "Brisanje..." : "Obriši belešku"}
+            <AlertDialogCancel disabled={isDeleting}>Otkazi</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+              {isDeleting ? 'Brisanje...' : 'Obrisi beleÅ¡ku'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

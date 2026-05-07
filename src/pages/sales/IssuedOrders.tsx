@@ -11,7 +11,7 @@ import { Plus, Send, Package, Truck, CheckCircle, Eye, Trash2 } from 'lucide-rea
 import { toast } from 'sonner';
 import { demoIssuedOrders, demoSuppliers, demoArticles, Order } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { ordersApi } from '@/services/apiService';
+import { articlesApi, ordersApi, suppliersApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const statusLabels: Record<string, string> = {
@@ -40,6 +40,8 @@ const formatCurrency = (value: number) => {
 
 const IssuedOrders = () => {
   const { data: orders, setData: setOrders, isLoading: _isLoading, refetch } = useFetchData(() => ordersApi.getIssued(), demoIssuedOrders);
+  const { data: suppliers } = useFetchData(() => suppliersApi.getAll(), demoSuppliers);
+  const { data: articles } = useFetchData(() => articlesApi.getAll(), demoArticles);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -51,8 +53,8 @@ const IssuedOrders = () => {
   });
 
   const handleSubmit = () => {
-    const supplier = demoSuppliers.find(s => s.id === formData.supplierId);
-    const article = demoArticles.find(a => a.id === formData.articleId);
+    const supplier = suppliers.find(s => s.id === formData.supplierId);
+    const article = articles.find(a => a.id === formData.articleId);
     
     if (!supplier || !article) {
       toast.error('Izaberite dobavljača i artikal');
@@ -252,7 +254,7 @@ const IssuedOrders = () => {
                   <SelectValue placeholder="Izaberite dobavljača" />
                 </SelectTrigger>
                 <SelectContent>
-                  {demoSuppliers.map((supplier) => (
+                  {suppliers.map((supplier) => (
                     <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -265,7 +267,7 @@ const IssuedOrders = () => {
                   <SelectValue placeholder="Izaberite artikal" />
                 </SelectTrigger>
                 <SelectContent>
-                  {demoArticles.map((article) => (
+                  {articles.map((article) => (
                     <SelectItem key={article.id} value={article.id}>
                       {article.name} - {formatCurrency(article.price)}
                     </SelectItem>

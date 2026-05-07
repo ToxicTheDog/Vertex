@@ -352,7 +352,7 @@ export function AppSidebar() {
 
   const isActiveRoute = (url: string) => {
     if (url === '/') return location.pathname === '/';
-    return location.pathname.startsWith(url);
+    return location.pathname === url || location.pathname.startsWith(`${url}/`);
   };
 
   return (

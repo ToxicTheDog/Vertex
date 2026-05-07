@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { API_ENDPOINTS } from '@/config/api';
 import { campaignsApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
@@ -26,53 +25,6 @@ interface Campaign {
   date: string;
 }
 
-const campaigns: Campaign[] = [
-  {
-    id: '1',
-    name: 'Novogodišnja promocija',
-    type: 'email',
-    status: 'completed',
-    recipients: 450,
-    sent: 448,
-    opened: 312,
-    clicked: 145,
-    date: '2024-01-01'
-  },
-  {
-    id: '2',
-    name: 'Prolećni popusti',
-    type: 'email',
-    status: 'scheduled',
-    recipients: 520,
-    sent: 0,
-    opened: 0,
-    clicked: 0,
-    date: '2024-03-01'
-  },
-  {
-    id: '3',
-    name: 'SMS podsetnik za plaćanje',
-    type: 'sms',
-    status: 'active',
-    recipients: 85,
-    sent: 85,
-    opened: 0,
-    clicked: 0,
-    date: '2024-02-15'
-  },
-  {
-    id: '4',
-    name: 'Newsletter - februar',
-    type: 'email',
-    status: 'draft',
-    recipients: 0,
-    sent: 0,
-    opened: 0,
-    clicked: 0,
-    date: '2024-02-28'
-  }
-];
-
 const statusColors: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
   active: 'bg-success/20 text-success',
@@ -83,13 +35,23 @@ const statusColors: Record<string, string> = {
 const statusLabels: Record<string, string> = {
   draft: 'Nacrt',
   active: 'Aktivna',
-  completed: 'Završena',
+  completed: 'Zavrsena',
   scheduled: 'Zakazana'
 };
 
+const formatDate = (value?: string) => {
+  if (!value) {
+    return '-';
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString('sr-RS');
+};
+
 const Campaigns = () => {
-  const totalSent = campaigns.reduce((sum, c) => sum + c.sent, 0);
-  const totalOpened = campaigns.reduce((sum, c) => sum + c.opened, 0);
+  const { data: campaigns } = useFetchData<Campaign[]>(() => campaignsApi.getAll(), []);
+  const totalSent = campaigns.reduce((sum, campaign) => sum + (Number(campaign.sent) || 0), 0);
+  const totalOpened = campaigns.reduce((sum, campaign) => sum + (Number(campaign.opened) || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -153,7 +115,7 @@ const Campaigns = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Stopa otvaranja</p>
                 <p className="text-2xl font-bold">
-                  {totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) : 0}%
+                  {totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) : '0.0'}%
                 </p>
               </div>
             </div>
@@ -197,18 +159,23 @@ const Campaigns = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge className={statusColors[campaign.status]}>
-                      {statusLabels[campaign.status]}
+                    <Badge className={statusColors[campaign.status] || statusColors.draft}>
+                      {statusLabels[campaign.status] || campaign.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-center">{campaign.recipients}</TableCell>
-                  <TableCell className="text-center">{campaign.sent}</TableCell>
-                  <TableCell className="text-center">
-                    {campaign.type === 'email' ? campaign.opened : '-'}
-                  </TableCell>
-                  <TableCell>{new Date(campaign.date).toLocaleDateString('sr-RS')}</TableCell>
+                  <TableCell className="text-center">{campaign.recipients || 0}</TableCell>
+                  <TableCell className="text-center">{campaign.sent || 0}</TableCell>
+                  <TableCell className="text-center">{campaign.type === 'email' ? campaign.opened || 0 : '-'}</TableCell>
+                  <TableCell>{formatDate(campaign.date)}</TableCell>
                 </TableRow>
               ))}
+              {campaigns.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                    Nema kampanja za prikaz.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

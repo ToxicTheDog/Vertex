@@ -1,27 +1,31 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Clock, Calendar, User, Search, Eye, Edit, Trash2, Play, Pause } from 'lucide-react';
+import { Plus, Clock, Calendar, User, Search, Eye, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { demoTimeEntries, demoEmployees, TimeEntry } from '@/data/demoData';
-import { API_ENDPOINTS } from '@/config/api';
-import { timeTrackingApi } from '@/services/apiService';
-import { useFetchData } from '@/hooks/useFetchData';
+import { employeesApi, timeTrackingApi } from '@/services/apiService';
+import { DatePickerField } from '@/components/shared/DatePickerField';
+
+const PAGE_SIZE = 10;
 
 const TimeTracking = () => {
-  const { data: entries, setData: setEntries, isLoading: _isLoading, refetch } = useFetchData(() => timeTrackingApi.getAll(), demoTimeEntries);
+  const [entries, setEntries] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<TimeEntry | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  
   const [formData, setFormData] = useState({
     employeeId: '',
     date: new Date().toISOString().split('T')[0],
@@ -31,49 +35,35 @@ const TimeTracking = () => {
     projectName: '',
   });
 
-  const filteredEntries = entries.filter(e => 
-    e.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const fetchEntries = async (page = currentPage, search = searchTerm) => {
+    const response = await timeTrackingApi.getPage({
+      page,
+      pageSize: PAGE_SIZE,
+      search,
+    });
 
-  const totalHours = entries.reduce((sum, e) => sum + e.hoursWorked, 0);
-  const todayEntries = entries.filter(e => e.date === new Date().toISOString().split('T')[0]);
-  const todayHours = todayEntries.reduce((sum, e) => sum + e.hoursWorked, 0);
-
-  const handleSubmit = () => {
-    const employee = demoEmployees.find(e => e.id === formData.employeeId);
-    if (!employee) {
-      toast.error('Izaberite zaposlenog');
-      return;
-    }
-
-    const start = formData.startTime.split(':').map(Number);
-    const end = formData.endTime.split(':').map(Number);
-    const hoursWorked = (end[0] + end[1]/60) - (start[0] + start[1]/60);
-
-    const newEntry: TimeEntry = {
-      id: isEditing && selectedEntry ? selectedEntry.id : Date.now().toString(),
-      employeeId: formData.employeeId,
-      employeeName: `${employee.firstName} ${employee.lastName}`,
-      date: formData.date,
-      startTime: formData.startTime,
-      endTime: formData.endTime,
-      hoursWorked: Math.round(hoursWorked * 10) / 10,
-      projectName: formData.projectName || undefined,
-      description: formData.description,
-    };
-
-    if (isEditing && selectedEntry) {
-      setEntries(entries.map(e => e.id === selectedEntry.id ? newEntry : e));
-      toast.success('Unos je uspešno izmenjen');
-    } else {
-      setEntries([newEntry, ...entries]);
-      toast.success('Radno vreme je uspešno evidentirano');
-    }
-
-    setDialogOpen(false);
-    resetForm();
+    setEntries(response.success ? response.data : []);
+    setTotalItems(response.success ? response.total : 0);
+    setTotalPages(response.success ? response.totalPages || 0 : 0);
   };
+
+  const fetchEmployees = async () => {
+    const response = await employeesApi.getAll();
+    setEmployees(response.success && response.data ? response.data : []);
+  };
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  useEffect(() => {
+    fetchEntries(currentPage, searchTerm);
+  }, [currentPage, searchTerm]);
+
+  const totalHours = entries.reduce((sum, entry) => sum + (Number(entry.hoursWorked) || 0), 0);
+  const today = new Date().toISOString().split('T')[0];
+  const todayHours = entries.filter((entry) => entry.date === today).reduce((sum, entry) => sum + (Number(entry.hoursWorked) || 0), 0);
+  const averageHours = entries.length > 0 ? (totalHours / entries.length).toFixed(1) : '0.0';
 
   const resetForm = () => {
     setFormData({
@@ -88,26 +78,63 @@ const TimeTracking = () => {
     setSelectedEntry(null);
   };
 
-  const handleEdit = (entry: TimeEntry) => {
+  const handleSubmit = async () => {
+    const payload = {
+      employeeId: formData.employeeId,
+      date: formData.date,
+      startTime: formData.startTime,
+      endTime: formData.endTime,
+      description: formData.description,
+      projectName: formData.projectName,
+    };
+
+    const response = isEditing && selectedEntry
+      ? await timeTrackingApi.update(selectedEntry.id, payload)
+      : await timeTrackingApi.create(payload);
+
+    if (!response.success) {
+      toast.error(response.message || 'Čuvanje nije uspelo');
+      return;
+    }
+
+    toast.success(isEditing ? 'Unos je uspešno izmenjen' : 'Radno vreme je uspešno evidentirano');
+    setDialogOpen(false);
+    resetForm();
+    fetchEntries(currentPage, searchTerm);
+  };
+
+  const handleEdit = (entry: any) => {
     setSelectedEntry(entry);
     setFormData({
       employeeId: entry.employeeId,
       date: entry.date,
       startTime: entry.startTime,
       endTime: entry.endTime,
-      description: entry.description,
+      description: entry.description || '',
       projectName: entry.projectName || '',
     });
     setIsEditing(true);
     setDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setEntries(entries.filter(e => e.id !== id));
+  const handleDelete = async (entry: any) => {
+    const response = await timeTrackingApi.delete(entry.id);
+
+    if (!response.success) {
+      toast.error(response.message || 'Brisanje nije uspelo');
+      return;
+    }
+
     toast.success('Unos je obrisan');
+
+    if (entries.length === 1 && currentPage > 1) {
+      setCurrentPage((page) => page - 1);
+    } else {
+      fetchEntries(currentPage, searchTerm);
+    }
   };
 
-  const handleView = (entry: TimeEntry) => {
+  const handleView = (entry: any) => {
     setSelectedEntry(entry);
     setViewDialogOpen(true);
   };
@@ -125,14 +152,13 @@ const TimeTracking = () => {
         </Button>
       </div>
 
-      {/* Statistika */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Ukupno unosa</p>
-                <p className="text-2xl font-bold">{entries.length}</p>
+                <p className="text-2xl font-bold">{totalItems}</p>
               </div>
               <Calendar className="h-8 w-8 text-primary" />
             </div>
@@ -142,7 +168,7 @@ const TimeTracking = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Ukupno sati</p>
+                <p className="text-sm text-muted-foreground">Sati na stranici</p>
                 <p className="text-2xl font-bold">{totalHours}h</p>
               </div>
               <Clock className="h-8 w-8 text-info" />
@@ -153,10 +179,10 @@ const TimeTracking = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Danas</p>
+                <p className="text-sm text-muted-foreground">Danas na stranici</p>
                 <p className="text-2xl font-bold">{todayHours}h</p>
               </div>
-              <Play className="h-8 w-8 text-success" />
+              <Calendar className="h-8 w-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -164,8 +190,8 @@ const TimeTracking = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Prosek po danu</p>
-                <p className="text-2xl font-bold">{(totalHours / entries.length).toFixed(1)}h</p>
+                <p className="text-sm text-muted-foreground">Prosek na stranici</p>
+                <p className="text-2xl font-bold">{averageHours}h</p>
               </div>
               <User className="h-8 w-8 text-muted-foreground" />
             </div>
@@ -173,7 +199,6 @@ const TimeTracking = () => {
         </Card>
       </div>
 
-      {/* Lista */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -186,13 +211,16 @@ const TimeTracking = () => {
               <Input
                 placeholder="Pretraži..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setCurrentPage(1);
+                }}
                 className="pl-8"
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Table>
             <TableHeader>
               <TableRow>
@@ -207,15 +235,13 @@ const TimeTracking = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEntries.map((entry) => (
+              {entries.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell>{new Date(entry.date).toLocaleDateString('sr-RS')}</TableCell>
                   <TableCell className="font-medium">{entry.employeeName}</TableCell>
                   <TableCell>{entry.startTime}</TableCell>
                   <TableCell>{entry.endTime}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{entry.hoursWorked}h</Badge>
-                  </TableCell>
+                  <TableCell><Badge variant="secondary">{entry.hoursWorked}h</Badge></TableCell>
                   <TableCell>{entry.projectName || '-'}</TableCell>
                   <TableCell className="max-w-[200px] truncate">{entry.description}</TableCell>
                   <TableCell className="text-right">
@@ -226,85 +252,97 @@ const TimeTracking = () => {
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(entry)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(entry.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(entry)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
+              {entries.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                    Nema unosa za prikaz.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
+
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious href="#" className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''} onClick={(event) => {
+                    event.preventDefault();
+                    if (currentPage > 1) setCurrentPage((page) => page - 1);
+                  }} />
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, index) => index + 1)
+                  .slice(Math.max(0, currentPage - 3), Math.max(0, currentPage - 3) + 5)
+                  .map((pageNumber) => (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink href="#" isActive={pageNumber === currentPage} onClick={(event) => {
+                        event.preventDefault();
+                        setCurrentPage(pageNumber);
+                      }}>
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                <PaginationItem>
+                  <PaginationNext href="#" className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''} onClick={(event) => {
+                    event.preventDefault();
+                    if (currentPage < totalPages) setCurrentPage((page) => page + 1);
+                  }} />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </CardContent>
       </Card>
 
-      {/* Dialog za novi/izmenu unos */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Izmena unosa' : 'Novi unos radnog vremena'}</DialogTitle>
-            <DialogDescription>
-              Evidentirajte radno vreme
-            </DialogDescription>
+            <DialogDescription>Evidentirajte radno vreme</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label>Zaposleni</Label>
-              <Select value={formData.employeeId} onValueChange={(v) => setFormData({...formData, employeeId: v})}>
+              <Select value={formData.employeeId} onValueChange={(value) => setFormData({ ...formData, employeeId: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Izaberite zaposlenog" />
                 </SelectTrigger>
                 <SelectContent>
-                  {demoEmployees.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName}</SelectItem>
+                  {employees.map((employee) => (
+                    <SelectItem key={employee.id} value={employee.id}>{employee.firstName} {employee.lastName}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="date">Datum</Label>
-              <Input
-                id="date"
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({...formData, date: e.target.value})}
-              />
+              <DatePickerField value={formData.date} onChange={(value) => setFormData({ ...formData, date: value })} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="startTime">Početak</Label>
-                <Input
-                  id="startTime"
-                  type="time"
-                  value={formData.startTime}
-                  onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                />
+                <Input id="startTime" type="time" value={formData.startTime} onChange={(event) => setFormData({ ...formData, startTime: event.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="endTime">Kraj</Label>
-                <Input
-                  id="endTime"
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                />
+                <Input id="endTime" type="time" value={formData.endTime} onChange={(event) => setFormData({ ...formData, endTime: event.target.value })} />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="projectName">Projekat (opciono)</Label>
-              <Input
-                id="projectName"
-                value={formData.projectName}
-                onChange={(e) => setFormData({...formData, projectName: e.target.value})}
-              />
+              <Input id="projectName" value={formData.projectName} onChange={(event) => setFormData({ ...formData, projectName: event.target.value })} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Opis aktivnosti</Label>
-              <Input
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-              />
+              <Input id="description" value={formData.description} onChange={(event) => setFormData({ ...formData, description: event.target.value })} />
             </div>
           </div>
           <DialogFooter>
@@ -314,7 +352,6 @@ const TimeTracking = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog za pregled */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -323,7 +360,7 @@ const TimeTracking = () => {
           {selectedEntry && (
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                   <Clock className="h-8 w-8 text-primary" />
                 </div>
                 <div>

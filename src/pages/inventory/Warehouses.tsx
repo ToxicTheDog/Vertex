@@ -3,12 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { demoWarehouses, demoArticles } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { warehousesApi } from '@/services/apiService';
+import { articlesApi, warehousesApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
 const Warehouses = () => {
   const { data: warehouses } = useFetchData(() => warehousesApi.getAll(), demoWarehouses);
-  const { data: allArticles } = useFetchData(() => warehousesApi.getAll(), demoArticles);
+  const { data: allArticles } = useFetchData(() => articlesApi.getAll(), demoArticles);
   const lowStockArticles = allArticles.filter(a => a.stock <= a.minStock);
   const lowStockItems = lowStockArticles.filter(a => a.stock <= a.minStock);
 

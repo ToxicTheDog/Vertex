@@ -1,59 +1,69 @@
-import { BarChart3, TrendingUp, Package, Users, Download } from 'lucide-react';
+import { BarChart3, Package, Users, Download } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { demoInvoices, demoArticles, demoClients } from '@/data/demoData';
-import { API_ENDPOINTS } from '@/config/api';
-import { reportsApi } from '@/services/apiService';
+import { clientsApi, dashboardApi, invoicesApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
-const monthlySales = [
-  { month: 'Jan', sales: 385000 },
-  { month: 'Feb', sales: 420000 },
-  { month: 'Mar', sales: 395000 },
-  { month: 'Apr', sales: 450000 },
-  { month: 'Maj', sales: 410000 },
-  { month: 'Jun', sales: 480000 },
-];
+const emptyStats = {
+  monthlyData: [] as Array<{ month: string; revenue: number; expenses: number }>,
+  revenueBreakdown: [] as Array<{ name: string; value: number; color?: string }>,
+};
 
-const topProducts = [
-  { name: 'Laptop HP ProBook', sales: 425000, quantity: 5 },
-  { name: 'Monitor Dell 27"', sales: 350000, quantity: 10 },
-  { name: 'Konsultantske usluge', sales: 280000, quantity: 56 },
-  { name: 'Razvoj softvera', sales: 240000, quantity: 32 },
-  { name: 'SEO optimizacija', sales: 96000, quantity: 12 },
-];
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
 
-const salesByCategory = [
-  { name: 'Elektronika', value: 775000, color: 'hsl(var(--primary))' },
-  { name: 'Usluge', value: 520000, color: 'hsl(var(--chart-2))' },
-  { name: 'Periferije', value: 185000, color: 'hsl(var(--chart-3))' },
-  { name: 'Nameštaj', value: 95000, color: 'hsl(var(--chart-4))' },
-];
+const EmptyChartState = ({ message }: { message: string }) => (
+  <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+    {message}
+  </div>
+);
 
 const SalesReports = () => {
-  const { data: invoices } = useFetchData(() => reportsApi.getSales('', ''), demoInvoices);
-  const { data: articles } = useFetchData(() => reportsApi.getSales('', ''), demoArticles);
-  const { data: clients } = useFetchData(() => reportsApi.getSales('', ''), demoClients);
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
-  };
+  const { data: stats } = useFetchData(() => dashboardApi.getStats(), emptyStats);
+  const { data: invoices } = useFetchData<any[]>(() => invoicesApi.getAll(), []);
+  const { data: clients } = useFetchData<any[]>(() => clientsApi.getAll(), []);
 
-  const totalSales = monthlySales.reduce((sum, m) => sum + m.sales, 0);
-  const averageSale = totalSales / monthlySales.length;
-  const invoiceCount = invoices.filter(i => i.type === 'invoice').length;
+  const monthlySales = (Array.isArray(stats.monthlyData) ? stats.monthlyData : []).map((entry) => ({
+    month: entry.month,
+    sales: Number(entry.revenue) || 0
+  }));
+  const totalSales = monthlySales.reduce((sum, entry) => sum + entry.sales, 0);
+  const averageSale = monthlySales.length > 0 ? totalSales / monthlySales.length : 0;
+  const salesByCategory = (Array.isArray(stats.revenueBreakdown) ? stats.revenueBreakdown : []).map((entry, index) => ({
+    name: entry.name,
+    value: Number(entry.value) || 0,
+    color: entry.color || `hsl(var(--chart-${(index % 5) + 1}))`
+  }));
+
+  const topClients = Object.values(
+    invoices.reduce<Record<string, { name: string; sales: number; quantity: number }>>((accumulator, invoice) => {
+      const key = invoice.clientName || 'Nepoznat klijent';
+      if (!accumulator[key]) {
+        accumulator[key] = { name: key, sales: 0, quantity: 0 };
+      }
+
+      accumulator[key].sales += Number(invoice.total) || 0;
+      accumulator[key].quantity += 1;
+      return accumulator;
+    }, {})
+  )
+    .sort((first, second) => second.sales - first.sales)
+    .slice(0, 5);
+
+  const topClientsTotal = topClients.reduce((sum, client) => sum + client.sales, 0);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Izveštaji o prodaji</h1>
-          <p className="text-muted-foreground">Analiza prodaje po periodu, artiklu i klijentu</p>
+          <h1 className="text-3xl font-bold tracking-tight">Izvestaji o prodaji</h1>
+          <p className="text-muted-foreground">Analiza prodaje po periodu i klijentu</p>
         </div>
         <Button>
           <Download className="mr-2 h-4 w-4" />
-          Izvezi izveštaj
+          Izvezi izvestaj
         </Button>
       </div>
 
@@ -65,19 +75,16 @@ const SalesReports = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalSales)}</div>
-            <p className="text-xs text-success flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" /> +15% od prošle godine
-            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Prosečna prodaja</CardTitle>
+            <CardTitle className="text-sm font-medium">Prosecna prodaja</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(averageSale)}</div>
-            <p className="text-xs text-muted-foreground">mesečno</p>
+            <p className="text-xs text-muted-foreground">mesecno</p>
           </CardContent>
         </Card>
         <Card>
@@ -86,7 +93,7 @@ const SalesReports = () => {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{invoiceCount}</div>
+            <div className="text-2xl font-bold">{invoices.length}</div>
             <p className="text-xs text-muted-foreground">izdatih</p>
           </CardContent>
         </Card>
@@ -97,7 +104,7 @@ const SalesReports = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{clients.length}</div>
-            <p className="text-xs text-muted-foreground">ovog meseca</p>
+            <p className="text-xs text-muted-foreground">u bazi</p>
           </CardContent>
         </Card>
       </div>
@@ -106,26 +113,30 @@ const SalesReports = () => {
         <Card>
           <CardHeader>
             <CardTitle>Prodaja po mesecima</CardTitle>
-            <CardDescription>Mesečni trend prodaje za tekuću godinu</CardDescription>
+            <CardDescription>Mesecni trend prodaje</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlySales}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="month" className="text-xs" />
-                  <YAxis className="text-xs" tickFormatter={(value) => `${(value / 1000)}k`} />
-                  <Tooltip 
-                    formatter={(value: number) => formatCurrency(value)}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Bar dataKey="sales" name="Prodaja" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {monthlySales.length === 0 ? (
+                <EmptyChartState message="Nema prodaje za prikaz." />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlySales}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="month" className="text-xs" />
+                    <YAxis className="text-xs" tickFormatter={(value) => `${value / 1000}k`} />
+                    <Tooltip
+                      formatter={(value: number) => formatCurrency(value)}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Bar dataKey="sales" name="Prodaja" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -133,46 +144,52 @@ const SalesReports = () => {
         <Card>
           <CardHeader>
             <CardTitle>Prodaja po kategorijama</CardTitle>
-            <CardDescription>Raspodela prodaje po grupama proizvoda</CardDescription>
+            <CardDescription>Raspodela stvarnih prihoda</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[300px] flex items-center">
-              <ResponsiveContainer width="60%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={salesByCategory}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={90}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {salesByCategory.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+              {salesByCategory.length === 0 ? (
+                <EmptyChartState message="Nema kategorija prodaje za prikaz." />
+              ) : (
+                <>
+                  <ResponsiveContainer width="60%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={salesByCategory}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={90}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {salesByCategory.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number) => formatCurrency(value)}
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="space-y-3">
+                    {salesByCategory.map((item) => (
+                      <div key={item.name} className="flex items-center gap-2 text-sm">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                        <div>
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-muted-foreground text-xs">{formatCurrency(item.value)}</p>
+                        </div>
+                      </div>
                     ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number) => formatCurrency(value)}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="space-y-3">
-                {salesByCategory.map((item) => (
-                  <div key={item.name} className="flex items-center gap-2 text-sm">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <div>
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-muted-foreground text-xs">{formatCurrency(item.value)}</p>
-                    </div>
                   </div>
-                ))}
-              </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -180,32 +197,39 @@ const SalesReports = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Top proizvodi po prodaji</CardTitle>
-          <CardDescription>Najprodavaniji proizvodi i usluge</CardDescription>
+          <CardTitle>Top kupci po prodaji</CardTitle>
+          <CardDescription>Najveci promet po klijentu</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>R.br.</TableHead>
-                <TableHead>Proizvod / Usluga</TableHead>
-                <TableHead className="text-right">Količina</TableHead>
+                <TableHead>Klijent</TableHead>
+                <TableHead className="text-right">Broj faktura</TableHead>
                 <TableHead className="text-right">Ukupna prodaja</TableHead>
                 <TableHead className="text-right">Udeo</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {topProducts.map((product, index) => (
-                <TableRow key={product.name}>
+              {topClients.map((client, index) => (
+                <TableRow key={client.name}>
                   <TableCell className="font-medium">{index + 1}</TableCell>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell className="text-right">{product.quantity}</TableCell>
-                  <TableCell className="text-right font-medium">{formatCurrency(product.sales)}</TableCell>
+                  <TableCell>{client.name}</TableCell>
+                  <TableCell className="text-right">{client.quantity}</TableCell>
+                  <TableCell className="text-right font-medium">{formatCurrency(client.sales)}</TableCell>
                   <TableCell className="text-right">
-                    {((product.sales / topProducts.reduce((s, p) => s + p.sales, 0)) * 100).toFixed(1)}%
+                    {topClientsTotal > 0 ? `${((client.sales / topClientsTotal) * 100).toFixed(1)}%` : '0.0%'}
                   </TableCell>
                 </TableRow>
               ))}
+              {topClients.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                    Nema prodajnih podataka za prikaz.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

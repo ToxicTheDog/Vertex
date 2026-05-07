@@ -6,41 +6,43 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { demoClients, demoInvoices, demoSuppliers } from '@/data/demoData';
 import { API_ENDPOINTS } from '@/config/api';
-import { clientReportsApi } from '@/services/apiService';
+import { clientsApi, invoicesApi, suppliersApi } from '@/services/apiService';
 import { useFetchData } from '@/hooks/useFetchData';
 
-const clientStats = demoClients.map(client => {
-  const invoices = demoInvoices.filter(i => i.clientId === client.id);
-  const totalRevenue = invoices.reduce((sum, i) => sum + i.total, 0);
-  const paidInvoices = invoices.filter(i => i.status === 'paid').length;
-  const overdueInvoices = invoices.filter(i => i.status === 'overdue').length;
-  
-  return {
-    ...client,
-    totalRevenue,
-    invoiceCount: invoices.length,
-    paidInvoices,
-    overdueInvoices,
-    paymentRate: invoices.length > 0 ? (paidInvoices / invoices.length) * 100 : 0
-  };
-}).sort((a, b) => b.totalRevenue - a.totalRevenue);
-
-const topClientsChart = clientStats.slice(0, 5).map(c => ({
-  name: c.name.length > 15 ? c.name.substring(0, 15) + '...' : c.name,
-  revenue: c.totalRevenue
-}));
-
 const ClientReports = () => {
-  const { data: clients } = useFetchData(() => clientReportsApi.getAll(), demoClients);
-  const { data: invoices } = useFetchData(() => clientReportsApi.getAll(), demoInvoices);
-  const { data: suppliers } = useFetchData(() => clientReportsApi.getAll(), demoSuppliers);
+  const { data: clients } = useFetchData(() => clientsApi.getAll(), demoClients);
+  const { data: invoices } = useFetchData(() => invoicesApi.getAll(), demoInvoices);
+  const { data: suppliers } = useFetchData(() => suppliersApi.getAll(), demoSuppliers);
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('sr-RS', { style: 'currency', currency: 'RSD' }).format(amount);
   };
 
+  const clientStats = clients.map((client) => {
+    const clientInvoices = invoices.filter((invoice) => invoice.clientId === client.id);
+    const totalRevenue = clientInvoices.reduce((sum, invoice) => sum + invoice.total, 0);
+    const paidInvoices = clientInvoices.filter((invoice) => invoice.status === 'paid').length;
+    const overdueInvoices = clientInvoices.filter((invoice) => invoice.status === 'overdue').length;
+
+    return {
+      ...client,
+      totalRevenue,
+      invoiceCount: clientInvoices.length,
+      paidInvoices,
+      overdueInvoices,
+      paymentRate: clientInvoices.length > 0 ? (paidInvoices / clientInvoices.length) * 100 : 0,
+    };
+  }).sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+  const topClientsChart = clientStats.slice(0, 5).map((client) => ({
+    name: client.name.length > 15 ? `${client.name.substring(0, 15)}...` : client.name,
+    revenue: client.totalRevenue,
+  }));
+
   const totalRevenue = clientStats.reduce((sum, c) => sum + c.totalRevenue, 0);
   const clientsWithOverdue = clientStats.filter(c => c.overdueInvoices > 0).length;
-  const avgPaymentRate = clientStats.reduce((sum, c) => sum + c.paymentRate, 0) / clientStats.length;
+  const avgPaymentRate = clientStats.length > 0
+    ? clientStats.reduce((sum, c) => sum + c.paymentRate, 0) / clientStats.length
+    : 0;
 
   return (
     <div className="space-y-6">

@@ -1,40 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Filter, Download, MoreHorizontal, Eye, Edit, Trash2, Send } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { demoInvoices } from '@/data/demoData';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { InvoiceViewDialog, InvoiceData } from '@/components/dialogs/InvoiceViewDialog';
 import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
-import { API_ENDPOINTS } from '@/config/api';
 import { invoicesApi } from '@/services/apiService';
-import { useFetchData } from '@/hooks/useFetchData';
+
+const PAGE_SIZE = 10;
 
 const statusColors: Record<string, string> = {
   paid: 'bg-success text-success-foreground',
@@ -52,33 +32,41 @@ const statusLabels: Record<string, string> = {
   cancelled: 'Otkazano'
 };
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('sr-RS', {
-    style: 'currency',
-    currency: 'RSD',
-    minimumFractionDigits: 0
-  }).format(value);
-};
+const formatCurrency = (value: number) => new Intl.NumberFormat('sr-RS', {
+  style: 'currency',
+  currency: 'RSD',
+  minimumFractionDigits: 0
+}).format(value);
 
 const Invoices = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const { data: invoices, setData: setInvoices, isLoading: _isLoading, refetch } = useFetchData(() => invoicesApi.getAll(), demoInvoices.filter(inv => inv.type === 'invoice'));
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const filteredInvoices = invoices.filter(invoice => {
-    const matchesSearch = 
-      invoice.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const fetchInvoices = async (page = currentPage, status = statusFilter) => {
+    const response = await invoicesApi.getPage({
+      page,
+      pageSize: PAGE_SIZE,
+      status: status === 'all' ? undefined : status,
+      search: searchTerm,
+    });
 
-  const handleView = (invoice: typeof invoices[0]) => {
+    setInvoices(response.success ? response.data : []);
+    setTotalPages(response.success ? response.totalPages || 0 : 0);
+  };
+
+  useEffect(() => {
+    fetchInvoices(currentPage, statusFilter);
+  }, [currentPage, statusFilter, searchTerm]);
+
+  const handleView = (invoice: any) => {
     setSelectedInvoice({
       id: invoice.id,
       number: invoice.number,
@@ -91,22 +79,23 @@ const Invoices = () => {
     setViewDialogOpen(true);
   };
 
-  const handleSend = (invoice: InvoiceData) => {
-    setInvoices(invoices.map(inv => 
-      inv.id === invoice.id ? { ...inv, status: 'sent' as const } : inv
+  const handleSend = async (invoice: InvoiceData) => {
+    const response = await invoicesApi.send(invoice.id);
+
+    if (!response.success) {
+      toast({ title: 'Greška', description: response.message || 'Slanje nije uspelo', variant: 'destructive' });
+      return;
+    }
+
+    setInvoices((currentInvoices) => currentInvoices.map((currentInvoice) =>
+      currentInvoice.id === invoice.id ? { ...currentInvoice, status: 'sent' } : currentInvoice
     ));
     setViewDialogOpen(false);
-    toast({
-      title: "Faktura poslata",
-      description: `Faktura ${invoice.number} je uspešno poslata klijentu.`
-    });
+    toast({ title: 'Faktura poslata', description: `Faktura ${invoice.number} je uspešno poslata klijentu.` });
   };
 
   const handleDownload = (invoice: InvoiceData) => {
-    toast({
-      title: "Preuzimanje PDF-a",
-      description: `Faktura ${invoice.number} se preuzima...`
-    });
+    toast({ title: 'Preuzimanje PDF-a', description: `Faktura ${invoice.number} se preuzima...` });
   };
 
   const handleDelete = (id: string) => {
@@ -114,15 +103,27 @@ const Invoices = () => {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (invoiceToDelete) {
-      setInvoices(invoices.filter(inv => inv.id !== invoiceToDelete));
-      toast({
-        title: "Faktura obrisana",
-        description: "Faktura je uspešno obrisana."
-      });
-      setInvoiceToDelete(null);
+  const confirmDelete = async () => {
+    if (!invoiceToDelete) {
+      return;
     }
+
+    const response = await invoicesApi.delete(invoiceToDelete);
+
+    if (!response.success) {
+      toast({ title: 'Greška', description: response.message || 'Brisanje nije uspelo', variant: 'destructive' });
+      return;
+    }
+
+    toast({ title: 'Faktura obrisana', description: 'Faktura je uspešno obrisana.' });
+
+    if (invoices.length === 1 && currentPage > 1) {
+      setCurrentPage((page) => page - 1);
+    } else {
+      fetchInvoices(currentPage, statusFilter);
+    }
+
+    setInvoiceToDelete(null);
   };
 
   return (
@@ -142,18 +143,24 @@ const Invoices = () => {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col md:flex-row gap-4 justify-between">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:justify-between">
+            <div className="relative max-w-sm flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Pretraži po broju ili klijentu..."
                 className="pl-9"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setCurrentPage(1);
+                }}
               />
             </div>
             <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(value) => {
+                setStatusFilter(value);
+                setCurrentPage(1);
+              }}>
                 <SelectTrigger className="w-[180px]">
                   <Filter className="mr-2 h-4 w-4" />
                   <SelectValue placeholder="Status" />
@@ -173,7 +180,7 @@ const Invoices = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Table>
             <TableHeader>
               <TableRow>
@@ -187,16 +194,16 @@ const Invoices = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredInvoices.map((invoice) => (
-                <TableRow key={invoice.id} className="data-table-row">
+              {invoices.map((invoice) => (
+                <TableRow key={invoice.id}>
                   <TableCell className="font-medium">{invoice.number}</TableCell>
                   <TableCell>{invoice.clientName}</TableCell>
                   <TableCell>{new Date(invoice.date).toLocaleDateString('sr-RS')}</TableCell>
                   <TableCell>{new Date(invoice.dueDate).toLocaleDateString('sr-RS')}</TableCell>
-                  <TableCell className="text-right font-medium">{formatCurrency(invoice.total)}</TableCell>
+                  <TableCell className="text-right font-medium">{formatCurrency(Number(invoice.total) || 0)}</TableCell>
                   <TableCell>
-                    <Badge className={statusColors[invoice.status]}>
-                      {statusLabels[invoice.status]}
+                    <Badge className={statusColors[invoice.status] || statusColors.draft}>
+                      {statusLabels[invoice.status] || invoice.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -219,21 +226,21 @@ const Invoices = () => {
                             Izmeni
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          setInvoices(invoices.map(inv => 
-                            inv.id === invoice.id ? { ...inv, status: 'sent' as const } : inv
-                          ));
-                          toast({
-                            title: "Faktura poslata",
-                            description: `Faktura ${invoice.number} je poslata klijentu.`
-                          });
-                        }}>
+                        <DropdownMenuItem onClick={() => handleSend({
+                          id: invoice.id,
+                          number: invoice.number,
+                          clientName: invoice.clientName,
+                          date: invoice.date,
+                          dueDate: invoice.dueDate,
+                          status: invoice.status,
+                          total: invoice.total
+                        })}>
                           <Send className="mr-2 h-4 w-4" />
                           Pošalji
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDownload({ 
-                          id: invoice.id, 
-                          number: invoice.number, 
+                        <DropdownMenuItem onClick={() => handleDownload({
+                          id: invoice.id,
+                          number: invoice.number,
                           clientName: invoice.clientName,
                           date: invoice.date,
                           dueDate: invoice.dueDate,
@@ -253,18 +260,50 @@ const Invoices = () => {
                   </TableCell>
                 </TableRow>
               ))}
+              {invoices.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                    Nema faktura za prikaz.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
+
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious href="#" className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''} onClick={(event) => {
+                    event.preventDefault();
+                    if (currentPage > 1) setCurrentPage((page) => page - 1);
+                  }} />
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, index) => index + 1)
+                  .slice(Math.max(0, currentPage - 3), Math.max(0, currentPage - 3) + 5)
+                  .map((pageNumber) => (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink href="#" isActive={pageNumber === currentPage} onClick={(event) => {
+                        event.preventDefault();
+                        setCurrentPage(pageNumber);
+                      }}>
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                <PaginationItem>
+                  <PaginationNext href="#" className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''} onClick={(event) => {
+                    event.preventDefault();
+                    if (currentPage < totalPages) setCurrentPage((page) => page + 1);
+                  }} />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </CardContent>
       </Card>
 
-      <InvoiceViewDialog
-        open={viewDialogOpen}
-        onOpenChange={setViewDialogOpen}
-        invoice={selectedInvoice}
-        onSend={handleSend}
-        onDownload={handleDownload}
-      />
+      <InvoiceViewDialog open={viewDialogOpen} onOpenChange={setViewDialogOpen} invoice={selectedInvoice} onSend={handleSend} onDownload={handleDownload} />
 
       <ConfirmDialog
         open={deleteDialogOpen}

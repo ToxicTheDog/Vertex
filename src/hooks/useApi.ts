@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DEMO_MODE } from '@/config/api';
 import { ApiResponse } from '@/services/apiService';
+import { createEmptyData } from '@/utils/fallbackData';
 
 interface UseApiOptions<T> {
   initialData?: T;
@@ -23,8 +24,9 @@ export function useApi<T>(
   options: UseApiOptions<T> = {}
 ): UseApiResult<T> {
   const { initialData, fetchOnMount = true, onSuccess, onError } = options;
-  
-  const [data, setData] = useState<T | null>(initialData ?? null);
+  const emptyData = createEmptyData(demoData);
+
+  const [data, setData] = useState<T | null>(initialData ?? (DEMO_MODE ? demoData : emptyData));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,45 +36,41 @@ export function useApi<T>(
 
     try {
       if (DEMO_MODE) {
-        // U demo modu, koristi demo podatke
-        await new Promise(resolve => setTimeout(resolve, 300)); // Simuliraj delay
+        await new Promise((resolve) => setTimeout(resolve, 300));
         setData(demoData);
         onSuccess?.(demoData);
       } else {
         const response = await fetchFn();
-        
-        if (response.success && response.data) {
+
+        if (response.success && response.data !== undefined) {
           setData(response.data);
           onSuccess?.(response.data);
         } else {
-          const errorMsg = response.error || response.message || 'Greška pri učitavanju podataka';
+          const errorMsg = response.error || response.message || 'Greska pri ucitavanju podataka';
           setError(errorMsg);
           onError?.(errorMsg);
-          // Postavi demo podatke kao fallback
-          setData(demoData);
+          setData(emptyData);
         }
       }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Nepoznata greška';
+      const errorMsg = err instanceof Error ? err.message : 'Nepoznata greska';
       setError(errorMsg);
       onError?.(errorMsg);
-      // Postavi demo podatke kao fallback
-      setData(demoData);
+      setData(emptyData);
     } finally {
       setIsLoading(false);
     }
-  }, [fetchFn, demoData, onSuccess, onError]);
+  }, [demoData, emptyData, fetchFn, onError, onSuccess]);
 
   useEffect(() => {
     if (fetchOnMount) {
       refetch();
     }
-  }, [fetchOnMount]); // Ne uključuj refetch u dependencies jer se menja
+  }, [fetchOnMount]);
 
   return { data, isLoading, error, refetch, setData };
 }
 
-// Hook za real-time ažuriranja
 interface UseRealtimeOptions {
   interval?: number;
   enabled?: boolean;
@@ -83,7 +81,7 @@ export function useRealtime<T>(
   options: UseRealtimeOptions = {}
 ): { data: T | null; isConnected: boolean } {
   const { interval = 30000, enabled = true } = options;
-  
+
   const [data, setData] = useState<T | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -107,22 +105,18 @@ export function useRealtime<T>(
       }
     };
 
-    // Inicijalni fetch
     fetch();
-
-    // Postavi interval
     intervalId = setInterval(fetch, interval);
 
     return () => {
       mounted = false;
       clearInterval(intervalId);
     };
-  }, [fetchFn, interval, enabled]);
+  }, [enabled, fetchFn, interval]);
 
   return { data, isConnected };
 }
 
-// Hook za mutacije (create, update, delete)
 interface UseMutationOptions<TData, TVariables> {
   onSuccess?: (data: TData) => void;
   onError?: (error: string) => void;
@@ -140,7 +134,7 @@ export function useMutation<TData, TVariables>(
   options: UseMutationOptions<TData, TVariables> = {}
 ): UseMutationResult<TData, TVariables> {
   const { onSuccess, onError } = options;
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -150,25 +144,25 @@ export function useMutation<TData, TVariables>(
 
     try {
       const response = await mutationFn(variables);
-      
+
       if (response.success) {
         onSuccess?.(response.data as TData);
         return response.data ?? null;
-      } else {
-        const errorMsg = response.error || response.message || 'Greška pri obradi zahteva';
-        setError(errorMsg);
-        onError?.(errorMsg);
-        return null;
       }
+
+      const errorMsg = response.error || response.message || 'Greska pri obradi zahteva';
+      setError(errorMsg);
+      onError?.(errorMsg);
+      return null;
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Nepoznata greška';
+      const errorMsg = err instanceof Error ? err.message : 'Nepoznata greska';
       setError(errorMsg);
       onError?.(errorMsg);
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, [mutationFn, onSuccess, onError]);
+  }, [mutationFn, onError, onSuccess]);
 
   const reset = useCallback(() => {
     setError(null);

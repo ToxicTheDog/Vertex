@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Plus, Building2, MapPin, Phone, Edit, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Plus, Building2, MapPin, Phone, Edit, Trash2, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,22 +22,22 @@ import {
 import { toast } from 'sonner';
 import { Branch } from '@/data/demoData';
 import { branchesApi } from '@/services/apiService';
-import { DEMO_MODE } from '@/config/api';
-import { demoBranches } from '@/data/demoData';
-import { API_ENDPOINTS } from '@/config/api';
+
+const PAGE_SIZE = 10;
 
 const Branches = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -46,37 +47,18 @@ const Branches = () => {
     isActive: true,
   });
 
-  // Učitavanje poslovnica
-  const fetchBranches = async () => {
+  const fetchBranches = async (page = currentPage, search = searchTerm) => {
     setIsLoading(true);
-
-    if (DEMO_MODE) {
-      setBranches(demoBranches);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const response = await branchesApi.getAll();
-
-      if (response.success && response.data) {
-        setBranches(response.data);
-      } else {
-        toast.error(response.message || "Greška pri učitavanju poslovnica");
-        setBranches(demoBranches); // fallback
-      }
-    } catch (error) {
-      console.error("Error fetching branches:", error);
-      toast.error("Nije moguće učitati poslovnice sa servera");
-      setBranches(demoBranches); // fallback
-    } finally {
-      setIsLoading(false);
-    }
+    const response = await branchesApi.getPage({ page, pageSize: PAGE_SIZE, search });
+    setBranches(response.success ? response.data : []);
+    setTotalPages(response.success ? response.totalPages || 0 : 0);
+    setTotalItems(response.success ? response.total || 0 : 0);
+    setIsLoading(false);
   };
 
   useEffect(() => {
-    fetchBranches();
-  }, []);
+    fetchBranches(currentPage, searchTerm);
+  }, [currentPage, searchTerm]);
 
   const resetForm = () => {
     setFormData({
@@ -115,94 +97,56 @@ const Branches = () => {
     setDeleteDialogOpen(true);
   };
 
-  // Kreiranje ili ažuriranje
   const handleSubmit = async () => {
     if (!formData.name || !formData.address || !formData.city) {
-      toast.error("Naziv, adresa i grad su obavezni!");
+      toast.error('Naziv, adresa i grad su obavezni.');
       return;
     }
 
     setIsSubmitting(true);
+    const response = isEditing && selectedBranch
+      ? await branchesApi.update(selectedBranch.id, formData)
+      : await branchesApi.create(formData);
+    setIsSubmitting(false);
 
-    try {
-      if (isEditing && selectedBranch) {
-        // UPDATE
-        if (DEMO_MODE) {
-          const updatedBranch: Branch = { ...selectedBranch, ...formData };
-          setBranches(branches.map(b => b.id === selectedBranch.id ? updatedBranch : b));
-          toast.success('Poslovnica je uspešno izmenjena');
-        } else {
-          const response = await branchesApi.update(selectedBranch.id, formData);
-          if (response.success) {
-            toast.success('Poslovnica je uspešno izmenjena');
-            fetchBranches();
-          } else {
-            throw new Error(response.message || 'Greška pri ažuriranju');
-          }
-        }
-      } else {
-        // CREATE
-        if (DEMO_MODE) {
-          const newBranch: Branch = {
-            id: Date.now().toString(),
-            ...formData,
-          };
-          setBranches([newBranch, ...branches]);
-          toast.success('Nova poslovnica je uspešno kreirana');
-        } else {
-          const response = await branchesApi.create(formData);
-          if (response.success) {
-            toast.success('Nova poslovnica je uspešno kreirana');
-            fetchBranches();
-          } else {
-            throw new Error(response.message || 'Greška pri kreiranju');
-          }
-        }
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Došlo je do greške prilikom čuvanja");
-    } finally {
-      setIsSubmitting(false);
-      setDialogOpen(false);
-      resetForm();
+    if (!response.success) {
+      toast.error(response.message || 'Poslovnica nije sacuvana.');
+      return;
     }
+
+    toast.success(isEditing ? 'Poslovnica je uspesno izmenjena.' : 'Nova poslovnica je uspesno kreirana.');
+    setDialogOpen(false);
+    resetForm();
+    fetchBranches(currentPage, searchTerm);
   };
 
-  // Brisanje
   const confirmDelete = async () => {
-    if (!selectedBranch) return;
+    if (!selectedBranch) {
+      return;
+    }
 
     setIsDeleting(true);
+    const response = await branchesApi.delete(selectedBranch.id);
+    setIsDeleting(false);
 
-    try {
-      if (DEMO_MODE) {
-        setBranches(branches.filter(b => b.id !== selectedBranch.id));
-        toast.success('Poslovnica je uspešno obrisana');
-      } else {
-        const response = await branchesApi.delete(selectedBranch.id);
-        if (response.success) {
-          toast.success('Poslovnica je uspešno obrisana');
-          fetchBranches();
-        } else {
-          throw new Error(response.message || 'Greška pri brisanju');
-        }
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Nije moguće obrisati poslovnicu");
-    } finally {
-      setIsDeleting(false);
-      setDeleteDialogOpen(false);
-      setSelectedBranch(null);
+    if (!response.success) {
+      toast.error(response.message || 'Nije moguce obrisati poslovnicu.');
+      return;
+    }
+
+    toast.success('Poslovnica je uspesno obrisana.');
+    setDeleteDialogOpen(false);
+    setSelectedBranch(null);
+
+    if (branches.length === 1 && currentPage > 1) {
+      setCurrentPage((page) => page - 1);
+    } else {
+      fetchBranches(currentPage, searchTerm);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-96 text-lg">
-        Učitavanje poslovnica...
-      </div>
-    );
-  }
+  const activeBranches = branches.filter((branch) => branch.isActive).length;
+  const inactiveBranches = branches.filter((branch) => !branch.isActive).length;
 
   return (
     <div className="space-y-6">
@@ -217,14 +161,13 @@ const Branches = () => {
         </Button>
       </div>
 
-      {/* Statistika */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Ukupno poslovnica</p>
-                <p className="text-2xl font-bold">{branches.length}</p>
+                <p className="text-2xl font-bold">{totalItems}</p>
               </div>
               <Building2 className="h-8 w-8 text-primary" />
             </div>
@@ -234,10 +177,8 @@ const Branches = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Aktivne</p>
-                <p className="text-2xl font-bold text-success">
-                  {branches.filter(b => b.isActive).length}
-                </p>
+                <p className="text-sm text-muted-foreground">Aktivne na stranici</p>
+                <p className="text-2xl font-bold text-success">{activeBranches}</p>
               </div>
               <div className="h-8 w-8 rounded-full bg-success/20 flex items-center justify-center">
                 <Building2 className="h-4 w-4 text-success" />
@@ -249,10 +190,8 @@ const Branches = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Neaktivne</p>
-                <p className="text-2xl font-bold text-muted-foreground">
-                  {branches.filter(b => !b.isActive).length}
-                </p>
+                <p className="text-sm text-muted-foreground">Neaktivne na stranici</p>
+                <p className="text-2xl font-bold text-muted-foreground">{inactiveBranches}</p>
               </div>
               <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
                 <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -262,20 +201,35 @@ const Branches = () => {
         </Card>
       </div>
 
-      {/* Lista poslovnica */}
       <Card>
         <CardHeader>
-          <CardTitle>Lista poslovnica</CardTitle>
-          <CardDescription>Sve registrovane poslovnice</CardDescription>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <CardTitle>Lista poslovnica</CardTitle>
+              <CardDescription>Ukupno {totalItems} poslovnica</CardDescription>
+            </div>
+            <div className="relative max-w-sm flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Pretrazi po nazivu, gradu ili menadzeru..."
+                value={searchTerm}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-8"
+              />
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Naziv</TableHead>
                 <TableHead>Adresa</TableHead>
                 <TableHead>Grad</TableHead>
-                <TableHead>Menadžer</TableHead>
+                <TableHead>Menadzer</TableHead>
                 <TableHead>Telefon</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Akcije</TableHead>
@@ -309,117 +263,109 @@ const Branches = () => {
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(branch)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteClick(branch)}
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(branch)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
+              {!isLoading && branches.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
+                    Nema poslovnica za prikaz.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
+
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious href="#" className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''} onClick={(event) => {
+                    event.preventDefault();
+                    if (currentPage > 1) setCurrentPage((page) => page - 1);
+                  }} />
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, index) => index + 1)
+                  .slice(Math.max(0, currentPage - 3), Math.max(0, currentPage - 3) + 5)
+                  .map((pageNumber) => (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink href="#" isActive={pageNumber === currentPage} onClick={(event) => {
+                        event.preventDefault();
+                        setCurrentPage(pageNumber);
+                      }}>
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                <PaginationItem>
+                  <PaginationNext href="#" className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''} onClick={(event) => {
+                    event.preventDefault();
+                    if (currentPage < totalPages) setCurrentPage((page) => page + 1);
+                  }} />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </CardContent>
       </Card>
 
-      {/* Dialog za kreiranje / izmenu */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Izmena poslovnice' : 'Nova poslovnica'}</DialogTitle>
             <DialogDescription>Unesite podatke o poslovnici</DialogDescription>
           </DialogHeader>
-
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Naziv poslovnice *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
+              <Input id="name" value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="address">Adresa *</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              />
+              <Input id="address" value={formData.address} onChange={(event) => setFormData({ ...formData, address: event.target.value })} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="city">Grad *</Label>
-              <Input
-                id="city"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              />
+              <Input id="city" value={formData.city} onChange={(event) => setFormData({ ...formData, city: event.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="manager">Menadžer</Label>
-              <Input
-                id="manager"
-                value={formData.manager}
-                onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
-              />
+              <Label htmlFor="manager">Menadzer</Label>
+              <Input id="manager" value={formData.manager} onChange={(event) => setFormData({ ...formData, manager: event.target.value })} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Telefon</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
+              <Input id="phone" value={formData.phone} onChange={(event) => setFormData({ ...formData, phone: event.target.value })} />
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="active">Aktivna poslovnica</Label>
-              <Switch
-                id="active"
-                checked={formData.isActive}
-                onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
-              />
+              <Switch id="active" checked={formData.isActive} onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })} />
             </div>
           </div>
-
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => { setDialogOpen(false); resetForm(); }}
-            >
-              Otkaži
-            </Button>
+            <Button variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>Otkazi</Button>
             <Button onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting
-                ? "Čuvanje..."
-                : isEditing
-                  ? "Sačuvaj izmene"
-                  : "Kreiraj poslovnicu"}
+              {isSubmitting ? 'Cuvanje...' : isEditing ? 'Sacuvaj izmene' : 'Kreiraj poslovnicu'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Potvrda brisanja */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Da li ste sigurni?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ova akcija će trajno obrisati poslovnicu <strong>{selectedBranch?.name}</strong>.<br />
-              Ova radnja se ne može opozvati.
+              Ova akcija ce trajno obrisati poslovnicu <strong>{selectedBranch?.name}</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Otkaži</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={isDeleting}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              {isDeleting ? "Brisanje..." : "Obriši poslovnicu"}
+            <AlertDialogCancel disabled={isDeleting}>Otkazi</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+              {isDeleting ? 'Brisanje...' : 'Obrisi poslovnicu'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

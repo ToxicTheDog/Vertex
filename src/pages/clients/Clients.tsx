@@ -1,67 +1,33 @@
-import { useState, useEffect } from 'react';
-import { Plus, Search, Download, MoreHorizontal, Edit, Trash2, UserPlus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Search, Download, MoreHorizontal, Edit, Trash2, UserPlus } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
 import { clientsApi } from '@/services/apiService';
 import { Client } from '@/data/demoData';
-import { DEMO_MODE } from '@/config/api';
 
-// Import demo podataka za DEMO_MODE
-import { demoClients } from '@/data/demoData';
-import { API_ENDPOINTS } from '@/config/api';
+const PAGE_SIZE = 10;
 
 const Clients = () => {
   const [clients, setClients] = useState<Client[]>([]);
-  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-
   const [formData, setFormData] = useState({
     name: '',
     pib: '',
@@ -72,59 +38,41 @@ const Clients = () => {
     phone: '',
     contactPerson: '',
   });
-
   const { toast } = useToast();
 
-  // Učitavanje klijenata
-  const fetchClients = async () => {
+  const fetchClients = async (page = currentPage, search = searchTerm) => {
     setIsLoading(true);
 
-    if (DEMO_MODE) {
-      setClients(demoClients);
-      setFilteredClients(demoClients);
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const response = await clientsApi.getAll();
-      if (response.success && response.data) {
-        setClients(response.data);
-        setFilteredClients(response.data);
-      } else {
-        toast({
-          title: "Greška",
-          description: response.message || "Nije moguće učitati klijente",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching clients:", error);
-      toast({
-        title: "Greška",
-        description: "Došlo je do greške prilikom učitavanja klijenata",
-        variant: "destructive",
+      const response = await clientsApi.getPage({
+        page,
+        pageSize: PAGE_SIZE,
+        search,
       });
+
+      if (!response.success) {
+        toast({
+          title: 'Greška',
+          description: 'Nije moguće učitati klijente',
+          variant: 'destructive',
+        });
+        setClients([]);
+        setTotalItems(0);
+        setTotalPages(0);
+        return;
+      }
+
+      setClients(response.data as Client[]);
+      setTotalItems(response.total || 0);
+      setTotalPages(response.totalPages || 0);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Filtriranje po pretrazi
   useEffect(() => {
-    const filtered = clients.filter((client) =>
-      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.pib.includes(searchTerm) ||
-      client.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.contactPerson.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredClients(filtered);
-  }, [searchTerm, clients]);
-
-  // Učitaj podatke pri mount-u
-  useEffect(() => {
-    fetchClients();
-  }, []);
+    fetchClients(currentPage, searchTerm);
+  }, [currentPage, searchTerm]);
 
   const resetForm = () => {
     setFormData({
@@ -149,14 +97,14 @@ const Clients = () => {
   const handleEdit = (client: Client) => {
     setSelectedClient(client);
     setFormData({
-      name: client.name,
-      pib: client.pib,
-      maticniBroj: client.maticniBroj,
-      address: client.address,
-      city: client.city,
-      email: client.email,
-      phone: client.phone,
-      contactPerson: client.contactPerson,
+      name: client.name || '',
+      pib: client.pib || '',
+      maticniBroj: client.maticniBroj || '',
+      address: client.address || '',
+      city: client.city || '',
+      email: client.email || '',
+      phone: client.phone || '',
+      contactPerson: client.contactPerson || '',
     });
     setIsEditing(true);
     setIsDialogOpen(true);
@@ -167,13 +115,12 @@ const Clients = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  // Kreiranje ili ažuriranje klijenta
   const handleSubmit = async () => {
     if (!formData.name || !formData.pib) {
       toast({
-        title: "Greška",
-        description: "Naziv firme i PIB su obavezni!",
-        variant: "destructive",
+        title: 'Greška',
+        description: 'Naziv firme i PIB su obavezni',
+        variant: 'destructive',
       });
       return;
     }
@@ -181,78 +128,62 @@ const Clients = () => {
     setIsSubmitting(true);
 
     try {
-      if (isEditing && selectedClient) {
-        // UPDATE
-        if (DEMO_MODE) {
-          const updated = { ...selectedClient, ...formData };
-          setClients(clients.map((c) => (c.id === selectedClient.id ? updated : c)));
-          toast({ title: "Uspešno", description: "Klijent je izmenjen (demo mod)" });
-        } else {
-          const response = await clientsApi.update(selectedClient.id, formData);
-          if (response.success) {
-            toast({ title: "Uspešno", description: "Klijent je uspešno izmenjen" });
-            fetchClients();
-          } else {
-            throw new Error(response.message || "Greška pri ažuriranju");
-          }
-        }
-      } else {
-        // CREATE
-        if (DEMO_MODE) {
-          const newClient: Client = {
-            id: Date.now().toString(),
-            ...formData,
-            createdAt: new Date().toISOString().split('T')[0],
-          };
-          setClients([newClient, ...clients]);
-          toast({ title: "Uspešno", description: "Novi klijent je dodat (demo mod)" });
-        } else {
-          const response = await clientsApi.create(formData);
-          if (response.success) {
-            toast({ title: "Uspešno", description: "Novi klijent je kreiran" });
-            fetchClients();
-          } else {
-            throw new Error(response.message || "Greška pri kreiranju");
-          }
-        }
+      const response = isEditing && selectedClient
+        ? await clientsApi.update(selectedClient.id, formData)
+        : await clientsApi.create(formData);
+
+      if (!response.success) {
+        throw new Error(response.message || 'Čuvanje nije uspelo');
       }
+
+      toast({
+        title: 'Uspešno',
+        description: isEditing ? 'Klijent je uspešno izmenjen' : 'Novi klijent je kreiran',
+      });
+
+      setIsDialogOpen(false);
+      resetForm();
+      fetchClients(currentPage, searchTerm);
     } catch (error: any) {
       toast({
-        title: "Greška",
-        description: error.message || "Došlo je do greške prilikom čuvanja",
-        variant: "destructive",
+        title: 'Greška',
+        description: error.message || 'Došlo je do greške prilikom čuvanja',
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
-      setIsDialogOpen(false);
-      resetForm();
     }
   };
 
-  // Brisanje klijenta
   const confirmDelete = async () => {
-    if (!selectedClient) return;
+    if (!selectedClient) {
+      return;
+    }
 
     setIsDeleting(true);
 
     try {
-      if (DEMO_MODE) {
-        setClients(clients.filter((c) => c.id !== selectedClient.id));
-        toast({ title: "Uspešno", description: "Klijent je obrisan (demo mod)" });
+      const response = await clientsApi.delete(selectedClient.id);
+
+      if (!response.success) {
+        throw new Error(response.message || 'Brisanje nije uspelo');
+      }
+
+      toast({
+        title: 'Uspešno',
+        description: 'Klijent je uspešno obrisan',
+      });
+
+      if (clients.length === 1 && currentPage > 1) {
+        setCurrentPage((page) => page - 1);
       } else {
-        const response = await clientsApi.delete(selectedClient.id);
-        if (response.success) {
-          toast({ title: "Uspešno", description: "Klijent je uspešno obrisan" });
-          fetchClients();
-        } else {
-          throw new Error(response.message || "Greška pri brisanju");
-        }
+        fetchClients(currentPage, searchTerm);
       }
     } catch (error: any) {
       toast({
-        title: "Greška",
-        description: error.message || "Nije moguće obrisati klijenta",
-        variant: "destructive",
+        title: 'Greška',
+        description: error.message || 'Nije moguće obrisati klijenta',
+        variant: 'destructive',
       });
     } finally {
       setIsDeleting(false);
@@ -260,14 +191,6 @@ const Clients = () => {
       setSelectedClient(null);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-96 text-lg">
-        Učitavanje klijenata...
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -284,14 +207,17 @@ const Clients = () => {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col md:flex-row gap-4 justify-between">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:justify-between">
+            <div className="relative max-w-sm flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Pretraži po imenu, PIB-u, gradu ili kontaktu..."
                 className="pl-9"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setCurrentPage(1);
+                }}
               />
             </div>
             <Button variant="outline">
@@ -301,7 +227,7 @@ const Clients = () => {
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="space-y-4">
           <Table>
             <TableHeader>
               <TableRow>
@@ -315,7 +241,7 @@ const Clients = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredClients.map((client) => (
+              {clients.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">{client.name}</TableCell>
                   <TableCell>{client.pib}</TableCell>
@@ -337,10 +263,7 @@ const Clients = () => {
                           <Edit className="mr-2 h-4 w-4" />
                           Izmeni
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => handleDeleteClick(client)}
-                        >
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(client)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Obriši
                         </DropdownMenuItem>
@@ -349,150 +272,136 @@ const Clients = () => {
                   </TableCell>
                 </TableRow>
               ))}
+              {!isLoading && clients.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
+                    Nema pronađenih klijenata.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
 
-          {filteredClients.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              Nema pronađenih klijenata.
-            </div>
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      if (currentPage > 1) {
+                        setCurrentPage((page) => page - 1);
+                      }
+                    }}
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, index) => index + 1)
+                  .slice(Math.max(0, currentPage - 3), Math.max(0, currentPage - 3) + 5)
+                  .map((pageNumber) => (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink
+                        href="#"
+                        isActive={pageNumber === currentPage}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          setCurrentPage(pageNumber);
+                        }}
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      if (currentPage < totalPages) {
+                        setCurrentPage((page) => page + 1);
+                      }
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           )}
         </CardContent>
       </Card>
 
-      {/* === DIALOG ZA DODAVANJE / IZMENU === */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Izmena klijenta' : 'Novi klijent'}</DialogTitle>
             <DialogDescription>
-              {isEditing
-                ? 'Izmenite podatke o postojećem klijentu'
-                : 'Unesite podatke o novom klijentu'}
+              {isEditing ? 'Izmenite podatke o postojećem klijentu' : 'Unesite podatke o novom klijentu'}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Naziv firme *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Naziv firme d.o.o."
-              />
+              <Input id="name" value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="pib">PIB *</Label>
-                <Input
-                  id="pib"
-                  value={formData.pib}
-                  onChange={(e) => setFormData({ ...formData, pib: e.target.value })}
-                  placeholder="123456789"
-                />
+                <Input id="pib" value={formData.pib} onChange={(event) => setFormData({ ...formData, pib: event.target.value })} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="maticniBroj">Matični broj</Label>
-                <Input
-                  id="maticniBroj"
-                  value={formData.maticniBroj}
-                  onChange={(e) => setFormData({ ...formData, maticniBroj: e.target.value })}
-                  placeholder="12345678"
-                />
+                <Input id="maticniBroj" value={formData.maticniBroj} onChange={(event) => setFormData({ ...formData, maticniBroj: event.target.value })} />
               </div>
             </div>
-
             <div className="grid gap-2">
               <Label htmlFor="address">Adresa</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Ulica i broj"
-              />
+              <Input id="address" value={formData.address} onChange={(event) => setFormData({ ...formData, address: event.target.value })} />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="city">Grad</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="Beograd"
-                />
+                <Input id="city" value={formData.city} onChange={(event) => setFormData({ ...formData, city: event.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="contactPerson">Kontakt osoba</Label>
+                <Input id="contactPerson" value={formData.contactPerson} onChange={(event) => setFormData({ ...formData, contactPerson: event.target.value })} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="phone">Telefon</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+381 11 123 4567"
-                />
+                <Input id="phone" value={formData.phone} onChange={(event) => setFormData({ ...formData, phone: event.target.value })} />
               </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="info@firma.rs"
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="contactPerson">Kontakt osoba</Label>
-              <Input
-                id="contactPerson"
-                value={formData.contactPerson}
-                onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-                placeholder="Ime i prezime"
-              />
             </div>
           </div>
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => { setIsDialogOpen(false); resetForm(); }}
-            >
-              Otkaži
-            </Button>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Otkaži</Button>
             <Button onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting
-                ? "Čuvanje..."
-                : isEditing
-                  ? "Sačuvaj izmene"
-                  : "Kreiraj klijenta"}
+              {isSubmitting ? 'Čuvanje...' : isEditing ? 'Sačuvaj' : 'Kreiraj'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* === ALERT DIALOG ZA BRISANJE === */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Da li ste sigurni?</AlertDialogTitle>
+            <AlertDialogTitle>Obrisati klijenta?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ova akcija će trajno obrisati klijenta <strong>{selectedClient?.name}</strong>.<br />
-              Ova radnja se ne može opozvati.
+              Ova akcija se ne može poništiti.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Otkaži</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={isDeleting}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              {isDeleting ? "Brisanje..." : "Obriši klijenta"}
+            <AlertDialogCancel>Otkaži</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={isDeleting}>
+              {isDeleting ? 'Brisanje...' : 'Obriši'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

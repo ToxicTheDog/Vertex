@@ -1,3 +1,5 @@
+import { DEMO_MODE } from '@/config/api';
+
 // Demo data za ERP sistem
 
 export interface Client {
@@ -996,3 +998,58 @@ export const dashboardStats = {
     { month: 'Jun', revenue: 400000, expenses: 280000 }
   ]
 };
+
+if (!DEMO_MODE) {
+  [
+    demoClients,
+    demoInvoices,
+    demoEmployees,
+    demoArticles,
+    demoWarehouses,
+    demoTransactions,
+    demoPaymentOrders,
+    demoBankStatements,
+    demoContracts,
+    demoCrmNotes,
+    demoBranches,
+    demoFiscalRegisters,
+    demoPosTerminals,
+    demoSuppliers,
+    demoReceivedOrders,
+    demoIssuedOrders,
+    demoPriceLists,
+    demoCategories,
+    demoSerialNumbers,
+    demoTimeEntries,
+    demoPayrollEntries,
+    demoAbsences,
+    demoBusinessTrips,
+    demoTravelOrders,
+    demoFixedAssets,
+    demoDepreciationEntries,
+    demoPromotions,
+    demoFeedbacks,
+    demoReminders,
+    demoStockMovements,
+    demoInventoryLists,
+    demoReceivedInvoices,
+    demoRecurringInvoices,
+    demoTaxRecords,
+    demoLedgerEntries,
+  ].forEach((collection) => {
+    collection.length = 0;
+  });
+
+  Object.assign(dashboardStats, {
+    totalRevenue: 0,
+    totalExpenses: 0,
+    profit: 0,
+    pendingInvoices: 0,
+    overdueInvoices: 0,
+    totalClients: 0,
+    totalEmployees: 0,
+    lowStockItems: 0,
+    vatToPay: 0,
+    monthlyData: [],
+  });
+}
