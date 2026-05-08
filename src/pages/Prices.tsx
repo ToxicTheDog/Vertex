@@ -16,7 +16,16 @@ interface Plan {
   badge?: string;
   seats: { admin: number; accountant: number; viewer: number };
   features: string[];
+  /** Module keys (matching customModules.key) that this plan includes */
+  includedModules: string[];
 }
+
+// Module sets per plan (incremental)
+const CORE_MODULES = ['racuni'];
+const OPERATIONS_MODULES = [...CORE_MODULES, 'banka', 'pdv', 'pppdv', 'klijenti', 'porezi'];
+const COMMERCE_MODULES = [...OPERATIONS_MODULES, 'knjig', 'prodaja', 'nabavka', 'artikli', 'lager'];
+const ADMIN_MODULES = [...COMMERCE_MODULES, 'skladiste', 'zaposleni', 'plate'];
+const ENTERPRISE_MODULES = [...ADMIN_MODULES, 'marketing', 'projekti', 'automatizacija'];
 
 interface CustomModule {
   key: string;
@@ -39,6 +48,7 @@ const standardPlans: Plan[] = [
       '1 Accountant + 1 Viewer included',
       'Admin is free of charge',
     ],
+    includedModules: CORE_MODULES,
   },
   {
     name: 'Operations',
@@ -53,6 +63,7 @@ const standardPlans: Plan[] = [
       'VAT records & VAT forms',
       '2 Viewers included',
     ],
+    includedModules: OPERATIONS_MODULES,
   },
   {
     name: 'Commerce Plus',
@@ -69,6 +80,7 @@ const standardPlans: Plan[] = [
       'Stock & Serial numbers',
       '2 Accountants + 3 Viewers',
     ],
+    includedModules: COMMERCE_MODULES,
   },
   {
     name: 'Administration',
@@ -83,6 +95,7 @@ const standardPlans: Plan[] = [
       'Warehouses & inventory',
       '3 Accountants + 5 Viewers',
     ],
+    includedModules: ADMIN_MODULES,
   },
   {
     name: 'Enterprise',
@@ -99,6 +112,7 @@ const standardPlans: Plan[] = [
       'Fixed assets & depreciation',
       '5 Accountants + 10 Viewers',
     ],
+    includedModules: ENTERPRISE_MODULES,
   },
 ];
 
@@ -144,9 +158,50 @@ const Prices = () => {
     return Math.round(base * discount);
   }, [selectedModules, extraViewers, extraKnjigovodje, discount]);
 
-  const suggestedPlan = useMemo(() => {
-    return standardPlans.find((p) => Math.round(p.price * discount) <= customTotal + 5);
-  }, [customTotal, discount]);
+  /**
+   * Smart recommendation:
+   * - Find the cheapest standard plan that COVERS all modules the user selected.
+   * - If that plan is cheaper or equal → "save money" recommendation.
+   * - If that plan is slightly more expensive (≤ 25% over custom) but adds many extra modules → "better value" upsell.
+   * - Otherwise → no recommendation (custom is the right fit).
+   */
+  const recommendation = useMemo(() => {
+    const selected = [...selectedModules];
+    const coveringPlans = standardPlans.filter((p) =>
+      selected.every((m) => p.includedModules.includes(m))
+    );
+    if (coveringPlans.length === 0) return null;
+
+    // Cheapest plan that covers everything user picked
+    const best = coveringPlans.reduce((a, b) => (a.price <= b.price ? a : b));
+    const planPrice = Math.round(best.price * discount);
+    const extraModules = best.includedModules.filter((m) => !selectedModules.has(m)).length;
+
+    if (planPrice <= customTotal) {
+      const savings = customTotal - planPrice;
+      return {
+        plan: best,
+        planPrice,
+        type: 'save' as const,
+        savings,
+        extraModules,
+      };
+    }
+
+    // Upsell: only if not too much more expensive AND adds meaningful extras
+    const overpay = planPrice - customTotal;
+    if (overpay <= Math.max(10, customTotal * 0.25) && extraModules >= 3) {
+      return {
+        plan: best,
+        planPrice,
+        type: 'upsell' as const,
+        overpay,
+        extraModules,
+      };
+    }
+
+    return null;
+  }, [selectedModules, customTotal, discount]);
 
   const toggleModule = (key: string) => {
     if (key === 'racuni') return; // Core is mandatory
@@ -388,12 +443,27 @@ const Prices = () => {
                     </div>
                   </div>
 
-                  {suggestedPlan && Math.round(suggestedPlan.price * discount) <= customTotal && (
+                  {recommendation && (
                     <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-sm">
-                      <p className="font-medium text-primary mb-1">💡 Recommendation</p>
+                      <p className="font-medium text-primary mb-1">
+                        {recommendation.type === 'save' ? '💰 Save money' : '⭐ Better value'}
+                      </p>
                       <p className="text-muted-foreground">
-                        The <strong>{suggestedPlan.name}</strong> plan ({Math.round(suggestedPlan.price * discount)}€/mo)
-                        offers more features at a similar or lower price.
+                        {recommendation.type === 'save' ? (
+                          <>
+                            The <strong>{recommendation.plan.name}</strong> plan covers everything you selected
+                            for just <strong>{recommendation.planPrice}€/mo</strong>
+                            {recommendation.savings > 0 && <> — saving you <strong>{recommendation.savings}€/mo</strong></>}
+                            {recommendation.extraModules > 0 && <>, plus {recommendation.extraModules} extra module{recommendation.extraModules > 1 ? 's' : ''} included</>}.
+                          </>
+                        ) : (
+                          <>
+                            For just <strong>{recommendation.overpay}€/mo more</strong>, the{' '}
+                            <strong>{recommendation.plan.name}</strong> plan adds{' '}
+                            <strong>{recommendation.extraModules} more module{recommendation.extraModules > 1 ? 's' : ''}</strong>{' '}
+                            and more user seats.
+                          </>
+                        )}
                       </p>
                     </div>
                   )}
