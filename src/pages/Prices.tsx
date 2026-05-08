@@ -158,9 +158,50 @@ const Prices = () => {
     return Math.round(base * discount);
   }, [selectedModules, extraViewers, extraKnjigovodje, discount]);
 
-  const suggestedPlan = useMemo(() => {
-    return standardPlans.find((p) => Math.round(p.price * discount) <= customTotal + 5);
-  }, [customTotal, discount]);
+  /**
+   * Smart recommendation:
+   * - Find the cheapest standard plan that COVERS all modules the user selected.
+   * - If that plan is cheaper or equal → "save money" recommendation.
+   * - If that plan is slightly more expensive (≤ 25% over custom) but adds many extra modules → "better value" upsell.
+   * - Otherwise → no recommendation (custom is the right fit).
+   */
+  const recommendation = useMemo(() => {
+    const selected = [...selectedModules];
+    const coveringPlans = standardPlans.filter((p) =>
+      selected.every((m) => p.includedModules.includes(m))
+    );
+    if (coveringPlans.length === 0) return null;
+
+    // Cheapest plan that covers everything user picked
+    const best = coveringPlans.reduce((a, b) => (a.price <= b.price ? a : b));
+    const planPrice = Math.round(best.price * discount);
+    const extraModules = best.includedModules.filter((m) => !selectedModules.has(m)).length;
+
+    if (planPrice <= customTotal) {
+      const savings = customTotal - planPrice;
+      return {
+        plan: best,
+        planPrice,
+        type: 'save' as const,
+        savings,
+        extraModules,
+      };
+    }
+
+    // Upsell: only if not too much more expensive AND adds meaningful extras
+    const overpay = planPrice - customTotal;
+    if (overpay <= Math.max(10, customTotal * 0.25) && extraModules >= 3) {
+      return {
+        plan: best,
+        planPrice,
+        type: 'upsell' as const,
+        overpay,
+        extraModules,
+      };
+    }
+
+    return null;
+  }, [selectedModules, customTotal, discount]);
 
   const toggleModule = (key: string) => {
     if (key === 'racuni') return; // Core is mandatory
