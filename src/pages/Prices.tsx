@@ -443,12 +443,27 @@ const Prices = () => {
                     </div>
                   </div>
 
-                  {suggestedPlan && Math.round(suggestedPlan.price * discount) <= customTotal && (
+                  {recommendation && (
                     <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-sm">
-                      <p className="font-medium text-primary mb-1">💡 Recommendation</p>
+                      <p className="font-medium text-primary mb-1">
+                        {recommendation.type === 'save' ? '💰 Save money' : '⭐ Better value'}
+                      </p>
                       <p className="text-muted-foreground">
-                        The <strong>{suggestedPlan.name}</strong> plan ({Math.round(suggestedPlan.price * discount)}€/mo)
-                        offers more features at a similar or lower price.
+                        {recommendation.type === 'save' ? (
+                          <>
+                            The <strong>{recommendation.plan.name}</strong> plan covers everything you selected
+                            for just <strong>{recommendation.planPrice}€/mo</strong>
+                            {recommendation.savings > 0 && <> — saving you <strong>{recommendation.savings}€/mo</strong></>}
+                            {recommendation.extraModules > 0 && <>, plus {recommendation.extraModules} extra module{recommendation.extraModules > 1 ? 's' : ''} included</>}.
+                          </>
+                        ) : (
+                          <>
+                            For just <strong>{recommendation.overpay}€/mo more</strong>, the{' '}
+                            <strong>{recommendation.plan.name}</strong> plan adds{' '}
+                            <strong>{recommendation.extraModules} more module{recommendation.extraModules > 1 ? 's' : ''}</strong>{' '}
+                            and more user seats.
+                          </>
+                        )}
                       </p>
                     </div>
                   )}
