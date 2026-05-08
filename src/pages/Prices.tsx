@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Check, Star, Zap, Shield, Crown, Settings2, Users, Calculator, ChevronRight } from 'lucide-react';
 
-// ── Tipovi ──
+// ── Types ──
 interface Plan {
   name: string;
   price: number;
@@ -14,7 +14,7 @@ interface Plan {
   description: string;
   highlight?: boolean;
   badge?: string;
-  seats: { admin: number; knjigovođa: number; viewer: number };
+  seats: { admin: number; accountant: number; viewer: number };
   features: string[];
 }
 
@@ -25,101 +25,101 @@ interface CustomModule {
   category: string;
 }
 
-// ── Podaci ──
+// ── Data ──
 const standardPlans: Plan[] = [
   {
     name: 'Core',
     price: 29,
     icon: <Shield className="h-6 w-6" />,
-    description: 'Računi, fakture i osnovno knjigovodstvo',
-    seats: { admin: 1, knjigovođa: 1, viewer: 1 },
+    description: 'Invoices, billing and basic accounting',
+    seats: { admin: 1, accountant: 1, viewer: 1 },
     features: [
-      'Računi i fakture (kompletno)',
-      'Dashboard & Profil',
-      '1 Knjigovođa + 1 Viewer uključeni',
-      'Admin se ne naplaćuje',
+      'Invoices & billing (full)',
+      'Dashboard & Profile',
+      '1 Accountant + 1 Viewer included',
+      'Admin is free of charge',
     ],
   },
   {
-    name: 'Operativa',
+    name: 'Operations',
     price: 49,
     icon: <Zap className="h-6 w-6" />,
-    description: 'Core + klijenti, banka, PDV',
-    seats: { admin: 1, knjigovođa: 1, viewer: 2 },
+    description: 'Core + clients, banking, VAT',
+    seats: { admin: 1, accountant: 1, viewer: 2 },
     features: [
-      'Sve iz Core plana',
-      'Klijenti & CRM beleške',
-      'Banka (izvodi, nalozi)',
-      'PDV evidencija & PPPDV',
-      '2 Viewer-a uključena',
+      'Everything in Core',
+      'Clients & CRM notes',
+      'Banking (statements, orders)',
+      'VAT records & VAT forms',
+      '2 Viewers included',
     ],
   },
   {
-    name: 'Komercijala Plus',
+    name: 'Commerce Plus',
     price: 69,
     icon: <Star className="h-6 w-6" />,
-    description: 'Operativa + prodaja, nabavka, lager',
+    description: 'Operations + sales, purchasing, stock',
     highlight: true,
-    badge: 'Popularno',
-    seats: { admin: 1, knjigovođa: 2, viewer: 3 },
+    badge: 'Popular',
+    seats: { admin: 1, accountant: 2, viewer: 3 },
     features: [
-      'Sve iz Operativa plana',
-      'Prodaja & Nabavka',
-      'Artikli, Cenovnici, Kategorije',
-      'Lager & Serijski brojevi',
-      '2 Knjigovođe + 3 Viewer-a',
+      'Everything in Operations',
+      'Sales & Purchasing',
+      'Articles, Price lists, Categories',
+      'Stock & Serial numbers',
+      '2 Accountants + 3 Viewers',
     ],
   },
   {
-    name: 'Administracija',
+    name: 'Administration',
     price: 89,
     icon: <Users className="h-6 w-6" />,
-    description: 'Komercijala + HR, plate, inventar',
-    seats: { admin: 1, knjigovođa: 3, viewer: 5 },
+    description: 'Commerce + HR, payroll, inventory',
+    seats: { admin: 1, accountant: 3, viewer: 5 },
     features: [
-      'Sve iz Komercijala Plus plana',
-      'Zaposleni, evidencija rada',
-      'Plate & odsustva',
-      'Skladišta & inventar',
-      '3 Knjigovođe + 5 Viewer-a',
+      'Everything in Commerce Plus',
+      'Employees, time tracking',
+      'Payroll & absences',
+      'Warehouses & inventory',
+      '3 Accountants + 5 Viewers',
     ],
   },
   {
     name: 'Enterprise',
     price: 119,
     icon: <Crown className="h-6 w-6" />,
-    description: 'Sve funkcionalnosti + automatizacija',
-    badge: 'Kompletno',
-    seats: { admin: 1, knjigovođa: 5, viewer: 10 },
+    description: 'All features + automation',
+    badge: 'Complete',
+    seats: { admin: 1, accountant: 5, viewer: 10 },
     features: [
-      'Sve iz Administracija plana',
-      'Marketing & kampanje',
-      'Projekti & taskovi',
-      'Automatizacija (fakture, PDV, izvještaji)',
-      'Osnovna sredstva & amortizacija',
-      '5 Knjigovođa + 10 Viewer-a',
+      'Everything in Administration',
+      'Marketing & campaigns',
+      'Projects & tasks',
+      'Automation (invoices, VAT, reports)',
+      'Fixed assets & depreciation',
+      '5 Accountants + 10 Viewers',
     ],
   },
 ];
 
 const customModules: CustomModule[] = [
-  { key: 'racuni', label: 'Računi i fakture', price: 15, category: 'Finansije' },
-  { key: 'banka', label: 'Banka', price: 8, category: 'Finansije' },
-  { key: 'pdv', label: 'PDV evidencija', price: 7, category: 'Finansije' },
-  { key: 'pppdv', label: 'PPPDV', price: 5, category: 'Finansije' },
-  { key: 'porezi', label: 'Porezi', price: 6, category: 'Finansije' },
-  { key: 'knjig', label: 'Knjigovodstvo (KUF/KIF)', price: 8, category: 'Finansije' },
-  { key: 'klijenti', label: 'Klijenti & CRM', price: 7, category: 'Klijenti' },
-  { key: 'prodaja', label: 'Prodaja & narudžbe', price: 10, category: 'Prodaja' },
-  { key: 'nabavka', label: 'Nabavka & dobavljači', price: 8, category: 'Prodaja' },
-  { key: 'artikli', label: 'Artikli & cenovnici', price: 6, category: 'Prodaja' },
-  { key: 'lager', label: 'Lager & serijski br.', price: 7, category: 'Prodaja' },
-  { key: 'skladiste', label: 'Skladišta & inventar', price: 8, category: 'Inventar' },
-  { key: 'zaposleni', label: 'Zaposleni & evidencija', price: 9, category: 'HR' },
-  { key: 'plate', label: 'Plate & odsustva', price: 10, category: 'HR' },
-  { key: 'marketing', label: 'Marketing & kampanje', price: 8, category: 'Marketing' },
-  { key: 'projekti', label: 'Projekti & taskovi', price: 7, category: 'Projekti' },
-  { key: 'automatizacija', label: 'Automatizacija', price: 12, category: 'Premium' },
+  { key: 'racuni', label: 'Invoices & billing', price: 15, category: 'Finance' },
+  { key: 'banka', label: 'Banking', price: 8, category: 'Finance' },
+  { key: 'pdv', label: 'VAT records', price: 7, category: 'Finance' },
+  { key: 'pppdv', label: 'VAT forms', price: 5, category: 'Finance' },
+  { key: 'porezi', label: 'Taxes', price: 6, category: 'Finance' },
+  { key: 'knjig', label: 'Bookkeeping (Inbound/Outbound)', price: 8, category: 'Finance' },
+  { key: 'klijenti', label: 'Clients & CRM', price: 7, category: 'Clients' },
+  { key: 'prodaja', label: 'Sales & orders', price: 10, category: 'Sales' },
+  { key: 'nabavka', label: 'Purchasing & suppliers', price: 8, category: 'Sales' },
+  { key: 'artikli', label: 'Articles & price lists', price: 6, category: 'Sales' },
+  { key: 'lager', label: 'Stock & serial numbers', price: 7, category: 'Sales' },
+  { key: 'skladiste', label: 'Warehouses & inventory', price: 8, category: 'Inventory' },
+  { key: 'zaposleni', label: 'Employees & time tracking', price: 9, category: 'HR' },
+  { key: 'plate', label: 'Payroll & absences', price: 10, category: 'HR' },
+  { key: 'marketing', label: 'Marketing & campaigns', price: 8, category: 'Marketing' },
+  { key: 'projekti', label: 'Projects & tasks', price: 7, category: 'Projects' },
+  { key: 'automatizacija', label: 'Automation', price: 12, category: 'Premium' },
 ];
 
 const EXTRA_VIEWER_PRICE = 3;
@@ -149,7 +149,7 @@ const Prices = () => {
   }, [customTotal, discount]);
 
   const toggleModule = (key: string) => {
-    if (key === 'racuni') return; // Core obavezan
+    if (key === 'racuni') return; // Core is mandatory
     setSelectedModules((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
@@ -165,23 +165,23 @@ const Prices = () => {
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold tracking-tight mb-3">VERTEX Cenovnik</h1>
+          <h1 className="text-4xl font-bold tracking-tight mb-3">VERTEX Pricing</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Izaberite standardni plan ili kreirajte Custom paket prema vašim potrebama.
+            Choose a standard plan or build a Custom package tailored to your needs.
           </p>
 
           {/* Billing toggle */}
           <div className="flex items-center justify-center gap-3 mt-6">
-            <Label className={!annual ? 'font-semibold' : 'text-muted-foreground'}>Mesečno</Label>
+            <Label className={!annual ? 'font-semibold' : 'text-muted-foreground'}>Monthly</Label>
             <Switch checked={annual} onCheckedChange={setAnnual} />
             <Label className={annual ? 'font-semibold' : 'text-muted-foreground'}>
-              Godišnje
+              Annual
               <Badge variant="secondary" className="ml-2 text-xs">-20%</Badge>
             </Label>
           </div>
         </div>
 
-        {/* ── Standardni planovi ── */}
+        {/* ── Standard plans ── */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-16">
           {standardPlans.map((plan) => (
             <Card
@@ -207,10 +207,10 @@ const Prices = () => {
               <CardContent className="flex-1 flex flex-col">
                 <div className="text-center mb-4">
                   <span className="text-4xl font-bold">{Math.round(plan.price * discount)}€</span>
-                  <span className="text-muted-foreground text-sm">/mesečno</span>
+                  <span className="text-muted-foreground text-sm">/month</span>
                 </div>
                 <div className="text-xs text-muted-foreground text-center mb-4">
-                  {plan.seats.admin} Admin (besplatan) · {plan.seats.knjigovođa} Knjigovođa · {plan.seats.viewer} Viewer
+                  {plan.seats.admin} Admin (free) · {plan.seats.accountant} Accountant · {plan.seats.viewer} Viewer
                 </div>
                 <ul className="space-y-2 flex-1">
                   {plan.features.map((f, i) => (
@@ -221,25 +221,25 @@ const Prices = () => {
                   ))}
                 </ul>
                 <Button className="w-full mt-6" variant={plan.highlight ? 'default' : 'outline'}>
-                  Izaberi {plan.name}
+                  Choose {plan.name}
                 </Button>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* ── Custom konfigurator ── */}
+        {/* ── Custom configurator ── */}
         <div id="custom" className="scroll-mt-8">
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-2">
               <Settings2 className="h-6 w-6 text-primary" />
               <h2 className="text-3xl font-bold">Custom Plan</h2>
             </div>
-            <p className="text-muted-foreground">Sastavite sopstveni paket — plaćate samo ono što koristite.</p>
+            <p className="text-muted-foreground">Build your own package — pay only for what you use.</p>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-3">
-            {/* Moduli */}
+            {/* Modules */}
             <div className="lg:col-span-2 space-y-6">
               {categories.map((cat) => (
                 <Card key={cat}>
@@ -273,7 +273,7 @@ const Prices = () => {
                               <span className="text-sm font-medium">{mod.label}</span>
                               {isCore && (
                                 <Badge variant="outline" className="text-[10px] ml-1">
-                                  Obavezno
+                                  Required
                                 </Badge>
                               )}
                             </div>
@@ -285,15 +285,15 @@ const Prices = () => {
                 </Card>
               ))}
 
-              {/* Dodaci korisnika */}
+              {/* Extra users */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Dodatni korisnici</CardTitle>
-                  <CardDescription>Core uključuje 1 Knjigovođu + 1 Viewer-a. Admin je besplatan.</CardDescription>
+                  <CardTitle className="text-base">Additional users</CardTitle>
+                  <CardDescription>Core includes 1 Accountant + 1 Viewer. Admin is free.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label>Dodatni Viewer-i ({EXTRA_VIEWER_PRICE}€/kom)</Label>
+                    <Label>Additional Viewers ({EXTRA_VIEWER_PRICE}€/each)</Label>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
@@ -315,7 +315,7 @@ const Prices = () => {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label>Dodatne Knjigovođe ({EXTRA_KNJIGOVODJA_PRICE}€/kom)</Label>
+                    <Label>Additional Accountants ({EXTRA_KNJIGOVODJA_PRICE}€/each)</Label>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
@@ -340,13 +340,13 @@ const Prices = () => {
               </Card>
             </div>
 
-            {/* Rekapitulacija */}
+            {/* Summary */}
             <div>
               <Card className="sticky top-6 border-primary/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calculator className="h-5 w-5" />
-                    Vaš Custom plan
+                    Your Custom plan
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -369,7 +369,7 @@ const Prices = () => {
                     )}
                     {extraKnjigovodje > 0 && (
                       <li className="flex justify-between">
-                        <span>{extraKnjigovodje}× Knjigovođa</span>
+                        <span>{extraKnjigovodje}× Accountant</span>
                         <span className="font-medium">{extraKnjigovodje * EXTRA_KNJIGOVODJA_PRICE}€</span>
                       </li>
                     )}
@@ -377,29 +377,29 @@ const Prices = () => {
 
                   <div className="border-t pt-3">
                     {annual && (
-                      <p className="text-xs text-muted-foreground mb-1">Godišnji popust: -20%</p>
+                      <p className="text-xs text-muted-foreground mb-1">Annual discount: -20%</p>
                     )}
                     <div className="flex items-end justify-between">
-                      <span className="text-sm font-medium">Ukupno</span>
+                      <span className="text-sm font-medium">Total</span>
                       <div className="text-right">
                         <span className="text-3xl font-bold">{customTotal}€</span>
-                        <span className="text-muted-foreground text-sm">/mes</span>
+                        <span className="text-muted-foreground text-sm">/mo</span>
                       </div>
                     </div>
                   </div>
 
                   {suggestedPlan && Math.round(suggestedPlan.price * discount) <= customTotal && (
                     <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-sm">
-                      <p className="font-medium text-primary mb-1">💡 Preporuka</p>
+                      <p className="font-medium text-primary mb-1">💡 Recommendation</p>
                       <p className="text-muted-foreground">
-                        Plan <strong>{suggestedPlan.name}</strong> ({Math.round(suggestedPlan.price * discount)}€/mes)
-                        nudi više funkcionalnosti za sličnu ili nižu cenu.
+                        The <strong>{suggestedPlan.name}</strong> plan ({Math.round(suggestedPlan.price * discount)}€/mo)
+                        offers more features at a similar or lower price.
                       </p>
                     </div>
                   )}
 
                   <Button className="w-full" size="lg">
-                    Započni sa Custom planom
+                    Get started with Custom
                     <ChevronRight className="ml-1 h-4 w-4" />
                   </Button>
                 </CardContent>
