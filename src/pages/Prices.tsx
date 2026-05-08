@@ -48,6 +48,7 @@ const standardPlans: Plan[] = [
       '1 Accountant + 1 Viewer included',
       'Admin is free of charge',
     ],
+    includedModules: CORE_MODULES,
   },
   {
     name: 'Operations',
@@ -62,6 +63,7 @@ const standardPlans: Plan[] = [
       'VAT records & VAT forms',
       '2 Viewers included',
     ],
+    includedModules: OPERATIONS_MODULES,
   },
   {
     name: 'Commerce Plus',
@@ -78,6 +80,7 @@ const standardPlans: Plan[] = [
       'Stock & Serial numbers',
       '2 Accountants + 3 Viewers',
     ],
+    includedModules: COMMERCE_MODULES,
   },
   {
     name: 'Administration',
@@ -92,6 +95,7 @@ const standardPlans: Plan[] = [
       'Warehouses & inventory',
       '3 Accountants + 5 Viewers',
     ],
+    includedModules: ADMIN_MODULES,
   },
   {
     name: 'Enterprise',
@@ -108,6 +112,7 @@ const standardPlans: Plan[] = [
       'Fixed assets & depreciation',
       '5 Accountants + 10 Viewers',
     ],
+    includedModules: ENTERPRISE_MODULES,
   },
 ];
 
