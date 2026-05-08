@@ -16,7 +16,16 @@ interface Plan {
   badge?: string;
   seats: { admin: number; accountant: number; viewer: number };
   features: string[];
+  /** Module keys (matching customModules.key) that this plan includes */
+  includedModules: string[];
 }
+
+// Module sets per plan (incremental)
+const CORE_MODULES = ['racuni'];
+const OPERATIONS_MODULES = [...CORE_MODULES, 'banka', 'pdv', 'pppdv', 'klijenti', 'porezi'];
+const COMMERCE_MODULES = [...OPERATIONS_MODULES, 'knjig', 'prodaja', 'nabavka', 'artikli', 'lager'];
+const ADMIN_MODULES = [...COMMERCE_MODULES, 'skladiste', 'zaposleni', 'plate'];
+const ENTERPRISE_MODULES = [...ADMIN_MODULES, 'marketing', 'projekti', 'automatizacija'];
 
 interface CustomModule {
   key: string;
